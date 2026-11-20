@@ -71,40 +71,72 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline float fmaf(float x, float y, float z);
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline float __fmaf_ieee_rn(float x, float y, float z);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__funnelshift_l`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __funnelshift_l(
     unsigned int lo, unsigned int hi, unsigned int shift);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__funnelshift_lc`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __funnelshift_lc(
     unsigned int lo, unsigned int hi, unsigned int shift);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__funnelshift_r`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __funnelshift_r(
     unsigned int lo, unsigned int hi, unsigned int shift);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__funnelshift_rc`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __funnelshift_rc(
     unsigned int lo, unsigned int hi, unsigned int shift);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_lo`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int __dp2a_lo(int src_a, int src_b, int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_lo`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __dp2a_lo(unsigned int src_a, unsigned int src_b, unsigned int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_lo`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int __dp2a_lo(short2 src_a, char4 src_b, int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_lo`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __dp2a_lo(ushort2 src_a, uchar4 src_b, unsigned int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_hi`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int __dp2a_hi(int src_a, int src_b, int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_hi`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __dp2a_hi(unsigned int src_a, unsigned int src_b, unsigned int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_hi`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int __dp2a_hi(short2 src_a, char4 src_b, int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp2a_hi`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __dp2a_hi(ushort2 src_a, uchar4 src_b, unsigned int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp4a`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int __dp4a(int src_a, int src_b, int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp4a`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __dp4a(unsigned int src_a, unsigned int src_b, unsigned int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp4a`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int __dp4a(char4 src_a, char4 src_b, int c);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__dp4a`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __dp4a(uchar4 src_a, uchar4 src_b, unsigned int c);
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline float fabsf(float x);

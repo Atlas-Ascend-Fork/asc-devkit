@@ -38,6 +38,8 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline int64_t asc_atomic_add(__gm__ int64_t* add
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline uint64_t asc_atomic_add(__gm__ uint64_t* address, uint64_t val);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `asc_atomic_add`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline float2 asc_atomic_add(__gm__ float2* address, float2 val);
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t asc_atomic_sub(__ubuf__ int32_t* address, int32_t val);
@@ -206,6 +208,8 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline int64_t asc_atomic_add(int64_t* address, i
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline uint64_t asc_atomic_add(uint64_t* address, uint64_t val);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `asc_atomic_add`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline float2 asc_atomic_add(float2* address, float2 val);
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t asc_atomic_sub(int32_t* address, int32_t val);

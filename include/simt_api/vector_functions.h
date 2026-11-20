@@ -20,6 +20,9 @@
 
 #if (__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201) || (__NPU_ARCH__ == 9202) || (__NPU_ARCH__ == 5102)
 
+#define ALIGN_16 16
+#define ALIGN_32 32
+
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline short2 make_short2(short x, short y);
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline short3 make_short3(short x, short y, short z);
@@ -65,19 +68,19 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline ulong3 make_ulong3(unsigned long int x, un
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline ulong4 make_ulong4(
     unsigned long int x, unsigned long int y, unsigned long int z, unsigned long int w);
 
-struct alignas(16) long4_16a {
+struct alignas(ALIGN_16) long4_16a {
     long x, y, z, w;
 };
 
-struct alignas(16) ulong4_16a {
+struct alignas(ALIGN_16) ulong4_16a {
     unsigned long x, y, z, w;
 };
 
-struct alignas(32) long4_32a {
+struct alignas(ALIGN_32) long4_32a {
     long x, y, z, w;
 };
 
-struct alignas(32) ulong4_32a {
+struct alignas(ALIGN_32) ulong4_32a {
     unsigned long x, y, z, w;
 };
 

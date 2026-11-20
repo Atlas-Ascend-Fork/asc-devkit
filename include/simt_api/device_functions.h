@@ -891,6 +891,8 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned short __asc_bswap16(unsigned shor
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __asc_bswap32(unsigned int x);
 
+__ASC_SIMT_SIMULATION_CHECK__(
+    3510, 5102, 9201, 9202, "Hardware lacks native support for `__asc_bswap64`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned long long __asc_bswap64(unsigned long long x);
 
 static __SIMT_DEVICE_FUNCTIONS_DECL__ int32_t laneid();
