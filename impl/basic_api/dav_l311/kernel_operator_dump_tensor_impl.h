@@ -114,7 +114,8 @@ __aicore__ inline void DumpShapeImpl(const ShapeInfo& shapeInfo)
     if (ptr->dumpOffset < tlvSize) {
         ASCENDC_ASSERT((false), {
             KERNEL_LOG(
-                KERNEL_ERROR, "dumpOffset is %d, which must less than remained space %d", ptr->dumpOffset, valueSize);
+                KERNEL_ERROR, "dumpOffset is %d, which must be less than remained space %d", ptr->dumpOffset,
+                valueSize);
         });
         *((__gm__ uint32_t*)ptr + BLOCK_INFO_RSV_POS) = DUMP_EXC_FLAG;
         dcci((__gm__ uint64_t*)ptr, cache_line_t::ENTIRE_DATA_CACHE, dcci_dst_t::CACHELINE_OUT);
@@ -139,7 +140,8 @@ __aicore__ inline void DumpTensorLocal2GMImpl(const LocalTensor<T>& src, uint32_
     uint32_t position = CheckValidPosition(src);
     // set the head struct value
     if (position == 0) {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only support dump tensor from local to gm"); });
+        ASCENDC_ASSERT(
+            (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only supports dump tensor from local to gm"); });
     }
 
     T data;
@@ -159,7 +161,7 @@ __aicore__ inline void DumpTensorLocal2GMImpl(const LocalTensor<T>& src, uint32_
     if (ptr->dumpOffset < (offset + sizeof(DumpMessageHead))) {
         ASCENDC_ASSERT((false), {
             KERNEL_LOG(
-                KERNEL_ERROR, "dumpOffset is %d, which must less than remained space %d", ptr->dumpOffset,
+                KERNEL_ERROR, "dumpOffset is %d, which must be less than remained space %d", ptr->dumpOffset,
                 (offset + sizeof(DumpMessageHead)));
         });
         *((__gm__ uint32_t*)ptr + BLOCK_INFO_RSV_POS) = DUMP_EXC_FLAG;
@@ -256,7 +258,7 @@ __aicore__ inline bool CheckDumpValid(uint32_t offset)
     __gm__ BlockInfo* ptr = (__gm__ BlockInfo*)(dumpWorkspaceStart + DUMP_UINTSIZE * core);
     if (ptr->dumpOffset < (offset + sizeof(DumpMessageHead) + ONE_DUMP_BACKUP_SIZE)) {
         KERNEL_LOG(
-            KERNEL_ERROR, "dumpOffset is %d, which must less than remained space %ld", ptr->dumpOffset,
+            KERNEL_ERROR, "dumpOffset is %d, which must be less than remained space %ld", ptr->dumpOffset,
             (offset + sizeof(DumpMessageHead) + ONE_DUMP_BACKUP_SIZE));
         *((__gm__ uint32_t*)ptr + BLOCK_INFO_RSV_POS) = DUMP_EXC_FLAG;
         dcci((__gm__ uint64_t*)ptr, cache_line_t::ENTIRE_DATA_CACHE, dcci_dst_t::CACHELINE_OUT);
@@ -431,7 +433,7 @@ __aicore__ inline void WriteScalar(__gm__ uint8_t* paramAddr, uint32_t paramIdx,
 {
     __gm__ uint64_t* scalarAddr = (__gm__ uint64_t*)paramAddr + paramIdx;
     *scalarAddr = 0;
-    static_assert(!SupportType<T, double>(), "printf unsupport double type");
+    static_assert(!SupportType<T, double>(), "printf does not support double type");
 
     if constexpr (SupportType<T, half, float>()) {
         *((__gm__ float*)scalarAddr) = static_cast<float>(scalar);

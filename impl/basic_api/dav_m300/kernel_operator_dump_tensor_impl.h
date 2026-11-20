@@ -409,7 +409,7 @@ __aicore__ static __attribute__((noinline)) void DumpTensorRingBufImpl(
 #if !(defined(ASCENDC_DUMP) && ASCENDC_DUMP == 0)
     EnablePrintf();
     if constexpr (GetTensorDataType<T>() == Internal::DumpTensorDataType::ACL_MAX) {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor not support this data type"); });
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor does not support this data type"); });
         return;
     }
     if (dumpSize == 0) {
@@ -418,7 +418,7 @@ __aicore__ static __attribute__((noinline)) void DumpTensorRingBufImpl(
     if constexpr (IsSameType<Tensor<T>, LocalTensor<T>>::value) {
         if (CheckDumpTensorPosition(src) == Hardware::MAX) {
             ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only support dump tensor from local to gm"); });
+                (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only supports dump tensor from local to gm"); });
             return;
         }
     }

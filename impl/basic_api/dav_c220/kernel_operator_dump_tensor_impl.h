@@ -66,7 +66,7 @@ __aicore__ inline void DumpTensorLocal2GMImpl(
         const Hardware position = GetPhyType(static_cast<TPosition>(src.GetPosition()));
 #ifdef ASCENDC_DUMP
         if constexpr (GetTensorDataType<T>() == Internal::DumpTensorDataType::ACL_MAX) {
-            ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor is not supported this data type\n"); });
+            ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor does not support this data type\n"); });
             return;
         }
 #endif
@@ -81,7 +81,7 @@ __aicore__ inline void DumpTensorLocal2GMImpl(
             __asc_aicore::asc_dump_cbuf((__cc__ T*)src.GetPhyAddr(), desc, dumpSize, shape, shapeDim);
         } else {
             ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only support dump tensor from local to gm"); });
+                (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only supports dump tensor from local to gm"); });
             return;
         }
     }

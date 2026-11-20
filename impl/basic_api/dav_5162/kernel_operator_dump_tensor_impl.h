@@ -101,7 +101,8 @@ __aicore__ void DumpTensorLocal2GMImpl(
     } else if (position == Hardware::L0C) {
         __asc_aicore::asc_dump_cbuf((__cc__ T*)src.GetPhyAddr(), desc, dumpSize, shape, shapeDim);
     } else {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only support dump tensor from local to gm"); });
+        ASCENDC_ASSERT(
+            (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only supports dump tensor from local to gm"); });
         return;
     }
     set_ctrl(ctrlValue);

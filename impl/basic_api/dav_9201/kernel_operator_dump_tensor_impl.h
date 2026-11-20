@@ -70,7 +70,7 @@ __aicore__ inline void DumpTensorLocal2GMImpl(
             }
         } else {
             ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only support dump tensor from local to gm"); });
+                (false), { KERNEL_LOG(KERNEL_ERROR, "dump tensor only supports dump tensor from local to gm"); });
             return;
         }
     }
