@@ -70,7 +70,7 @@ public:
 
         uint16_t src_row_shape;
         uint32_t src_col_shape;
-        uint32_t src_col_stride;
+        uint64_t src_col_stride;
         if constexpr (is_satisfied_ptn_format_v<SrcTensor, dn_layout_ptn>) {
             src_row_shape = get_element<attr_info::shape, attr_info::row>(src_layout);
             src_col_shape = get_element<attr_info::shape, attr_info::column>(src_layout);
@@ -84,13 +84,12 @@ public:
 
         uint16_t n_value = src_row_shape;
         uint32_t d_value = src_col_shape;
-        uint64_t src_d_value = src_col_stride;
 
         uint16_t dst_nz_c0_stride = dst_b_col_stride / c0_element<type>;
         uint16_t dst_nz_n_stride = 1;
 
-        uint64_t loop1_src_stride = src_d_value * sizeof(type);
-        uint64_t loop4_src_stride = src_dn_matrix_stride * sizeof(type);
+        uint64_t loop1_src_stride = gm_stride_bytes<type>(src_col_stride);
+        uint64_t loop4_src_stride = gm_stride_bytes<type>(src_dn_matrix_stride);
 
         uint16_t loop2_dst_stride = dst_nz_n_stride;  // loop2_dst_stride = dst_nz_n_stride
         uint16_t loop3_dst_stride = dst_nz_c0_stride; // loop3_dst_stride = dst_nz_c0_Stride
@@ -115,11 +114,11 @@ public:
         using type = typename SrcTensor::element_type;
         uint16_t n_value = get_shape_rows(copy_shape);
         uint32_t d_value = get_shape_columns(copy_shape);
-        uint32_t src_col_stride = get_matrix_element<attr_info::stride, attr_info::column, 1>(src.layout());
+        uint64_t src_col_stride = get_matrix_element<attr_info::stride, attr_info::column, 1>(src.layout());
         uint16_t loop3_dst_stride =
             get_matrix_element<attr_info::stride, attr_info::column, 1>(dst.layout()) / c0_element<type>;
-        uint64_t loop1_src_stride = src_col_stride * sizeof(type);
-        uint64_t loop4_src_stride = src_dn_matrix_stride * sizeof(type);
+        uint64_t loop1_src_stride = gm_stride_bytes<type>(src_col_stride);
+        uint64_t loop4_src_stride = gm_stride_bytes<type>(src_dn_matrix_stride);
         uint16_t loop4_dst_stride = static_cast<uint16_t>(dst_nz_matrix_stride / c0_element<type>);
         copy_gm_to_l1_multi_dn2nz_instr::data_copy_with_offset(
             dst, src, dst_offset, src_offset, dn_num, 1, loop3_dst_stride, loop4_dst_stride, loop1_src_stride,

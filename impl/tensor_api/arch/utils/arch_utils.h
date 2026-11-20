@@ -98,6 +98,16 @@ __aicore__ inline constexpr decltype(auto) get_matrix_element(const Layout& layo
     }
 }
 
+// Unified byte-stride conversion for Global Memory facing copy instructions.
+// A layout stride is expressed in elements and a GM stride can legitimately exceed 2^32 bytes
+// (the MTE2 source stride field is 40 bits wide), so the value must be widened to 64 bit *before*
+// the element-size multiplication. Never route a GM stride through a 16/32 bit intermediate.
+template <typename ElementType, typename StrideType>
+__aicore__ inline constexpr uint64_t gm_stride_bytes(const StrideType& stride_in_elements)
+{
+    return static_cast<uint64_t>(stride_in_elements) * static_cast<uint64_t>(sizeof(ElementType));
+}
+
 template <typename LayoutType>
 __aicore__ inline static constexpr uint32_t get_total_column_shape(const LayoutType& layout)
 {

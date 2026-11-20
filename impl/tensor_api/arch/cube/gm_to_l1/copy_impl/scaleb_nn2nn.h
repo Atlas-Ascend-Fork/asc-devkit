@@ -55,7 +55,7 @@ public:
         uint32_t src_shape_col_b;
         uint32_t src_shape_col_s;
         uint32_t src_shape_row_b;
-        uint32_t src_stride_col_b;
+        uint64_t src_stride_col_b;
         uint32_t src_stride_col_s;
         uint32_t dst_stride_col_b;
         if constexpr (SrcTensor::layout_type::depth == five_dim_data) {
@@ -74,7 +74,7 @@ public:
             dst_stride_col_b = get<1, 1>(dst.layout().stride());
         }
         uint32_t block_len = src_shape_row_b * sizeof(type) * src_shape_col_s * src_stride_col_s;
-        uint64_t src_stride = src_stride_col_b * sizeof(type);
+        uint64_t src_stride = gm_stride_bytes<type>(src_stride_col_b);
         uint32_t dst_stride = dst_stride_col_b * sizeof(type);
         uint32_t batch_num = get_shape_batch_size(src_shape);
         uint64_t src_batch_stride = 0;
