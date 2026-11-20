@@ -51,11 +51,48 @@ __aicore__ inline HcclHandle AllReduce(GM_ADDR sendBuf, GM_ADDR recvBuf, uint64_
 | sendBuf | 输入 | 源数据buffer地址。 |
 | recvBuf | 输出 | 目的数据buffer地址，集合通信结果输出到此buffer中。 |
 | count | 输入 | 参与AllReduce操作的数据个数，比如只有一个int32数据参与，则count=1。 |
-| dataType | 输入 | AllReduce操作的数据类型，目前支持float、half（即float16）、int8_t、int16_t、int32_t、bfloat16_t数据类型，即支持取值为HCCL_DATA_TYPE_FP32、HCCL_DATA_TYPE_FP16、HCCL_DATA_TYPE_INT8、HCCL_DATA_TYPE_INT16、HCCL_DATA_TYPE_INT32、HCCL_DATA_TYPE_BFP16。HcclDataType数据类型的介绍请参考[表1](HCCL_usage.md#table116710585514)。 |
-| op | 输入 | Reduce的操作类型，目前支持sum、max、min、prod操作类型，即支持取值为HCCL_REDUCE_SUM、HCCL_REDUCE_MAX、HCCL_REDUCE_MIN、HCCL_REDUCE_PROD。prod操作不支持int16_t、bfloat16_t数据类型。HcclReduceOp数据类型的介绍请参考[表2](HCCL_usage.md#table2469980529)。 |
+| dataType | 输入 | AllReduce操作的数据类型。不同产品和通信服务端支持的数据类型请参见[数据类型](#数据类型)。HcclDataType数据类型的介绍请参考[表1](HCCL_usage.md#table116710585514)。 |
+| op | 输入 | Reduce的操作类型。支持的操作类型及约束请参见[op说明](#op说明)。HcclReduceOp数据类型的介绍请参考[表2](HCCL_usage.md#table2469980529)。 |
 | repeat | 输入 | 一次下发的AllReduce通信任务个数。repeat取值≥1，默认值为1。当repeat>1时，每个AllReduce任务的sendBuf和recvBuf地址由服务端自动算出，计算公式如下：<br><br>sendBuf[i] = sendBuf + count* sizeof(datatype) * i, i∈[0, repeat)<br><br>recvBuf[i] = recvBuf + count* sizeof(datatype) * i, i∈[0, repeat)<br><br>注意：当设置repeat>1时，须与count参数配合使用，规划通信数据地址。 |
 
-**图1**  AllReduce三轮切分通信示例  
+### 数据类型
+
+不同产品和通信服务端支持的数据类型如下。
+
+<!-- npu="950" id10 -->
+- 对于Ascend 950PR&950DT系列产品：
+
+    - 通信服务端为AI CPU时，支持int8_t、int16_t、half、bfloat16_t、int32_t、float、int64_t、uint64_t、double。
+    - 通信服务端为CCU时，支持int16_t、half、bfloat16_t、int32_t、float；int8_t的使用须满足[op说明](#op说明)中的操作类型和算法约束。
+<!-- end id10 -->
+
+<!-- npu="A3" id11 -->
+- 对于Atlas A3系列产品，支持int8_t、int16_t、half、bfloat16_t、int32_t、float、int64_t。
+<!-- end id11 -->
+
+<!-- npu="910b" id12 -->
+- 对于Atlas A2系列产品，支持int8_t、int16_t、half、bfloat16_t、int32_t、float、int64_t。
+<!-- end id12 -->
+
+### op说明
+
+<!-- npu="950" id13 -->
+- 对于Ascend 950PR&950DT系列产品：
+
+    - AI CPU服务端：支持sum、prod、max、min操作，其中prod操作不支持int16_t、bfloat16_t数据类型。
+    - CCU服务端：仅支持sum、max、min操作。int8_t仅支持max、min操作，且要求所选通信算法支持int8_t；当前CCU自动选路的部分算法不支持该类型。
+<!-- end id13 -->
+
+<!-- npu="A3" id14 -->
+- 对于Atlas A3系列产品，通信服务端为AI CPU，支持sum、prod、max、min操作，其中prod操作不支持int16_t、bfloat16_t数据类型。
+<!-- end id14 -->
+
+<!-- npu="910b" id15 -->
+- 对于Atlas A2系列产品，通信服务端为AI CPU，支持sum、prod、max、min操作，其中prod操作不支持int16_t、bfloat16_t数据类型。
+<!-- end id15 -->
+
+**图1**  AllReduce三轮切分通信示例
+
 ![AllReduce三轮切分通信示例](../../../../figures/allreduce_3split_example.png)
 
 ## 返回值说明

@@ -51,12 +51,51 @@ __aicore__ inline HcclHandle ReduceScatter(GM_ADDR sendBuf, GM_ADDR recvBuf, uin
 | sendBuf | 输入 | 源数据buffer地址。 |
 | recvBuf | 输出 | 目的数据buffer地址，集合通信结果输出到此buffer中。 |
 | recvCount | 输入 | 参与ReduceScatter操作的recvBuf的数据个数；sendBuf的数据个数等于recvCount * rank size。 |
-| dataType | 输入 | ReduceScatter操作的数据类型，目前支持float、half、int8_t、int16_t、int32_t、bfloat16_t数据类型，即支持取值为HCCL_DATA_TYPE_FP32、HCCL_DATA_TYPE_FP16、HCCL_DATA_TYPE_INT8、HCCL_DATA_TYPE_INT16、HCCL_DATA_TYPE_INT32、HCCL_DATA_TYPE_BFP16。HcclDataType数据类型的介绍请参考[表1](HCCL_usage.md#table116710585514)。 |
-| op | 输入 | ReduceScatter的操作类型，目前支持sum、max、min、prod操作类型，即支持取值为HCCL_REDUCE_SUM、HCCL_REDUCE_MAX、HCCL_REDUCE_MIN、HCCL_REDUCE_PROD。prod操作不支持int16_t、bfloat16_t数据类型。HcclReduceOp数据类型的介绍请参考[表2](HCCL_usage.md#table2469980529)。 |
+| dataType | 输入 | ReduceScatter操作的数据类型。不同产品和通信服务端支持的数据类型请参见[数据类型](#数据类型)。HcclDataType数据类型的介绍请参考[表1](HCCL_usage.md#table116710585514)。 |
+| op | 输入 | ReduceScatter的操作类型。支持的操作类型及约束请参见[op说明](#op说明)。HcclReduceOp数据类型的介绍请参考[表2](HCCL_usage.md#table2469980529)。 |
 | strideCount | 输入 | 当将一张卡上sendBuf中的数据scatter到多张卡的recvBuf时，需要用strideCount参数表示sendBuf上相邻数据块间的起始地址的偏移量。<br>strideCount=0，表示从当前卡发送数据给其它卡时，相邻数据块保持地址连续。本卡发送数据到卡rank[i]，且本卡数据块在sendBuf中的偏移为i\*recvCount。非多轮切分场景下，推荐用户设置该参数为0。<br>strideCount>0，表示从当前卡发送数据给其它卡时，相邻数据块在sendBuf中起始地址的偏移数据量为strideCount。本卡发送数据到卡rank[i]，且本卡数据块在SendBuf中的偏移为i\*strideCount。<br><br>注意：上述的偏移数据量为数据个数，单位为sizeof(dataType)。 |
 | repeat | 输入 | 一次下发的ReduceScatter通信任务个数。repeat取值≥1，默认值为1。当repeat>1时，每个ReduceScatter任务的sendBuf和recvBuf地址由服务端自动算出，计算公式如下：<br><br>sendBuf[i] = sendBuf + recvCount * sizeof(datatype) * i, i∈[0, repeat)<br><br>recvBuf[i] = recvBuf + recvCount * sizeof(datatype) * i, i∈[0, repeat)<br><br>注意：当设置repeat>1时，须与strideCount参数配合使用，规划通信数据地址。 |
 
-**图1**  ReduceScatter通信示例  
+### 数据类型
+
+不同产品和通信服务端支持的数据类型如下。
+
+<!-- npu="950" id10 -->
+- 对于Ascend 950PR&950DT系列产品：
+
+    - 通信服务端为AI CPU时，支持int8_t、int16_t、half、bfloat16_t、int32_t、float、int64_t、uint64_t、double。
+    - 通信服务端为CCU时，支持int16_t、half、bfloat16_t、int32_t、float；int8_t的使用须满足[op说明](#op说明)中的输入输出类型和算法约束。
+<!-- end id10 -->
+
+<!-- npu="A3" id11 -->
+- 对于Atlas A3系列产品，支持int8_t、int16_t、half、bfloat16_t、int32_t、float、int64_t。
+<!-- end id11 -->
+
+<!-- npu="910b" id12 -->
+- 对于Atlas A2系列产品，支持int8_t、int16_t、half、bfloat16_t、int32_t、float、int64_t。
+<!-- end id12 -->
+
+### op说明
+
+<!-- npu="950" id13 -->
+- 对于Ascend 950PR&950DT系列产品：
+
+    - AI CPU服务端：支持sum、prod、max、min操作，其中prod操作不支持int16_t、bfloat16_t数据类型。
+    - CCU服务端：仅支持sum、max、min操作。使用int8_t输入时，须选择支持int8_t的通信算法，并满足以下输入输出类型约束；当前CCU自动选路的部分算法不支持int8_t。
+        - sum操作：仅适用于所选通信算法支持int8_t输入、浮点输出归约的场景。须通过[SetReduceType](../HCCL_Tiling/SetReduceType.md)将输出类型设置为half、bfloat16_t、float三者之一。
+        - max、min操作：输出类型须与输入类型一致。
+<!-- end id13 -->
+
+<!-- npu="A3" id14 -->
+- 对于Atlas A3系列产品，通信服务端为AI CPU，支持sum、prod、max、min操作，其中prod操作不支持int16_t、bfloat16_t数据类型。
+<!-- end id14 -->
+
+<!-- npu="910b" id15 -->
+- 对于Atlas A2系列产品，通信服务端为AI CPU，支持sum、prod、max、min操作，其中prod操作不支持int16_t、bfloat16_t数据类型。
+<!-- end id15 -->
+
+**图1**  ReduceScatter通信示例
+
 ![ReduceScatter通信示例-58](../../../../figures/reducescatter_example_58.png)
 
 以上图为例，假设4张卡的场景，每份数据被切分为3块（TileCnt为3），每张卡上的0-0、0-1、0-2数据最终reduce+scatter到卡rank0的recvBuf上，其余的每块1-y、2-y、3-y数据类似，最终分别reduce+scatter到卡rank1、rank2和rank3的recvBuf上。因此，对一张卡上的数据需要调用3次ReduceScatter接口，完成每份数据的3块切分数据的通信。对于每一份数据，本接口中参数recvCount为TileLen，strideCount为TileLen\*TileCnt（即数据块0-0和1-0间隔的数据个数）。由于本例为内存连续场景，因此也可以只调用1次ReduceScatter接口，并将repeat参数设置为3。
