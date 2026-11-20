@@ -23,7 +23,7 @@ template <bool commit>
 __aicore__ inline HcclHandle HcclImpl<HcclServerType::HCCL_SERVER_TYPE_AICPU, config>::BatchWrite(
     GM_ADDR batchWriteInfo, uint32_t itemNum, uint16_t queueID)
 {
-    return CommonPrepareImpl<true, HcclCMDType::HCCL_CMD_BATCH_WRITE>(
+    return CommonPrepareImpl<true>(
         {HcclCMDType::HCCL_CMD_BATCH_WRITE, batchWriteInfo, batchWriteInfo, itemNum, static_cast<HcclDataType>(queueID),
          static_cast<HcclDataType>(queueID), static_cast<HcclReduceOp>(queueID + GetBlockIdx() * queueNum_)});
 }
@@ -46,7 +46,7 @@ __aicore__ inline HcclHandle HcclImpl<HcclServerType::HCCL_SERVER_TYPE_AICPU, co
         {},
         {reinterpret_cast<uint64_t>(sendOffsets), reinterpret_cast<uint64_t>(sendSizes), remoteWinOffset}};
 
-    return CommonPrepareImpl<commit, HcclCMDType::HCCL_CMD_HALF_ALLTOALLV>(commonPrepareParam);
+    return CommonPrepareImpl<commit>(commonPrepareParam);
 }
 
 template <const auto& config>
@@ -58,7 +58,7 @@ __aicore__ inline void HcclImpl<HcclServerType::HCCL_SERVER_TYPE_AICPU, config>:
         "Call InterHcclGroupSync failed, ensure Hccl::Init func has been called successfully!");
     CommonPrepareParam param;
     param.commType.msgType = ControlMsgType::HCCL_CMD_INTER_GROUP_SYNC;
-    SendMsgToServer<HcclCMDType::HCCL_CMD_INVALID>(0U, param, srcGroupID, srcHandleID, 0UL);
+    SendMsgToServer(0U, param, srcGroupID, srcHandleID);
     ++(curMsgPosition_[0U]);
     ASCENDC_HCCL_API_ASSERT(
         curMsgPosition_[0U] < HCCL_MSG_CNT, { return; }, "Message amount exceeds the maximum value when sync group.");
@@ -216,7 +216,7 @@ __aicore__ inline void HcclImpl<HcclServerType::HCCL_SERVER_TYPE_AICPU, config>:
     }
     CommonPrepareParam param;
     param.commType.msgType = ControlMsgType::HCCL_CMD_BARRIER;
-    SendMsgToServer<HcclCMDType::HCCL_CMD_INVALID>(queueID, param, -1, INVALID_HANDLE_ID, 0UL);
+    SendMsgToServer(queueID, param);
     ++(curMsgPosition_[queueID]);
     ASCENDC_HCCL_API_ASSERT(
         curMsgPosition_[queueID] < HCCL_MSG_CNT, { return; }, "Message amount exceeds the maximum value when barrier.");
