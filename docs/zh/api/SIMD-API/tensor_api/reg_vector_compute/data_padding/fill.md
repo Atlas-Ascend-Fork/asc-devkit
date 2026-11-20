@@ -93,7 +93,7 @@
 | --- | --- | --- |
 | value | 输入 | 待广播的标量，类型为`T`。 |
 | src | 输入 | 源寄存器，类型为`reg_tensor<T>`。待广播元素由`part`指定。 |
-| mask | 输入 | 类型为`reg_tensor<bool>`。`mask.reg`中置1的比特选中对应的写入位置，默认值为`all_mask<T>()`。 |
+| mask | 输入 | 类型为`reg_tensor<bool>`，按位模式筛选写入位置。对应比特位为1时写入广播值，为0时置0。掩码按`T`的元素位宽解释：b8模式每个比特对应一个8 bit元素，b16模式每2个比特为一组对应一个16 bit元素且仅组内最低有效位有效，b32模式每4个比特为一组对应一个32 bit元素且仅组内最低有效位有效。默认值为`all_mask<T>()`。掩码生成方式参见[mask的用法](../mask_reg_compute/mask_usage.md)。 |
 
 ### 指定目的寄存器
 
@@ -113,7 +113,7 @@
 | dst | 输入/输出 | 目的寄存器，类型为`reg_tensor<T>`。写入广播结果时不修改`dst.mask`。 |
 | value | 输入 | 待广播的标量，类型为`T`。 |
 | src | 输入 | 源寄存器，类型为`reg_tensor<T>`。待广播元素由`part`指定。 |
-| mask | 输入 | 类型为`reg_tensor<bool>`。`mask.reg`中置1的比特选中对应的写入位置，默认值为`all_mask<T>()`。 |
+| mask | 输入 | 类型为`reg_tensor<bool>`，按位模式筛选写入位置。对应比特位为1时写入广播值，为0时根据`Mode`置0或保留原值。掩码按`T`的元素位宽解释：b8模式每个比特对应一个8 bit元素，b16模式每2个比特为一组对应一个16 bit元素且仅组内最低有效位有效，b32模式每4个比特为一组对应一个32 bit元素且仅组内最低有效位有效。默认值为`all_mask<T>()`。掩码生成方式参见[mask的用法](../mask_reg_compute/mask_usage.md)。 |
 
 ## 数据类型
 
@@ -133,6 +133,7 @@
 
 - `N`当前仅支持1。
 - `mask`仅筛选目的寄存器中的写入位置，不影响从`src`中读取的元素。
+- `mask`为位模式掩码，不是仅用元素个数表示的连续掩码。生成掩码时应使用与`T`元素位宽匹配的`all_mask<T>()`、`make_mask<Pattern, T>()`或`update_mask<T>(remain)`。
 - 对于源操作数为`src`的重载，`part`为`high_low_part::low`时广播`src`的最低位元素（下标为0的元素），`part`为`high_low_part::high`时广播`src`的最高位元素（下标最大的元素）。
 - 对于指定`dst`的重载，`Mode`为`merge_mode::zeroing`时，mask未选中的元素置0；`Mode`为`merge_mode::merging`时，mask未选中的元素保留`dst`中的原值。
 

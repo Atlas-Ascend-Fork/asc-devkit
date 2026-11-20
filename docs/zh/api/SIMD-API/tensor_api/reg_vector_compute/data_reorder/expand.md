@@ -53,7 +53,7 @@ __simd_callee__ inline reg_tensor<T> expand(reg_tensor<bool> mask);
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| mask | 输入 | 源掩码，类型为[reg_tensor&lt;bool&gt;](../reg_tensor/reg_tensor.md)。`mask.reg`参与前缀计数，不作为返回对象的有效性掩码。 |
+| mask | 输入 | 源掩码，类型为[reg_tensor&lt;bool&gt;](../reg_tensor/reg_tensor.md)，按位模式参与前缀计数。掩码按`T`的元素位宽解释：b8模式每个比特对应一个8 bit元素，b16模式每2个比特为一组对应一个16 bit元素且仅组内最低有效位有效，b32模式每4个比特为一组对应一个32 bit元素且仅组内最低有效位有效。`mask.reg`参与前缀计数，`mask.mask`不参与计算，也不作为返回对象的有效性掩码。 |
 
 ## 数据类型
 
@@ -66,6 +66,7 @@ T支持：int8_t、uint8_t、int16_t、uint16_t、int32_t、uint32_t。
 ## 约束说明
 
 - `mask.reg`须已初始化，且须按T的元素位宽构造。`mask.mask`不参与计算。
+- `mask`为位模式掩码，不是仅用元素个数表示的连续掩码。生成掩码时应使用与`T`元素位宽匹配的`all_mask<T>()`、`make_mask<Pattern, T>()`或`update_mask<T>(remain)`。
 - 返回对象的掩码为全有效掩码，可直接在后续操作中使用全部前缀计数。若仅需使用输入掩码为1的位置，应通过[with_mask](../reg_tensor/reg_tensor.md#with_mask)为结果重新绑定输入掩码。
 - 有符号结果类型仍受对应类型可表示范围限制。例如，int8_t不能表示大于127的非负计数，需要保留该范围以上计数时应选用适合的数据类型。
 

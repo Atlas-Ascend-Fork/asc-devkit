@@ -182,17 +182,25 @@ __simd_callee__ inline reg_tensor<bool> operator>=(
 
 ## 调用示例
 
+以下示例将输入中小于0的元素置为0，非负元素保持原值。`InputTensor`和`OutputTensor`使用位于UB的float类型Tensor：[load](../reg_data_load/load.md)和[store](../reg_data_store/store.md)要求操作Tensor位于UB，本接口的数据类型支持float；Tensor对象由实际调用处的[make_tensor](../../tensor/make_tensor.md)结果推导。
+
 ```cpp
 #include "tensor_api/experimental/vector_ops.h"
 
 template <typename InputTensor, typename OutputTensor>
 __simd_vf__ inline void compare_example(InputTensor input, OutputTensor output)
 {
+    // 引入本示例使用的比较运算符。
     using asc::te::experimental::operator>=;
+
+    // 从Tensor起始位置搬入一个寄存器，并绑定全有效掩码。
     auto src = asc::te::experimental::load(input, asc::te::make_coord(0))
                    .with_mask(asc::te::experimental::all_mask<float>());
+    // 源值非负时对应比特位为1，否则为0。
     auto condition = src >= 0.0f;
+    // 准备比较结果为0的位置使用的0值寄存器。
     auto zero = asc::te::experimental::fill(0.0f, asc::te::experimental::all_mask<float>());
+    // 比较结果为1的位置选择src，为0的位置选择zero，并将结果写回输出Tensor起始位置。
     auto dst = asc::te::experimental::select(condition, src, zero);
     asc::te::experimental::store(output, asc::te::make_coord(0), dst);
 }

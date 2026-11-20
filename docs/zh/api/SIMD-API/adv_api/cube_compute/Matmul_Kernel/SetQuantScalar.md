@@ -46,24 +46,6 @@ __aicore__ inline void SetQuantScalar(const uint64_t quantScalar)
 | --- | --- | --- |
 | quantScalar | 输入 | 量化或反量化系数。 |
 
-将float数据类型的量化计算参数scale、offset转换为uint64类型的入参的计算公式如下：
-
-1.  quantScalar为64位格式，初始为0。
-2.  scale按bit位取高19位截断，存储于quantScalar的bit位32位处，并将46位修改为1。
-
-    quantScalar = quantScalar ∣ \(scale & 0xFFFFE000\) ∣ \(1 << 46\)
-
-3.  根据offset取值进行后续计算：
-    -   若offset不存在，不再进行后续计算。
-    -   若offset存在：
-        1.  将offset值处理为int，范围为\[-256, 255\]。
-
-            offset = Max\(Min\(INT\(Round\(offset\)\), 255\), 256\)
-
-        2.  再将offset按bit位保留9位并存储于quantScalar的37到45位。
-
-            quantScalar = \(quantScalar & 0x4000FFFFFFFF\) ∣ \(\(offset & 0x1FF\) << 37\)
-
 ## 返回值说明
 
 无
@@ -77,6 +59,8 @@ __aicore__ inline void SetQuantScalar(const uint64_t quantScalar)
 本接口必须在[Iterate](Iterate.md)或者[IterateAll](IterateAll.md)前调用。
 
 ## 调用示例
+
+以下示例按位模式传递量化或反量化系数：通过`reinterpret_cast`读取`float`变量的32位位模式，再转换为`uint64_t`类型并传入`quantScalar`。
 
 ```
 REGIST_MATMUL_OBJ(&pipe, GetSysWorkSpacePtr(), mm, &tiling);

@@ -32,6 +32,25 @@ make_frame_layout用于根据标准分形排布模式构造带类型信息的lay
 
 LayoutPattern决定数据在内存中的分形排列方式，不同存储位置间的搬运和计算操作要求源/目的张量满足特定的LayoutPattern组合。
 
+### 常用矩阵LayoutPattern语义
+
+下表汇总矩阵类LayoutPattern的语义。各模式的完整shape和stride定义见[layout和层次化表述法](layout_hierarchical_representation.md)。
+
+| LayoutPattern | 语义 |
+| :--- | :--- |
+| `nd_layout_ptn` | 二维行优先排布。 |
+| `dn_layout_ptn` | 二维列优先排布。 |
+| `nd_ext_layout_ptn` | 层次化行优先连续排布，内层固定为1×1。 |
+| `dn_ext_layout_ptn` | 层次化列优先连续排布，内层固定为1×1。 |
+| `nz_layout_ptn` | 内层分形按Z字形（行主序）组织，外层分形按N字形（列主序）组织。 |
+| `zn_layout_ptn` | 内层分形按N字形（列主序）组织，外层分形按Z字形（行主序）组织。 |
+| `zz_layout_ptn` | 内层和外层分形均按Z字形（行主序）组织。 |
+| `nn_layout_ptn` | 内层和外层分形均按N字形（列主序）组织。用于MX矩阵计算，描述L1/L0ScaleB上scaleB的数据排布，仅支持`fp8_e8m0_t`且C0为2。 |
+| `scalea_nd_layout_ptn` | 用于MX矩阵计算，描述GM上不转置scaleA的数据排布，物理布局与连续NDExt一致，仅支持`fp8_e8m0_t`且C0为2。 |
+| `scalea_dn_layout_ptn` | 用于MX矩阵计算，描述GM上转置scaleA的数据排布，外层按列优先组织，仅支持`fp8_e8m0_t`且C0为2。 |
+| `scaleb_nd_layout_ptn` | 用于MX矩阵计算，描述GM上转置scaleB的数据排布，外层按行优先组织，仅支持`fp8_e8m0_t`且C0为2。 |
+| `scaleb_dn_layout_ptn` | 用于MX矩阵计算，描述GM上不转置scaleB的数据排布，物理布局与连续DNExt一致，仅支持`fp8_e8m0_t`且C0为2。 |
+
 ## 函数原型
 
 ```cpp
@@ -182,38 +201,60 @@ layout_trait用于指定C0维度基数。make_frame_layout支持以下四种传�
 
 using namespace asc::te;
 
-// 构造GM端ND布局张量
-auto layout_gm = make_frame_layout<nd_ext_layout_ptn, layout_trait_default<float>>(m, n);
-auto gm_tensor = make_tensor(make_mem_ptr<location::gm>(gm_addr), layout_gm);
-
-// 构造L1端NZ布局张量（L0A/L0B搬运的标准格式）
-auto layout_l1 = make_frame_layout<nz_layout_ptn, float>(m, n);
-auto l1_tensor = make_tensor(make_mem_ptr<location::l1>(l1_addr), layout_l1);
-
-// 省略第二个模板参数构造NZ布局
-auto layout_nz = make_frame_layout<nz_layout_ptn>(m, n);
-auto l1_tensor_nz = make_tensor(make_mem_ptr<location::l1>(l1_addr), layout_nz);
-
-// 指定C0元素数构造
-auto layout_c0 = make_frame_layout<nz_layout_ptn, _16>(m, n);
-auto l1_tensor_c0 = make_tensor(make_mem_ptr<location::l1>(l1_addr), layout_c0);
-
-// 自定义Trait构造
 struct my_layout_trait {
     static constexpr auto c0_element = Std::Int<16>{};
 };
-auto layout_custom = make_frame_layout<nz_layout_ptn, my_layout_trait>(m, n);
 
-// 构造Batch矩阵布局
-auto layout_batch_nz = make_frame_layout<nz_layout_ptn, float>(batch, m, n);
-auto l1_batch_tensor = make_tensor(make_mem_ptr<location::l1>(l1_addr), layout_batch_nz);
+__aicore__ inline void make_frame_layout_example(
+    __gm__ float* gm_addr,
+    __gm__ fp8_e8m0_t* scale_addr)
+{
+    // 示例中的维度均为编译期常量；实际算子可将其替换为运行期入参。
+    constexpr uint32_t m = 32;
+    constexpr uint32_t n = 64;
+    constexpr uint32_t batch = 4;
+    constexpr uint32_t scale_m = 32;
+    constexpr uint32_t scale_k = 2;
+    constexpr uint32_t c = 64;
+    constexpr uint32_t c1 = 4;
+    constexpr uint32_t c0 = 16;
+    constexpr uint32_t h = 16;
+    constexpr uint32_t w = 16;
 
-// 构造MX场景的scale Batch布局
-auto layout_batch_scalea = make_frame_layout<scalea_nd_layout_ptn>(batch, scale_m, scale_k);
-auto gm_scale_tensor = make_tensor(make_mem_ptr<location::gm>(scale_addr), layout_batch_scalea);
+    __cbuf__ float l1_buffer[batch * m * n];
 
-// 构造卷积特征图layout
-auto layout_nchw = make_frame_layout<nchw_layout_ptn>(n, c, h, w);
-auto layout_nhwc = make_frame_layout<nhwc_layout_ptn>(n, h, w, c);
-auto layout_nc1hwc0 = make_frame_layout<nc1hwc0_layout_ptn>(n, c1, h, w, c0);
+    // gm_addr和scale_addr为已有GM硬件地址指针，l1_buffer为函数内声明的L1硬件地址。
+    // make_mem_ptr可从已有硬件地址指针推导物理存储位置。
+    // 构造GM端NDExt布局张量
+    auto layout_gm = make_frame_layout<nd_ext_layout_ptn, layout_trait_default<float>>(m, n);
+    auto gm_tensor = make_tensor(make_mem_ptr(gm_addr), layout_gm);
+
+    // 构造L1端NZ布局张量（L0A/L0B搬运的标准格式）
+    auto layout_l1 = make_frame_layout<nz_layout_ptn, float>(m, n);
+    auto l1_tensor = make_tensor(make_mem_ptr(l1_buffer), layout_l1);
+
+    // 省略第二个模板参数构造NZ布局
+    auto layout_nz = make_frame_layout<nz_layout_ptn>(m, n);
+    auto l1_tensor_nz = make_tensor(make_mem_ptr(l1_buffer), layout_nz);
+
+    // 指定C0元素数构造
+    auto layout_c0 = make_frame_layout<nz_layout_ptn, _16>(m, n);
+    auto l1_tensor_c0 = make_tensor(make_mem_ptr(l1_buffer), layout_c0);
+
+    // 自定义Trait构造
+    auto layout_custom = make_frame_layout<nz_layout_ptn, my_layout_trait>(m, n);
+
+    // 构造Batch矩阵布局
+    auto layout_batch_nz = make_frame_layout<nz_layout_ptn, float>(batch, m, n);
+    auto l1_batch_tensor = make_tensor(make_mem_ptr(l1_buffer), layout_batch_nz);
+
+    // 构造MX场景的scale Batch布局
+    auto layout_batch_scalea = make_frame_layout<scalea_nd_layout_ptn>(batch, scale_m, scale_k);
+    auto gm_scale_tensor = make_tensor(make_mem_ptr(scale_addr), layout_batch_scalea);
+
+    // 构造卷积特征图layout。NC1HWC0场景需保证C = C1 * C0。
+    auto layout_nchw = make_frame_layout<nchw_layout_ptn>(n, c, h, w);
+    auto layout_nhwc = make_frame_layout<nhwc_layout_ptn>(n, h, w, c);
+    auto layout_nc1hwc0 = make_frame_layout<nc1hwc0_layout_ptn>(n, c1, h, w, c0);
+}
 ```

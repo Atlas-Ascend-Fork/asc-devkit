@@ -211,6 +211,8 @@ struct l1_to_l0b_trait_default {
 
 当源张量数据格式为`NZ`、目的张量数据格式为`ZN`时，接口按转置方式搬运。转置搬运会对源张量每个分形矩阵执行转置。
 
+NZ与ZN格式的定义和转换公式参见[关键分形格式详解](../../../basic_api/cube_compute_ISASI/cube_compute_fractal_intro/key_fractal_format_details.md)。
+
 不同数据位宽的转置搬运示意如下。
 
 #### b4转置搬运

@@ -28,7 +28,7 @@
 
 ## 功能说明
 
-在不改变Tiling的情况下，重新设置多Batch计算的Batch数。
+在Batch Matmul场景中，不改变Tiling的情况下，重新设置Batch Matmul的A矩阵Batch数和B矩阵Batch数。
 
 ## 函数原型
 

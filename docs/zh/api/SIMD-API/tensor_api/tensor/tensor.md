@@ -432,33 +432,38 @@ Tensor相关类型本身为类型定义，不直接返回值。
 
 using namespace asc::te;
 
-// gm_addr为Global Memory的地址偏移量；make_mem_ptr<location::gm, float>将其标记为
-// GM位置、元素类型为float的指针适配器（地址与对齐要求见make_mem_ptr约束）。
-constexpr uint64_t gm_addr = 128;
+__aicore__ inline void tensor_example(__gm__ float* gm_input, __cbuf__ float* l1_input)
+{
+    // gm_input和l1_input为已有硬件地址指针；显式传入location可按已有指针构造
+    // 指定物理位置的指针适配器。若只有地址偏移量，可改用
+    // make_mem_ptr<location::gm, float>(offset)形式构造。
 
-// 示例1：构造一个GM张量
-// shape为(128, 128)、stride为(128, 1)：行优先连续布局，相邻元素间隔1个元素（单位：元素个数）
-auto gm_layout = make_layout(make_shape(128, 128), make_stride(128, 1));
-auto gm_tensor = make_tensor(make_mem_ptr<location::gm, float>(gm_addr), gm_layout);
+    // 示例1：构造一个GM张量
+    // shape为(128, 128)、stride为(128, 1)：行优先连续布局，相邻元素间隔1个元素（单位：元素个数）
+    auto gm_layout = make_layout(make_shape(128, 128), make_stride(128, 1));
+    auto gm_tensor = make_tensor(make_mem_ptr<location::gm>(gm_input), gm_layout);
 
-auto gm_shape = gm_tensor.shape();        // (128, 128)
-auto gm_stride = gm_tensor.stride();      // (128, 1)
-auto gm_size = gm_tensor.size();          // 16384
-auto gm_cap = gm_tensor.capacity();       // 16384
-gm_tensor.set_l2_cache_hint(cache_mode::normal);
+    auto gm_shape = gm_tensor.shape();        // (128, 128)
+    auto gm_stride = gm_tensor.stride();      // (128, 1)
+    auto gm_size = gm_tensor.size();          // 16384
+    auto gm_cap = gm_tensor.capacity();       // 16384
+    gm_tensor.set_l2_cache_hint(cache_mode::normal);
 
-// 示例2：按坐标访问元素
-auto coord = make_coord(5, 10);
-auto value = gm_tensor[coord];
+    // 示例2：按坐标访问元素
+    // 按多维坐标访问单个元素。
+    auto coord = make_coord(5, 10);
+    auto value = gm_tensor[coord];
 
-// 示例3：获取子张量
-auto sub_tensor = gm_tensor(make_coord(16, 16));
+    // 示例3：获取子张量
+    // 以给定坐标为起点，返回一个从当前位置开始的子张量。
+    auto sub_tensor = gm_tensor(make_coord(16, 16));
 
-// 示例4：按shape切片
-auto slice_tensor = gm_tensor.slice(make_coord(0, 0), make_shape(32, 32));
+    // 示例4：按shape切片
+    auto slice_tensor = gm_tensor.slice(make_coord(0, 0), make_shape(32, 32));
 
-// 示例5：构造一个local_tensor
-auto local_layout = make_frame_layout<nz_layout_ptn, layout_trait_default<float>>(32, 32);
-auto local_tensor = make_tensor(make_mem_ptr<location::l1, float>(l1_addr), local_layout);
-auto local_data = local_tensor.data();
+    // 示例5：构造一个local_tensor
+    auto local_layout = make_frame_layout<nz_layout_ptn, layout_trait_default<float>>(32, 32);
+    auto local_tensor = make_tensor(make_mem_ptr<location::l1>(l1_input), local_layout);
+    auto local_data = local_tensor.data();
+}
 ```

@@ -54,7 +54,7 @@ __aicore__ inline constexpr auto crd2idx(
 | :--- | :---: | :--- |
 | coord | 输入 | 待转换的坐标。 |
 | shape | 输入 | 描述各维度大小的shape。 |
-| stride | 输入 | 描述各维度步长的stride。 |
+| stride | 输入 | 描述各维度步长的stride，步长单位为元素个数。 |
 
 ## 返回值说明
 
@@ -64,7 +64,7 @@ __aicore__ inline constexpr auto crd2idx(
 
 - coord、shape和stride为Tuple时，顶层元素数量需要一致，嵌套结构需要能够逐层对应。
 - coord中的各维坐标需要位于shape描述的有效范围内。
-- stride的单位与目标地址计算所使用的单位保持一致。
+- stride的单位与目标地址计算所使用的单位保持一致，且为元素个数。
 
 ## 调用示例
 

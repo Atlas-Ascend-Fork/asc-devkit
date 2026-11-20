@@ -327,7 +327,7 @@ __aicore__ inline void copy_l0c_to_ub_example(__cc__ float* l0c_addr, __ubuf__ f
 
 ### scalar量化输出
 
-scalar量化模式下，整个C矩阵共用同一个量化参数。量化参数通过`uint64_t`标量传入。
+scalar量化模式下，整个C矩阵共用同一个量化参数。量化参数通过`uint64_t`标量传入，`uint64_t`参数的bit位编码见[量化参数](../cube_store_key_features/quant_pre.md#量化参数)。
 
 ```cpp
 #include "tensor_api/tensor.h"
