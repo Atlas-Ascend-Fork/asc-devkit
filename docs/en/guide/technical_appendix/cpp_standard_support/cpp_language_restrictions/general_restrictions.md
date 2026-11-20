@@ -403,18 +403,18 @@ Compile-time recursion is constexpr evaluation recursion. A constexpr function m
 
 Taking the SIMT programming scenario as an example, a `__aicore__ constexpr` recursive function can be used as a compile-time result inside a kernel function:
 
-    ```cpp
-    __aicore__ constexpr uint32_t rec_sum(uint32_t n)
-    {
-        return n == 0u ? 0u : n + rec_sum(n - 1u);   // Compile-time recursive evaluation
-    }
+```cpp
+__aicore__ constexpr uint32_t rec_sum(uint32_t n)
+{
+    return n == 0u ? 0u : n + rec_sum(n - 1u);   // Compile-time recursive evaluation
+}
 
-    __global__ __launch_bounds__(128) void probe(float* output, uint32_t count)
-    {
-        constexpr uint32_t s10 = rec_sum(10u);        // First assign to a constexpr variable: folded to 55 at compile time
-        output[threadIdx.x] = static_cast<float>(s10);
-    }
-    ```
+__global__ __launch_bounds__(128) void probe(float* output, uint32_t count)
+{
+    constexpr uint32_t s10 = rec_sum(10u);        // First assign to a constexpr variable: folded to 55 at compile time
+    output[threadIdx.x] = static_cast<float>(s10);
+}
+```
 
 Runtime recursion is available only in the SIMT programming scenario and is not supported in other programming scenarios. As shown below, using runtime recursion in SIMD and SIMT hybrid programming triggers a compilation error:
 
