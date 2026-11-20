@@ -211,7 +211,7 @@
 #include "tensor_api/experimental/arch/vector/reg_data_store.h"
 
 template <typename T, typename SrcTensor, typename DstTensor>
-__simd_vf__ inline void LoadAndStore(const SrcTensor& src, DstTensor& dst)
+__simd_vf__ inline void LoadAndStore(SrcTensor src, DstTensor dst)
 {
     auto coord = asc::te::make_coord(0);
     auto value = asc::te::experimental::load(src, coord);
@@ -223,14 +223,13 @@ __simd_vf__ inline void LoadAndStore(const SrcTensor& src, DstTensor& dst)
 ### 交织搬出
 
 ```cpp
-template <typename T, typename DstTensor>
+template <typename SrcTensor, typename DstTensor>
 __simd_vf__ inline void StoreInterleaved(
-    DstTensor& dst,
-    const asc::te::experimental::reg_tensor<T>& even,
-    const asc::te::experimental::reg_tensor<T>& odd)
+    SrcTensor src, DstTensor dst)
 {
+    auto values = asc::te::experimental::load<asc::te::experimental::load_sideband_mode::deintlv>(src);
     asc::te::experimental::store<asc::te::experimental::store_sideband_mode::intlv>(
-        dst, asc::te::make_coord(0), even, odd);
+        dst, asc::te::make_coord(0), values.first, values.second);
 }
 ```
 

@@ -194,7 +194,7 @@
 #include "tensor_api/experimental/arch/vector/reg_data_load.h"
 
 template <typename T, typename SrcTensor>
-__simd_vf__ inline void LoadData(const SrcTensor& src)
+__simd_vf__ inline void LoadData(SrcTensor src)
 {
     auto value = asc::te::experimental::load(src, asc::te::make_coord(0));
     value.with_mask(asc::te::experimental::all_mask<T>());
@@ -206,7 +206,7 @@ __simd_vf__ inline void LoadData(const SrcTensor& src)
 
 ```cpp
 template <typename T, typename SrcTensor>
-__simd_vf__ inline void LoadDeinterleaved(const SrcTensor& src)
+__simd_vf__ inline void LoadDeinterleaved(SrcTensor src)
 {
     auto value = asc::te::experimental::load<asc::te::experimental::load_sideband_mode::deintlv>(
         src, asc::te::make_coord(0));

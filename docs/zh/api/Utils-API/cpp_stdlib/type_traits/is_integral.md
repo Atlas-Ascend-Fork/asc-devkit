@@ -50,8 +50,8 @@ struct is_integral;
 
 is\_integral的静态常量成员value用于获取返回的布尔值，is\_integral<T\>::value取值如下：
 
--   true：Tp是数组类型。
--   false：Tp不是数组类型。
+-   true：Tp是整数类型。
+-   false：Tp不是整数类型。
 
 ## 调用示例
 

@@ -66,7 +66,7 @@ template <typename T, typename U, typename V>
 __simd_vf__ inline void select_vf(T x_tensor, U y_tensor, V z_tensor,
     uint32_t repeat_times, uint32_t one_repeat_size)
 {
-    uint32_t count = TOTAL_LENGTH;
+    uint32_t count = total_length;
     using data_type = typename T::data_type;
     auto condition = asc::te::experimental::make_mask<asc::te::experimental::mask_pattern::vl8, data_type>();
     for (uint16_t i = 0; i < repeat_times; ++i) {

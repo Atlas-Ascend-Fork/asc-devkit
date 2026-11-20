@@ -53,8 +53,8 @@ struct enable_if;
 
 enable\_if的静态常量成员type用于获取返回值，enable\_if<Bp,  Tp\>::type取值如下：
 
--   Tp：Bp为true。
--   void：Bp为false。
+-   Bp为true时：enable_if包含嵌套类型成员type，其类型为Tp(void)。
+-   Bp为false时：enable_if不包含type成员，直接访问将导致编译期替换失败。
 
 ## 调用示例
 

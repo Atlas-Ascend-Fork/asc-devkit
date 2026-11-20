@@ -373,6 +373,12 @@ Tensor API矢量算子的数据流如下：
 
 copy用于tensor之间的数据搬运，load和store分别将数据从UB tensor加载到寄存器、从寄存器写回UB tensor。两类接口服务于不同阶段的数据传输。
 
+`__simd_vf__`标记的SIMD VF函数有以下入参约束：
+
+- 支持指针传参，指针变量必须使用__ubuf__地址空间限定符修饰。
+- 不支持引用传参（Pass-by-Reference）。Tensor、reg_tensor等对象在VF入口处必须按值传递。例如，Tensor API的VF函数应使用`SrcTensor src`等值传参形式，不应使用`const SrcTensor&`或`SrcTensor&`。
+- 不支持函数指针传参。
+
 #### 数据对象介绍
 
 [tensor](../../../../../api/SIMD-API/tensor_api/tensor/tensor.md)将内存访问引擎engine与layout绑定：engine描述存储位置和访问方式，layout描述形状及布局。从使用角度看，tensor同时回答“数据在哪里”和“如何通过逻辑坐标定位数据”。

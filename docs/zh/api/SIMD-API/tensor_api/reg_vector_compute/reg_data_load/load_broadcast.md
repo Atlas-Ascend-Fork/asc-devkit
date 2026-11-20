@@ -110,7 +110,7 @@
 #include "tensor_api/experimental/arch/vector/reg_data_load.h"
 
 template <typename SrcTensor>
-__simd_vf__ inline void LoadScalarBroadcast(const SrcTensor& src)
+__simd_vf__ inline void LoadScalarBroadcast(SrcTensor src)
 {
     auto value = asc::te::experimental::load_broadcast<asc::te::experimental::broadcast_mode::elem>(
         src, asc::te::make_coord(0));

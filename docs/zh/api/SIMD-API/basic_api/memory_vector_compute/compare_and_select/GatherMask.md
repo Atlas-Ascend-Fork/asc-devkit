@@ -261,7 +261,7 @@ repeatTimes值不生效，指令的迭代次数由源操作数和mask共同决�
 <br>&bull; Counter模式：src1RepeatStride不生效，多次迭代读取的gather mask始终连续存储。
 <!-- end id25 -->
 
-- 若调用该接口前为Counter模式，在调用该接口后需要显式设置回Counter模式（接口内部执行结束后会设置为Normal模式）。
+- 若调用该接口时配置为Counter模式，在调用该接口后需要显式设置回Counter模式（接口内部执行结束后会设置为Normal模式）。
 
 <!-- npu="950" id26 -->
 - 对Unified Buffer（UB）空间的占用说明。针对Ascend 950PR&950DT系列产品：

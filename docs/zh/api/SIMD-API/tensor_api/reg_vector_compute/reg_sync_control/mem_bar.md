@@ -103,7 +103,7 @@ __simd_callee__ inline void mem_bar()
 
 ```cpp
 template <typename Tensor>
-__simd_vf__ inline void Process(Tensor& data, uint16_t repeatTimes)
+__simd_vf__ inline void Process(Tensor data, uint16_t repeatTimes)
 {
     using T = typename Tensor::data_type;
     const auto mask = asc::te::experimental::all_mask<T>();
