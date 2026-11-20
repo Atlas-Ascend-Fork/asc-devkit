@@ -17,7 +17,7 @@ import numpy as np
 
 
 def softmax_2d_py_float(x, inmax=None, insum=None, update=None, log=None):
-    x.astype(np.float64)
+    x = x.astype(np.float64)
     orig_shape = x.shape
     x_max = np.max(x, axis=-1)
     x_max = np.reshape(x_max, [orig_shape[0], 1])
