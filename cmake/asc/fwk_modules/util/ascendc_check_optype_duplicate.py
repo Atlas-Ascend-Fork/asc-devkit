@@ -18,19 +18,45 @@ import json
 import sys
 from asc_op_compile_base.asc_op_compiler.op_tiling import _ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT, op_impl_path
 from asc_op_compile_base.common.utils.log_utils import LogUtil, AscendCLogLevel
+from asc_op_compile_base.common.ops_deliverables_conf import get_existing_deliverable_paths
+
+
+def _conf_log(msg):
+    LogUtil.print_compile_log("check_optype_duplicate", msg, AscendCLogLevel.LOG_INFO, LogUtil.Option.NON_SOC)
+
+
+def _get_ops_info_paths_from_conf(soc_version):
+    """Query built-in ops-info files from ops deliverables conf.
+
+    Return None if the conf is not usable (caller falls back to legacy dir scan);
+    otherwise return the existing ops-info file paths in declaration order.
+    """
+    return get_existing_deliverable_paths(
+        "ops-info",
+        opp_path=os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT),
+        soc_version=soc_version,
+        log_func=_conf_log,
+    )
 
 
 def check_optype_duplicate(args, ini_optypes):
-    opp_path = os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT)
-    json_path_base = os.path.join(opp_path, op_impl_path, os.path.join("ai_core", "tbe", "config", args.soc_version))
-    LogUtil.print_compile_log(
-        "check_optype_duplicate",
-        f"json path base is {json_path_base}",
-        AscendCLogLevel.LOG_DEBUG,
-        LogUtil.Option.NON_SOC,
-    )
-    json_pattern = json_path_base + "/*.json"
-    json_files = glob.glob(json_pattern, recursive=True)
+    # ops deliverables conf first (compatibility first: no conf, entry not declared, or nothing
+    # declared exists on disk all fall back to the legacy hard-coded dir scan)
+    json_files = _get_ops_info_paths_from_conf(args.soc_version)
+    if not json_files:
+        # fallback: legacy hard-coded config dir scan, keep original behavior
+        opp_path = os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT)
+        json_path_base = os.path.join(
+            opp_path, op_impl_path, os.path.join("ai_core", "tbe", "config", args.soc_version)
+        )
+        LogUtil.print_compile_log(
+            "check_optype_duplicate",
+            f"json path base is {json_path_base}",
+            AscendCLogLevel.LOG_DEBUG,
+            LogUtil.Option.NON_SOC,
+        )
+        json_pattern = json_path_base + "/*.json"
+        json_files = glob.glob(json_pattern, recursive=True)
 
     if len(json_files) == 0:
         LogUtil.print_compile_log(

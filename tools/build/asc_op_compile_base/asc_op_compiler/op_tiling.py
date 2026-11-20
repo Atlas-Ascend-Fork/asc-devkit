@@ -31,6 +31,7 @@ from asc_op_compile_base.common.context.op_info import OpInfo
 from asc_op_compile_base.common.context import op_context
 from asc_op_compile_base.common.context.op_context import OpContext
 from asc_op_compile_base.common.buildcfg import get_current_build_config
+from asc_op_compile_base.common.ops_deliverables_conf import get_existing_deliverable_paths
 
 BANK_CACHE = ""
 
@@ -107,6 +108,17 @@ if os.path.exists(config):
 else:
     _VENDOR_NAME = "customize"
     _CUSTOM_TILING_PATH_DEFAULT = os.path.join("op_impl", "custom", tiling_cust_path)
+
+
+def _get_ophost_tiling_paths_from_conf():
+    """Query built-in ophost tiling libs from ops deliverables conf.
+
+    Return None if the conf is not usable (caller falls back to legacy path scan);
+    otherwise return the existing lib paths in declaration order.
+    """
+    return get_existing_deliverable_paths(
+        "ophost", opp_path=os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT), log_func=log.info
+    )
 
 
 def _get_default_optiling_pathlist():
@@ -261,11 +273,17 @@ def do_op_tiling(optype, compile_info, inputs, outputs, compile_info_hash=None, 
             lib_optiling_builtin = ctypes.CDLL(builtin_optiling_lib_path2)
             builtin_optiling_lib_path2_str = str(builtin_optiling_lib_path2)
             lib_optiling_builtin.TbeLoadSoAndSaveToRegistry(builtin_optiling_lib_path2_str.encode("utf_8"))
-        elif os.path.exists(builtin_optiling_open_path):
-            so_files = glob.glob(os.path.join(builtin_optiling_open_path, "*.so"))
+        else:
+            # 3.1 ops deliverables conf first: load ophost libs in declaration order
+            builtin_ophost_libs = _get_ophost_tiling_paths_from_conf()
+            if not builtin_ophost_libs:
+                # fallback: legacy hard-coded op_host dir scan, keep original behavior
+                builtin_ophost_libs = glob.glob(os.path.join(builtin_optiling_open_path, "*.so"))
             # make libophost_legacy.so loading lastly
-            so_files.sort(key=lambda x: os.path.basename(x) == "libophost_legacy.so")
-            for so_path in so_files:
+            builtin_ophost_libs.sort(key=lambda x: os.path.basename(x) == "libophost_legacy.so")
+            for so_path in builtin_ophost_libs:
+                if not os.path.exists(so_path):
+                    continue
                 if "libophost_legacy.so" in so_path:
                     lib_optiling_builtin = ctypes.CDLL(so_path)
                     so_path_str = str(so_path)

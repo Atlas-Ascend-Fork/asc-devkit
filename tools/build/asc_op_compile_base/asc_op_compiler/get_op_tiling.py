@@ -36,6 +36,7 @@ from asc_op_compile_base.asc_op_compiler.op_tiling import (
 )
 from asc_op_compile_base.common.error_mgr import raise_tbe_python_err, TBE_DEFAULT_PYTHON_ERROR_CODE
 from asc_op_compile_base.common.utils.log_utils import LogUtil, AscendCLogLevel
+from asc_op_compile_base.common.ops_deliverables_conf import get_existing_deliverable_paths
 import asc_op_compile_base.common.context.op_context as op_context
 from asc_op_compile_base.common.utils import log
 from .global_storage import global_var_storage
@@ -110,14 +111,23 @@ def get_custom_opp_pathlist():
     return vendor_list
 
 
+def _conf_log(msg):
+    LogUtil.print_compile_log("", msg, AscendCLogLevel.LOG_INFO)
+
+
+def _get_ophost_tiling_paths_from_conf():
+    """Query built-in ophost tiling libs from ops deliverables conf.
+
+    Return None if the conf is not usable (caller falls back to legacy path scan);
+    otherwise return the existing lib paths in declaration order.
+    """
+    return get_existing_deliverable_paths(
+        "ophost", opp_path=os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT), log_func=_conf_log
+    )
+
+
 def load_op_host_tiling_lib():
     LogUtil.print_compile_log("", "load op host tiling lib.", AscendCLogLevel.LOG_INFO)
-    builtin_op_host_tiling_prefix = (
-        os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT) + "/" + op_impl_path + "/ai_core/tbe/op_host/"
-    )
-    builtin_op_host_tiling_pattern = builtin_op_host_tiling_prefix + "**/*.so"
-    builtin_op_host_tiling_file_path = glob.glob(builtin_op_host_tiling_pattern, recursive=True)
-    builtin_op_host_tiling_file_path.sort(key=lambda x: os.path.basename(x) == "libophost_legacy.so")
     import platform
 
     archlinux = platform.machine()
@@ -125,9 +135,28 @@ def load_op_host_tiling_lib():
         incompatiable_arch_name = "aarch64"
     else:
         incompatiable_arch_name = "x86_64"
-    for tiling_path in builtin_op_host_tiling_file_path:
-        if incompatiable_arch_name in tiling_path[len(builtin_op_host_tiling_prefix) :]:
-            continue
+    tiling_paths = _get_ophost_tiling_paths_from_conf()
+    if not tiling_paths:
+        # compatibility first: no conf, entry not declared, or nothing declared exists on disk
+        # all fall back to the legacy hard-coded op_host path scan, keep original behavior
+        builtin_op_host_tiling_prefix = (
+            os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT)
+            + "/"
+            + op_impl_path
+            + "/ai_core/tbe/op_host/"
+        )
+        builtin_op_host_tiling_pattern = builtin_op_host_tiling_prefix + "**/*.so"
+        builtin_op_host_tiling_file_path = glob.glob(builtin_op_host_tiling_pattern, recursive=True)
+        builtin_op_host_tiling_file_path.sort(key=lambda x: os.path.basename(x) == "libophost_legacy.so")
+        tiling_paths = [
+            tiling_path
+            for tiling_path in builtin_op_host_tiling_file_path
+            if incompatiable_arch_name not in tiling_path[len(builtin_op_host_tiling_prefix) :]
+        ]
+    else:
+        # make libophost_legacy.so loading lastly even if the conf declaration order changes
+        tiling_paths.sort(key=lambda x: os.path.basename(x) == "libophost_legacy.so")
+    for tiling_path in tiling_paths:
         try:
             if os.path.exists(tiling_path):
                 lib_tiling_builtin = ctypes.CDLL(tiling_path)
@@ -1615,6 +1644,24 @@ def get_isolate_tiling_info(op_type, json_file):
     return tiling_info
 
 
+def _get_builtin_impl_dirs_from_conf():
+    """Query built-in opsrc impl dirs from ops deliverables conf.
+
+    Return None if the conf is not usable; return the existing impl dirs otherwise
+    (an empty set means the conf is usable but no declared dir exists on disk).
+    """
+    paths = get_existing_deliverable_paths(
+        "opsrc", opp_path=os.environ.get(_ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT), log_func=_conf_log
+    )
+    if paths is None:
+        return None
+    impl_dirs = set()
+    for path in paths:
+        if os.path.isdir(path):
+            impl_dirs.add(os.path.normpath(os.path.abspath(path)))
+    return impl_dirs
+
+
 def get_info_by_traverse_py_stack(op_info: OpInfo, input_tiling_info_dict: dict):
     # offline compile python file name, i.e. AddCustom.py
     offline_op_compile_file = op_info.op_type + ".py"
@@ -1648,6 +1695,17 @@ def get_info_by_traverse_py_stack(op_info: OpInfo, input_tiling_info_dict: dict)
         elif online_op_compile_file == frame_file:
             # online op compile
             # built-in op
+            # 1. conf-first: ops deliverables conf opsrc dirs (declared and existing on disk)
+            conf_impl_dirs = _get_builtin_impl_dirs_from_conf()
+            if conf_impl_dirs:
+                normalized_compile_dir = os.path.normpath(op_compile_dir)
+                if any(
+                    normalized_compile_dir == conf_dir or normalized_compile_dir.startswith(conf_dir + os.sep)
+                    for conf_dir in conf_impl_dirs
+                ):
+                    is_build_in_op = True
+                    break
+            # 2. fallback: legacy hard-coded impl dir check, keep original behavior
             build_in_compile_file_dir = os.path.join(op_impl_path, "ai_core", "tbe", "impl")
             if build_in_compile_file_dir in op_compile_dir:
                 LogUtil.print_compile_log(
