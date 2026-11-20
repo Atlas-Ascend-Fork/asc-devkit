@@ -49,75 +49,20 @@
     ```
     
 **表2 msopprof文件介绍**<a name="table244174535419"></a>
-<table><thead align="left"><tr id="row17451145145411"><th class="cellrowborder" valign="top" width="24.54%" id="mcps1.2.3.1.1"><p id="p18451345115414"><a name="p18451345115414"></a><a name="p18451345115414"></a>名称</p>
-</th>
-<th class="cellrowborder" valign="top" width="75.46000000000001%" id="mcps1.2.3.1.2"><p id="p4451245115415"><a name="p4451245115415"></a><a name="p4451245115415"></a>说明</p>
-</th>
-</tr>
-</thead>
-<tbody><tr id="row194514510541"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p04514519549"><a name="p04514519549"></a><a name="p04514519549"></a>dump文件夹</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p6451456545"><a name="p6451456545"></a><a name="p6451456545"></a>原始的性能数据，用户无需关注。
-</td>
-</tr>
-<tr id="row74518458542"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p14520459540"><a name="p14520459540"></a><a name="p14520459540"></a>ArithmeticUtilization.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p145114515419"><a name="p145114515419"></a><a name="p145114515419"></a>Cube和Vector类型的指令耗时和占比，可参考ArithmeticUtilization（Cube及Vector类型指令耗时和占比）。</p>
-</td>
-</tr>
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>L2Cache.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>L2 Cache命中率，可参考L2Cache（L2 Cache命中率）。
-</td>
-</tr>
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>Memory.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>UB/L1/L2/主存储器采集内存读写带宽速率，可参考Memory（内存读写带宽速率）。
-</td>
-</tr>
 
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>MemoryL0.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>L0A/L0B/L0C采集内存读写带宽速率，可参考MemoryL0（L0读写带宽速率）。
-</td>
-</tr>
-
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>MemoryUB.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>mte/vector/scalar采集UB读写带宽速率，可参考MemoryUB（UB读写带宽速率）。</p>
-</td>
-</tr>
-
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>PipeUtilization.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>采集计算单元和搬运单元耗时和占比，可参考PipeUtilization（计算单元和搬运单元耗时占比）。
-</td>
-</tr>
-
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>ResourceConflictRatio.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>UB上的bank group、bank conflict和资源冲突在所有指令中的占比，可参考ResourceConflictRatio（资源冲突占比）。
-</td>
-</tr>
-
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>OpBasicInfo.csv</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>算子基础信息，包含算子名称、block dim和耗时等信息，可参考OpBasicInfo（算子基础信息）。
-</td>
-</tr>
-
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>visualize_data.bin</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>算子基础信息、计算单元负载、热点函数和Roofline瓶颈分析等信息的可视化呈现文件。visualize_data.bin可通过MindStudio Insight工具进行可视化展示。
-</td>
-</tr>
-<tr id="row124534535416"><td class="cellrowborder" valign="top" width="24.54%" headers="mcps1.2.3.1.1 "><p id="p144516455548"><a name="p144516455548"></a><a name="p144516455548"></a>trace.json</p>
-</td>
-<td class="cellrowborder" valign="top" width="75.46000000000001%" headers="mcps1.2.3.1.2 "><p id="p845134505416"><a name="p845134505416"></a><a name="p845134505416"></a>通算流水可视化呈现文件，Chrome浏览器具体请参考通算流水图。
-</td>
-</tr>
-</tbody>
-</table>
+| 名称 | 说明 |
+|--|--|
+| dump文件夹 | 原始的性能数据，用户无需关注。 |
+| ArithmeticUtilization.csv | Cube和Vector类型的指令耗时和占比，可参考ArithmeticUtilization（Cube及Vector类型指令耗时和占比）。 |
+| L2Cache.csv | L2 Cache命中率，可参考L2Cache（L2 Cache命中率）。 |
+| Memory.csv | UB/L1/L2/主存储器采集内存读写带宽速率，可参考Memory（内存读写带宽速率）。 |
+| MemoryL0.csv | L0A/L0B/L0C采集内存读写带宽速率，可参考MemoryL0（L0读写带宽速率）。 |
+| MemoryUB.csv | mte/vector/scalar采集UB读写带宽速率，可参考MemoryUB（UB读写带宽速率）。 |
+| PipeUtilization.csv | 采集计算单元和搬运单元耗时和占比，可参考PipeUtilization（计算单元和搬运单元耗时占比）。 |
+| ResourceConflictRatio.csv | UB上的bank group、bank conflict和资源冲突在所有指令中的占比，可参考ResourceConflictRatio（资源冲突占比）。 |
+| OpBasicInfo.csv | 算子基础信息，包含算子名称、block dim和耗时等信息，可参考OpBasicInfo（算子基础信息）。 |
+| visualize_data.bin | 算子基础信息、计算单元负载、热点函数和Roofline瓶颈分析等信息的可视化呈现文件。visualize_data.bin可通过MindStudio Insight工具进行可视化展示。 |
+| trace.json | 通算流水可视化呈现文件，Chrome浏览器具体请参考通算流水图。 |
 
 对于SIMT编程场景，只需遵循[AI Core SIMT编译](../compilation_and_execution/operator_compilation/ai_core_operator_compilation.md)指导进行算子编译，生成可执行文件后，按照上述步骤2和步骤3使用msOpProf工具执行程序，以获取算子执行的性能数据。
 
@@ -161,24 +106,10 @@
 
         **表3 仿真编译依赖库介绍**<a name="table84131311195116"></a>
 
-        <table><thead align="left"><tr id="row4413911115113"><th class="cellrowborder" valign="top" width="45.97%" id="mcps1.2.3.1.1"><p id="p1841381120511"><a name="p1841381120511"></a><a name="p1841381120511"></a>名称</p>
-        </th>
-        <th class="cellrowborder" valign="top" width="54.03%" id="mcps1.2.3.1.2"><p id="p15413191116515"><a name="p15413191116515"></a><a name="p15413191116515"></a>作用描述</p>
-        </th>
-        </tr>
-        </thead>
-        <tbody><tr id="row94131311115113"><td class="cellrowborder" valign="top" width="45.97%" headers="mcps1.2.3.1.1 "><p id="p8413161115114"><a name="p8413161115114"></a><a name="p8413161115114"></a>libruntime_camodel.so</p>
-        </td>
-        <td class="cellrowborder" valign="top" width="54.03%" headers="mcps1.2.3.1.2 "><p id="p2041381120511"><a name="p2041381120511"></a><a name="p2041381120511"></a>camodel仿真运行时库，负责NPU算子仿真环境的运行时功能支持。</p>
-        </td>
-        </tr>
-        <tr id="row841315115517"><td class="cellrowborder" valign="top" width="45.97%" headers="mcps1.2.3.1.1 "><p id="p16413211185110"><a name="p16413211185110"></a><a name="p16413211185110"></a>libnpu_drv_camodel.so</p>
-        </td>
-        <td class="cellrowborder" valign="top" width="54.03%" headers="mcps1.2.3.1.2 "><p id="p18413161165117"><a name="p18413161165117"></a><a name="p18413161165117"></a>仿真驱动库，对真实的驱动接口打桩，模拟真实NPU驱动行为，提供硬件交付的接口仿真。</p>
-        </td>
-        </tr>
-        </tbody>
-        </table>
+        | 名称 | 作用描述 |
+        |--|--|
+        | libruntime_camodel.so | camodel仿真运行时库，负责NPU算子仿真环境的运行时功能支持。 |
+        | libnpu_drv_camodel.so | 仿真驱动库，对真实的驱动接口打桩，模拟真实NPU驱动行为，提供硬件交付的接口仿真。 |
 
     -   通过向CMake传入变量CMAKE\_ASC\_RUN\_MODE和CMAKE\_ASC\_ARCHITECTURES来统一开启仿真编译。命令示例如下：
 

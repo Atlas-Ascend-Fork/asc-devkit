@@ -68,8 +68,8 @@ CANN基于分层架构设计，实现了上层应用与底层硬件的无缝衔�
 <a href="./quick_start/heterogeneous_system_and_programming_model.md" style="color: #3b82f6; font-size: 14px;">异构系统与SIMD/SIMT编程模型介绍</a>
 </div>
 <div style="margin: 5px 0; padding: 8px; background: #fff; border-left: 3px solid #3b82f6; border-radius: 4px;">
-<strong style="color: #1a1a1a;"><span style="color: #3b82f6;">💻</span> 动手实践</strong><br/><span style="color: #666; font-size: 14px;">• 
-<a href="./quick_start/simd_programming/simd_programming.md" style="color: #3b82f6; font-size: 14px;">SIMD算子快速入门</a><br/><span style="color: #666; font-size: 14px;">• 
+<strong style="color: #1a1a1a;"><span style="color: #3b82f6;">💻</span> 动手实践</strong><br/><span style="color: #666; font-size: 14px;">•</span>
+<a href="./quick_start/simd_programming/simd_programming.md" style="color: #3b82f6; font-size: 14px;">SIMD算子快速入门</a><br/><span style="color: #666; font-size: 14px;">•</span>
 <a href="./quick_start/simt_programming/simt_programming.md" style="color: #3b82f6; font-size: 14px;">SIMT算子快速入门</a>
 </div>
 </div>
@@ -123,7 +123,7 @@ CANN基于分层架构设计，实现了上层应用与底层硬件的无缝衔�
 <p style="color: #555; font-size: 14px; line-height: 1.6; min-height: 65px; margin-bottom: 10px;">本阶段聚焦于深入理解硬件底层细节，全面掌握高阶编程特性，以支撑实现算子的极致性能目标。</p>
 
 <div style=" margin: 5px 0; padding: 8px; background: #fff; border-left: 3px solid #3b82f6; border-radius: 4px;">
-<strong style="color: #1a1a1a;">📖 高级编程</strong><br/><span style="color: #666; font-size: 14px;">• 
+<strong style="color: #1a1a1a;">📖 高级编程</strong><br/><span style="color: #666; font-size: 14px;">•</span>
 <a href="../programming_guide/advanced_programming/hardware_implementation/basic_architecture.md" style="color: #3b82f6; font-size: 14px;">硬件实现</a><br/>
 <span style="color: #666; font-size: 14px;">• <a href="../programming_guide/advanced_programming/advanced_ai_core_programming_model/simd_simt_hybrid_programming/overview.md" style="color: #3b82f6; font-size: 14px;">SIMD & SIMT混合编程</a></span><br/>
 <span style="color: #666; font-size: 14px;">• <a href="../programming_guide/advanced_programming/aclnn_operator_development/overview.md" style="color: #3b82f6; font-size: 14px;">Aclnn算子工程化开发</a></span><br/>
@@ -131,8 +131,8 @@ CANN基于分层架构设计，实现了上层应用与底层硬件的无缝衔�
 <span style="color: #666; font-size: 14px;">• <a href="../programming_guide/advanced_programming/ai_framework_adaptation/overview.md" style="color: #3b82f6; font-size: 14px;">AI框架算子适配</a></span>
 </div>
 <div style=" margin: 5px 0; padding: 8px; background: #fff; border-left: 3px solid #3b82f6; border-radius: 4px;">
-<strong style="color: #1a1a1a;"><span style="color: #3b82f6;">💻</span> 实践巩固</strong><br/><span style="color: #666; font-size: 14px;">• 
-<a href="../operator_practice/simd_simt_hybrid_operator_impl/operator_impl.md" style="color: #3b82f6; font-size: 14px;">典型SIMD & SIMT混合算子开发</a><br/><span style="color: #666; font-size: 14px;">• 
+<strong style="color: #1a1a1a;"><span style="color: #3b82f6;">💻</span> 实践巩固</strong><br/><span style="color: #666; font-size: 14px;">•</span>
+<a href="../operator_practice/simd_simt_hybrid_operator_impl/operator_impl.md" style="color: #3b82f6; font-size: 14px;">典型SIMD & SIMT混合算子开发</a><br/><span style="color: #666; font-size: 14px;">•</span>
 <a href="https://gitcode.com/cann/cann-samples" style="color: #3b82f6; font-size: 14px;">Ascend C算子高性能实践样例仓</a>
 </div>
 <div style=" margin: 5px 0; padding: 8px; background: #fff; border-left: 3px solid #3b82f6; border-radius: 4px;">

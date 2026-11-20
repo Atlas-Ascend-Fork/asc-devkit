@@ -65,7 +65,6 @@ for (uint32_t mBlockIdx = 0;
     uint32_t curMBlockIdx = mBlockIdx;
     uint32_t mStart = curMBlockIdx * singleCoreM;
     DataCopyPad(...) // 搬运逻辑相同
-
 }</pre>
 </td>
 <td class="cellrowborder" valign="top" width="46.41292709043123%" headers="mcps1.1.4.1.3 ">
