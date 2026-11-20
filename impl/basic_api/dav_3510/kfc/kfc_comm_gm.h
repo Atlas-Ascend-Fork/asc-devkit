@@ -372,8 +372,15 @@ __aicore__ inline void ClearWorkspaceImpl(__gm__ uint8_t* workspace)
     uint32_t ubOffset11 = 0;
     uint32_t msgOffset11 = 0;
     if constexpr (MIX_NUM == 1) {
+#ifdef __ASCENDC_ENABLE_SUPER_KERNEL__
+        if (GetTaskRationImpl() != 2) {
+            msgOffset11 = BIDIRECTION_NUM * MAX_MSG_COUNT * AlignTo32(sizeof(KfcMsg));
+            ubOffset11 = AlignTo32(sizeof(MsgUBAvailable));
+        }
+#else
         msgOffset11 = BIDIRECTION_NUM * MAX_MSG_COUNT * AlignTo32(sizeof(KfcMsg));
         ubOffset11 = AlignTo32(sizeof(MsgUBAvailable));
+#endif
     }
     __gm__ uint8_t* msgStartAddr = (__gm__ uint8_t*)(workspace + (size + msgOffset11) * GetBlockIdxImpl());
     __gm__ uint8_t* ubMsgStartAddr =

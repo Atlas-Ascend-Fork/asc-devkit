@@ -96,6 +96,12 @@ constexpr int32_t MIX_NUM = __MIX_CORE_AIC_RATION__;
 constexpr int32_t MIX_NUM = 2;
 #endif
 constexpr int32_t MAX_BLOCK_AIV_NUM = 2;
+// SK 场景下，1:1编译的算子，1:1运行或1:2运行
+#if defined(__ASCENDC_ENABLE_SUPER_KERNEL__) && defined(__MIX_CORE_AIC_RATION__) && (__MIX_CORE_AIC_RATION__ == 1)
+constexpr int32_t KFC_CLEAR_MIX_NUM = MAX_BLOCK_AIV_NUM;
+#else
+constexpr int32_t KFC_CLEAR_MIX_NUM = MIX_NUM;
+#endif
 constexpr int32_t MIX_COEFFICIENT = 1;
 constexpr int32_t MAX_MATMUL_OBJ = 8;
 constexpr int MAX_AIV_NUM = 50;
@@ -364,19 +370,19 @@ struct SysWorkspaceDesc {
 
 __aicore__ inline void ClearWorkspaceImpl(__gm__ uint8_t* workspace)
 {
-    if (unlikely(GetBlockIdxImpl() >= MAX_AIV_NUM / MIX_NUM)) {
+    if (unlikely(GetBlockIdxImpl() >= MAX_AIV_NUM / KFC_CLEAR_MIX_NUM)) {
         // the kfc does nothing with the block idx out of mix_aic_num.
         return;
     }
-    constexpr uint32_t size = BIDIRECTION_NUM * MAX_MSG_COUNT * AlignTo32(sizeof(KfcMsg)) * MIX_NUM;
-    constexpr uint32_t sizeUbmsg = MIX_NUM * AlignTo32(sizeof(MsgUBAvailable));
+    constexpr uint32_t size = BIDIRECTION_NUM * MAX_MSG_COUNT * AlignTo32(sizeof(KfcMsg)) * KFC_CLEAR_MIX_NUM;
+    constexpr uint32_t sizeUbmsg = KFC_CLEAR_MIX_NUM * AlignTo32(sizeof(MsgUBAvailable));
     constexpr uint32_t offsetUbMsg =
         MAX_AIV_NUM * BIDIRECTION_NUM * MAX_MSG_COUNT * MIX_COEFFICIENT * AlignTo32(sizeof(KfcMsg)) +
         MAX_AIV_NUM * MIX_COEFFICIENT * MAX_MATMUL_OBJ * AlignTo32(sizeof(MsgMatmulCnt));
     constexpr uint32_t block = size / 2048;
     uint32_t ubOffset11 = 0;
     uint32_t msgOffset11 = 0;
-    if constexpr (MIX_NUM == 1) {
+    if constexpr (KFC_CLEAR_MIX_NUM == 1) {
         msgOffset11 = BIDIRECTION_NUM * MAX_MSG_COUNT * AlignTo32(sizeof(KfcMsg));
         ubOffset11 = AlignTo32(sizeof(MsgUBAvailable));
     }
