@@ -77,6 +77,12 @@
 #define __ASC_SIMT_SIMULATION_POW_CHECK__(...) __ASC_SIMT_SIMULATION_CHECK__(__VA_ARGS__)
 #endif
 
+#if !defined(ASC_SIMT_CPP_DEPRECATED)
+#define ASC_SIMT_CPP_DEPRECATED(version, removalDate, replacement)                                         \
+    [[deprecated("Deprecated since " #version ", Will be removed after " removalDate ", Use " #replacement \
+                 " instead.")]]
+#endif
+
 #if defined(__UNDEF_ASCENDC_INCLUDE_INTERNAL_HEADERS_DEVICE_TYPES_H__)
 #undef __ASCENDC_INCLUDE_INTERNAL_HEADERS__
 #undef __UNDEF_ASCENDC_INCLUDE_INTERNAL_HEADERS_DEVICE_TYPES_H__

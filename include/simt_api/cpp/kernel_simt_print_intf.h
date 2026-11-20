@@ -22,6 +22,7 @@ namespace Simt {
 #ifndef ASCENDC_CPU_DEBUG
 #if !defined(__CHECK_FEATURE_AT_PRECOMPILE) || (defined(__CHECK_FEATURE_AT_PRECOMPILE) && defined(__NPU_DEVICE__))
 template <class... Args>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", printf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline void PRINTF(const __gm__ char* fmt, Args&&... args);
 
 using __asc_simt_vf::printf; // compatible with interface in asc_printf.h

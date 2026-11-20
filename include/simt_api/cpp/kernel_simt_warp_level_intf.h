@@ -16,39 +16,51 @@
 
 namespace AscendC {
 namespace Simt {
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_all)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t WarpAllSync(int32_t predicate);
 
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_any)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t WarpAnySync(int32_t predicate);
 
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_uni)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t Uni(int32_t predicate);
 
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_ballot)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline uint32_t WarpBallotSync(int32_t predicate);
 
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_activemask)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline uint32_t WarpActiveMask();
 
 template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpShflSync(T var, int32_t srcLane, int32_t width = warpSize);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_shfl_up)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpShflUpSync(T var, uint32_t delta, int32_t width = warpSize);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_shfl_down)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpShflDownSync(T var, uint32_t delta, int32_t width = warpSize);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_shfl_xor)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpShflXorSync(T var, int32_t laneMask, int32_t width = warpSize);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_reduce_add)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpReduceAddSync(T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_reduce_max)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpReduceMaxSync(T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_reduce_min)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T WarpReduceMinSync(T val);
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline void ThreadBarrier();
 
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_threadfence)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline void ThreadFence();
 } // namespace Simt
 } // namespace AscendC

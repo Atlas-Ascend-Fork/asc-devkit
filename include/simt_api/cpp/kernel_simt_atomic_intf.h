@@ -22,15 +22,19 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicAdd(__gm__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_sub)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicSub(__ubuf__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_sub)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicSub(__gm__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_exch)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicExch(__ubuf__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_exch)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicExch(__gm__ T* address, T val);
 
 template <typename T>
@@ -46,15 +50,19 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicMin(__gm__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_inc)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicInc(__ubuf__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_inc)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicInc(__gm__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_dec)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicDec(__ubuf__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_dec)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicDec(__gm__ T* address, T val);
 
 template <typename T>
@@ -64,9 +72,11 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicCas(__gm__ T* address, T compare, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_and)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicAnd(__ubuf__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_and)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicAnd(__gm__ T* address, T val);
 
 template <typename T>
@@ -76,9 +86,11 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicOr(__gm__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_xor)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicXor(__ubuf__ T* address, T val);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asc_atomic_xor)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T AtomicXor(__gm__ T* address, T val);
 } // namespace Simt
 } // namespace AscendC

@@ -16,12 +16,14 @@
 namespace AscendC {
 namespace Simt {
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", isfinite)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bool IsFinite(T x);
 
 template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bool IsNan(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", isinf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bool IsInf(T x);
 } // namespace Simt
 } // namespace AscendC

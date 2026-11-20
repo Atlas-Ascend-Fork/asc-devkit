@@ -23,6 +23,7 @@ namespace Simt {
 
 enum class SatMode { NO_SAT = 0, SAT };
 
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", warpSize)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t GetWarpSize();
 
 template <int32_t dim = 0>

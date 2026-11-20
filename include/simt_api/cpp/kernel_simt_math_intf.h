@@ -22,6 +22,7 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T UintDiv(T dividend, T magic, T shift);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", fmaf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Fma(T x, T y, T z);
 
 template <typename T>
@@ -31,34 +32,44 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Min(T x, T y);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", fdimf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Fdim(T x, T y);
 
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", remquof)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T RemQuo(T x, T y, U* quo);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", fmodf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Mod(T x, T y);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", remainderf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Remainder(T x, T y);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", copysignf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T CopySign(T x, T y);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", nearbyintf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T NearbyInt(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", nextafterf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T NextAfter(T x, T y);
 
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", scalbnf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T ScaLbn(T x, U n);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", __brev)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Brev(T x);
 
 // count the leading zero bits
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", __clz)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t Clz(T x);
 
 // count the number of set 1 bit
@@ -66,12 +77,15 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t Popc(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", __byte_perm)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T BytePerm(T x, T y, T s);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", __ffs)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int32_t Ffs(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", __mulhi)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T MulHi(T x, T y);
 } // namespace Simt
 } // namespace AscendC

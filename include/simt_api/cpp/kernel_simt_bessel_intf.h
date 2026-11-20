@@ -17,21 +17,27 @@ namespace AscendC {
 namespace Simt {
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", j0f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T J0(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", j1f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T J1(T x);
 
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", jnf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline U Jn(T n, U x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", y0f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Y0(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", y1f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Y1(T x);
 
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", ynf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline U Yn(T n, U x);
 
 } // namespace Simt

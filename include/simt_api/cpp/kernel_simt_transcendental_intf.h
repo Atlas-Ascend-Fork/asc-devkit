@@ -22,9 +22,11 @@ namespace Simt {
  * @return the tangent of the x.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", tanf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Tan(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", tanhf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Tanh(T x);
 
 /**
@@ -33,15 +35,19 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Tanh(T x);
  * @return the tangent of the x*PI.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", tanpif)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Tanpi(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", atanf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Atan(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", atan2f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Atan2(T y, T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", atanhf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Atanh(T x);
 
 /**
@@ -53,6 +59,7 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cos(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", coshf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cosh(T x);
 
 /**
@@ -61,15 +68,19 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cosh(T x);
  * @return the cosine of the x*pi.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", cospif)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cospi(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asinf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Asin(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", acosf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Acos(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", acoshf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Acosh(T x);
 
 /**
@@ -81,6 +92,7 @@ template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Sin(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", sinhf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Sinh(T x);
 
 /**
@@ -89,9 +101,11 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Sinh(T x);
  * @return the sine of the x.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", sinpif)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Sinpi(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", asinhf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Asinh(T x);
 
 /**
@@ -101,6 +115,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Asinh(T x);
  *         c the cosine of the x.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", sincosf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline void Sincos(T x, T& s, T& c);
 
 /**
@@ -110,18 +125,23 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline void Sincos(T x, T& s, T& c);
  *         c the cosine of the x*pi.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", sincospif)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline void Sincospi(T x, T& s, T& c);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", expf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Exp(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", exp2f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Exp2(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", exp10f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Exp10(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", expm1f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Expm1(T x);
 
 /**
@@ -131,6 +151,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Expm1(T x);
  *          if x<0 return Nan
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", sqrtf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Sqrt(T x);
 
 /**
@@ -140,6 +161,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Sqrt(T x);
  *          if x<0 return Nan
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rsqrtf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rsqrt(T x);
 
 /**
@@ -149,6 +171,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rsqrt(T x);
  *         exp: the exponent of the x
  */
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", frexpf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Frexp(T x, U& exp);
 
 /**
@@ -158,6 +181,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Frexp(T x, U& exp);
  * @return  x * 2^exp
  */
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", ldexpf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Ldexp(T x, U exp);
 
 /**
@@ -167,6 +191,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Ldexp(T x, U exp);
  * @return square root of (x^2+y^2)
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", hypotf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Hypot(T x, T y);
 
 /**
@@ -176,6 +201,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Hypot(T x, T y);
  * @return The reciprocal of square root of (x^2+y^2)
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rhypotf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rhypot(T x, T y);
 
 /**
@@ -191,6 +217,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rhypot(T x, T y);
  *      If sqrt(a^2 + b^2 + c^2) overflows, return INF.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", norm3df)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Norm3d(T a, T b, T c);
 
 /**
@@ -206,6 +233,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Norm3d(T a, T b, T c);
  *      If sqrt(a^2 + b^2 + c^2) overflows, return INF.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rnorm3df)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rnorm3d(T a, T b, T c);
 
 /**
@@ -222,6 +250,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rnorm3d(T a, T b, T c);
  *      If sqrt(a^2 + b^2 + c^2+ d^2) overflows, return INF.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", norm4df)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Norm4d(T a, T b, T c, T d);
 
 /**
@@ -238,6 +267,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Norm4d(T a, T b, T c, T d);
  *      If sqrt(a^2 + b^2 + c^2 + d^2) overflows,return 0.
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rnorm4df)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rnorm4d(T a, T b, T c, T d);
 
 /**
@@ -253,6 +283,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rnorm4d(T a, T b, T c, T d);
  *      If n is less than 1, return |a[0]|.
  */
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", normf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline U Norm(T n, U* a);
 
 /**
@@ -268,27 +299,34 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline U Norm(T n, U* a);
  *      If n is less than 1, return 1/|a[0]|.
  */
 template <typename T, typename U>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rnormf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline U Rnorm(T n, U* a);
 
 template <typename T>
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Log(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", powf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Pow(T x, T y);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", log2f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Log2(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", log10f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Log10(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", log1pf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Log1p(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", logbf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Logb(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", ilogbf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline int Ilogb(T x);
 
 /**
@@ -302,6 +340,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline int Ilogb(T x);
  *      if x is -Inf, return -Inf;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", cbrtf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cbrt(T x);
 
 /**
@@ -315,6 +354,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cbrt(T x);
  *      if x is -Inf, return 0;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rcbrtf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rcbrt(T x);
 
 /**
@@ -328,6 +368,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rcbrt(T x);
  *      if x is Nan, return Nan;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", erff)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erf(T x);
 
 /**
@@ -340,6 +381,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erf(T x);
  *      if x is Nan, return Nan;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", erfcf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfc(T x);
 
 /**
@@ -354,6 +396,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfc(T x);
  *      if x is Nan, return Nan;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", erfinvf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfinv(T x);
 
 /**
@@ -367,6 +410,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfinv(T x);
  *      if x is Nan, return Nan;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", erfcinvf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfcinv(T x);
 
 /**
@@ -379,6 +423,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfcinv(T x);
  *      if x is Nan, return Nan;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", erfcxf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfcx(T x);
 
 /**
@@ -392,6 +437,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Erfcx(T x);
  *      if x is -Inf, return Nan;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", tgammaf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Tgamma(T x);
 
 /**
@@ -405,6 +451,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Tgamma(T x);
  *      if x is -Inf, return Inf;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", lgammaf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Lgamma(T x);
 
 /**
@@ -418,6 +465,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Lgamma(T x);
  *      if x is -Inf, return Inf;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", cyl_bessel_i0f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T CylBesselI0(T x);
 
 /**
@@ -431,6 +479,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T CylBesselI0(T x);
  *      if x is -Inf, return -Inf;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", cyl_bessel_i1f)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T CylBesselI1(T x);
 
 /**
@@ -443,6 +492,7 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline T CylBesselI1(T x);
  *      if x is -Inf, return 0;
  */
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", normcdff)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Normcdf(T x);
 
 } // namespace Simt

@@ -20,18 +20,23 @@ template <typename T, typename U, RoundMode roundMode, SatMode satMode = SatMode
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Cast(U x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", roundf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Round(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", rintf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Rint(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", floorf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Floor(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", ceilf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Ceil(T x);
 
 template <typename T>
+ASC_SIMT_CPP_DEPRECATED(9.3.0, "2027/11/20", truncf)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline T Trunc(T x);
 
 } // namespace Simt
