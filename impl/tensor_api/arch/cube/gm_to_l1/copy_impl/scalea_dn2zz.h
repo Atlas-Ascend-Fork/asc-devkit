@@ -55,7 +55,7 @@ public:
         uint16_t matrix_num = get_shape_batch_size(src_shape);
         uint16_t n_value = get_shape_columns(src_shape);
         uint32_t d_value = get_shape_rows(src_shape);
-        uint32_t src_col_stride = get_matrix_element<attr_info::stride, attr_info::column, 1>(src.layout());
+        uint64_t src_col_stride = get_matrix_element<attr_info::stride, attr_info::column, 1>(src.layout());
         uint16_t dst_stride =
             get_matrix_element<attr_info::stride, attr_info::row, 1>(dst.layout()) * sizeof(type) / c0_size<>;
         uint64_t src_matrix_stride = 0;
@@ -66,8 +66,8 @@ public:
         }
         copy_gm_to_l1_multi_nd2nz_instr::data_copy_with_offset(
             dst, src, dst_offset, src_offset, matrix_num, 1, dst_stride, dst_matrix_stride,
-            src_col_stride * sizeof(type), static_cast<asc_load_l2_cache_mode>(src.engine().get_cache_mode()), n_value,
-            d_value, src_matrix_stride, false, trait.pre_allocation);
+            gm_stride_bytes<type>(src_col_stride), static_cast<asc_load_l2_cache_mode>(src.engine().get_cache_mode()),
+            n_value, d_value, src_matrix_stride, false, trait.pre_allocation);
     }
 
     template <const gm_to_l1_trait& trait, typename DstTensor, typename SrcTensor>
@@ -87,7 +87,7 @@ public:
 
         uint32_t src_row_shape;
         uint32_t src_col_shape;
-        uint32_t src_col_stride;
+        uint64_t src_col_stride;
         if constexpr (is_satisfied_ptn_format_v<SrcTensor, dn_layout_ptn>) {
             src_row_shape = get_element<attr_info::shape, attr_info::row>(src_layout);
             src_col_shape = get_element<attr_info::shape, attr_info::column>(src_layout);

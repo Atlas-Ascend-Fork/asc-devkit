@@ -232,6 +232,12 @@ __aicore__ inline constexpr auto get_capacity(const Shape& shape, const Stride& 
     if constexpr (Std::is_tuple_v<Shape> && Std::is_tuple_v<Stride>) {
         static_assert(Std::tuple_size_v<Shape> == Std::tuple_size_v<Stride>, "Mismatched ranks");
         return get_capacity_impl(shape, stride, Std::make_index_sequence<Std::tuple_size_v<Shape>>{});
+    } else if constexpr (
+        Std::is_integral<Std::remove_cvref_t<Shape>>::value && Std::is_integral<Std::remove_cvref_t<Stride>>::value) {
+        // The capacity of a layout is its element span and is used as the batch stride of a batched layout.
+        // A single matrix can exceed 2^32 elements, so the product is widened instead of wrapping like the
+        // natural promotion of two 32 bit operands would. Compile-time (Int<...>) operands keep their type.
+        return static_cast<size_t>(shape) * static_cast<size_t>(stride);
     } else {
         return shape * stride;
     }

@@ -58,13 +58,13 @@ public:
         auto src_offset = src.layout()(src_coord);
         uint32_t src_shape_rows = get_shape_rows(src_shape);
         uint32_t src_shape_columns = get_shape_columns(src_shape);
-        uint32_t src_stride_rows = get_matrix_element<attr_info::stride, attr_info::row, 1>(src.layout());
+        uint64_t src_stride_rows = get_matrix_element<attr_info::stride, attr_info::row, 1>(src.layout());
         uint32_t dst_shape_columns = get_element<attr_info::shape, attr_info::column, 1>(dst.layout());
         uint32_t dst_stride_rows = get_matrix_element<attr_info::stride, attr_info::row, 1>(dst.layout());
 
         uint32_t block_count = src_shape_rows;
         uint32_t block_len = src_shape_columns * sizeof(type);
-        uint64_t src_stride = src_stride_rows * sizeof(type);
+        uint64_t src_stride = gm_stride_bytes<type>(src_stride_rows);
         uint32_t dst_stride = dst_stride_rows * sizeof(type);
         if ((src_shape_rows == 1) || (src_shape_columns == 1) ||
             (src_stride_rows == src_shape_columns && dst_stride_rows == dst_shape_columns &&
@@ -104,7 +104,7 @@ private:
 
         uint32_t src_shape_rows;
         uint32_t src_shape_columns;
-        uint32_t src_stride_rows;
+        uint64_t src_stride_rows;
         uint32_t dst_shape_columns;
         uint32_t dst_stride_rows;
 
@@ -133,7 +133,7 @@ private:
         // multi rows copy, dst non-contiguous case
         uint32_t block_count = src_shape_rows;
         uint32_t block_len = src_shape_columns * sizeof(type);
-        uint64_t src_stride = src_stride_rows * sizeof(type);
+        uint64_t src_stride = gm_stride_bytes<type>(src_stride_rows);
         uint32_t dst_stride = dst_stride_rows * sizeof(type);
 
         if ((src_shape_rows == 1) || (src_shape_columns == 1) ||
@@ -192,13 +192,13 @@ private:
             src_shape_columns = get_element<attr_info::shape, attr_info::column, 1>(src_inner);
         }
 
-        uint32_t matrix_elems = src_shape_rows * src_shape_columns;
+        uint64_t matrix_elems = static_cast<uint64_t>(src_shape_rows) * static_cast<uint64_t>(src_shape_columns);
         auto cache_mode = static_cast<asc_load_l2_cache_mode>(src.engine().get_cache_mode());
 
         // batch-strided: B blocks, stride = per-matrix start-to-start in bytes.
         uint32_t block_count = batch_size;
-        uint32_t block_len = matrix_elems * sizeof(type);
-        uint64_t src_stride = src_batch_stride * sizeof(type);
+        uint32_t block_len = static_cast<uint32_t>(matrix_elems * sizeof(type));
+        uint64_t src_stride = gm_stride_bytes<type>(src_batch_stride);
         uint32_t dst_stride = dst_batch_stride * sizeof(type);
 
         if constexpr (is_b4_type<type>) {

@@ -77,7 +77,9 @@ __aicore__ inline constexpr auto crd2idx(const Coord& coord, const Shape& shape,
                 return crd2idx_itt(coord, shape, stride, tuple_sequence<Shape>{});
             }
         } else { // "int" "int" "int"
-            return coord * stride;
+            // A Global Memory element offset can exceed 2^32 (a single bf16 tensor of 8 GiB already has 2^32
+            // elements) and the tensor address arithmetic is driven by this value, so accumulate in 64 bit.
+            return static_cast<size_t>(coord) * static_cast<size_t>(stride);
         }
     }
 }
