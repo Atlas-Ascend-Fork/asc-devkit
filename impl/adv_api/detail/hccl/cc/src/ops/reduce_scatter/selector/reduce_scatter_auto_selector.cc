@@ -104,11 +104,19 @@ SelectorStatus ReduceScatterAutoSelector::SelectMeshAlgoCcums(
     if (topoInfo->level0Topo == Level0Shape::MESH_1D) {
         if (topoInfo->level0MeshType == Level0MeshType::TWO_DIE_REGULAR) {
             selectAlgName = "CcuReduceScatterMesh2Die";
+            HCCL_WARNING(
+                "[ReduceScatterAutoSelector][%s] algo[%s] not registered, not supported.", __func__,
+                selectAlgName.c_str());
+            return SelectorStatus::NOT_MATCH;
         } else if (topoInfo->level0MeshType == Level0MeshType::TWO_DIE_NOT_REGULAR) {
             HCCL_INFO("[%s] TWO_DIE_NOT_REGULAR not match", __func__);
             return SelectorStatus::NOT_MATCH;
         } else {
             selectAlgName = "CcuReduceScatterMesh1D";
+            HCCL_WARNING(
+                "[ReduceScatterAutoSelector][%s] algo[%s] not registered, not supported.", __func__,
+                selectAlgName.c_str());
+            return SelectorStatus::NOT_MATCH;
         }
     } else if (topoInfo->level0Topo == Level0Shape::MESH_1D_CLOS) {
         // UBX机型
@@ -123,17 +131,29 @@ SelectorStatus ReduceScatterAutoSelector::SelectMeshAlgoCcums(
         if (isMeshNumEqualToClosNum && topoInfo->userRankSize <= MAX_RANK_NUM_FOR_CONCURRENT_ALGO) {
             // 4P mesh
             if (IsSmallData(dataSize)) {
-                // 小数据量，用1d mesh算法
+                // 小数据量，用1d mesh算法（注册随 ae71ab4ee7 ccu 切换逻辑清理删除，未迁移）
                 selectAlgName = "CcuReduceScatterMesh1D";
+                HCCL_WARNING(
+                    "[ReduceScatterAutoSelector][%s] algo[%s] not registered, not supported.", __func__,
+                    selectAlgName.c_str());
+                return SelectorStatus::NOT_MATCH;
             } else {
-                // 大数据量，用mesh+clos并行算法
+                // 大数据量，用mesh+clos并行算法（注册已删除，未迁移）
                 selectAlgName = "CcuReduceScatterConcurrentMeshNHRMs";
+                HCCL_WARNING(
+                    "[ReduceScatterAutoSelector][%s] algo[%s] not registered, not supported.", __func__,
+                    selectAlgName.c_str());
+                return SelectorStatus::NOT_MATCH;
             }
         } else if (isClosNumMultipleOfMeshNum && !IsSmallData(dataSize)) {
             HCCL_WARNING("[%s] MESH_1D_CLOS not match.", __func__);
             return SelectorStatus::NOT_MATCH;
         } else {
             selectAlgName = "CcuReduceScatterMesh1D";
+            HCCL_WARNING(
+                "[ReduceScatterAutoSelector][%s] algo[%s] not registered, not supported.", __func__,
+                selectAlgName.c_str());
+            return SelectorStatus::NOT_MATCH;
         }
     } else {
         HCCL_WARNING(

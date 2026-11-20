@@ -10,7 +10,7 @@
 #include "alg_env_config.h"
 
 namespace mc2_ops_hccl {
-// ccu 仿真目标不测 selector 环境变量注入链: external_alg_rules.cc 的 kRuleSelectorBase 需要
+// ccu 仿真目标不测 selector 环境变量注入链: topo_pattern.cc 的 kMatchSelectorBase 需要
 // AutoSelectorBase 的 vtable（key function Select 在 auto_selector_base.cc）而编入该 .cc，
 // 其 Select() 引用的本函数以空表 stub（与 cann_host_bridge_stub.cc 同款替身模式；
 // 产品真实现 common/alg_env_config.cc 依赖 sal/config_log/utils 链，不适合编入本目标）

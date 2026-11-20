@@ -31,6 +31,15 @@ HcclResult AlgMetaRegistry::Register(HcclCMDType cmd, const std::string& registe
             registeredName.c_str());
         return HCCL_E_PARA;
     }
+    // 一致性防御：patterns 须为非空静态数组。空挂（count>0 而指针为空）与空数组（count==0，
+    // 零长数组或缺省聚合——模式匹配对 0 条模式恒不命中）都会注册成永不可选的静默死行，
+    // 注册期直接拒绝
+    if (meta.patternCount == 0 || meta.patterns == nullptr) {
+        HCCL_ERROR(
+            "[AlgMetaRegistry] invalid sidecar registration, cmd[%u], name[%s], patternCount[%u], patterns[%p].",
+            static_cast<u32>(cmd), registeredName.c_str(), meta.patternCount, static_cast<const void*>(meta.patterns));
+        return HCCL_E_PARA;
+    }
     metas_[key] = meta;
     return HCCL_SUCCESS;
 }

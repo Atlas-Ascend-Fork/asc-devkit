@@ -21,6 +21,7 @@
 #include "topo_match_concurrent_v2.h"
 #endif
 #include "alg_meta_registry.h"
+#include "all_to_all_v_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -485,13 +486,17 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     InsTempAlltoAllVMesh1D, InsTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMeshConcurrent, AlgEngine::AICPU, "concur[mesh,mesh]", COND_NONE,
-    FLAG_UBX, 0);
+    kAicpuAllToAllSoleMeshConcurrentPatterns, 0);
+#if !defined(HCCL_CANN_COMPAT_850)
+// 宏守卫（selector alltoallv_auto_selector.cc:70 同款）：HCCL_CANN_COMPAT_850 打开时该支
+// NOT_MATCH，数组与注册同守卫（模式头同款 #if），防 GLOB 型测试目标在宏下出现注册死行
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMeshConcurrent, InsV2AllToAllConcurrentExecutor, TopoMatchUBX,
     InsTempAlltoAllVMesh1D, InsTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMeshConcurrent, AlgEngine::AICPU, "concur[mesh,mesh]", COND_NONE,
-    FLAG_UBX, 0);
+    kAicpuAllToAllVSoleMeshConcurrentPatterns, 0);
+#endif
 
 #if !defined(AICPU_COMPILE) && MC2_CLIENT_ENABLE_CCU
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
@@ -499,7 +504,7 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     CcuTempAllToAllMesh1DMultiJetty, CcuTempAllToAllMesh1DMultiJetty);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALL, CcuSchedAllToAllSoleMeshConcurrent, AlgEngine::CCU, "concur[mesh,mesh]", COND_NONE,
-    FLAG_UBX, 0);
+    kCcuSchedAllToAllSoleMeshConcurrentPatterns, 0);
 // KFC 并发 A2AV：照 hccl InsV2AllToAllVConcurrentExecutor 的注册结构——mission0 = mesh 优先链路
 // （CalcChannelRequestMesh1DWithPriorityTopo），mission1 = CLOS MultiJetty 链路。TopoMatchConcurrentV2
 // 与 hccl 同语义（两组均为全通信域 rank）。带宽比切分（100:96，head 落 mission0）由 AIV
@@ -507,9 +512,11 @@ REGISTER_ALG_META(
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMeshConcurrent, InsV2AllToAllConcurrentExecutor,
     TopoMatchConcurrentV2, CcuTempAllToAllVMesh1DMultiJetty, CcuTempAllToAllVMesh1DMultiJetty);
+// A2AV Concurrent 的模式（TopoPattern 形态，FLAG_UBX 已随本 feature 退役）：镜像 upstream selector
+// MESH_1D_CLOS 非混插分支（meshEq ∧ rank≤4；>4 落 MultiJetty 未注册 NOT_MATCH 兜底）
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMeshConcurrent, AlgEngine::CCU, "concur[mesh,mesh]",
-    COND_NONE, FLAG_UBX, 0);
+    COND_NONE, kCcuSchedAllToAllVSoleMeshConcurrentPatterns, 0);
 #endif
 
 } // namespace mc2_ops_hccl

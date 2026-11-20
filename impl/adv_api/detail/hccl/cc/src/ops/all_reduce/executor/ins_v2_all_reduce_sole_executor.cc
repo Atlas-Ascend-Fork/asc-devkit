@@ -19,6 +19,7 @@
 #include "ins_temp_all_reduce_aicpu_reduce_nhr.h"
 #include "ins_temp_all_reduce_mesh_1D_two_shot_mesh_chunk.h"
 #include "alg_meta_registry.h"
+#include "all_reduce_alg_patterns.h"
 #include "external_alg_rules.h"
 
 #include <type_traits>
@@ -278,27 +279,29 @@ REGISTER_EXEC_V2(
     InsTempAllReduceMesh1DTwoShot);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleMeshTwoShot, AlgEngine::AICPU, "sole[mesh.two_shot]", COND_NONE,
-    FLAG_NONE, 0);
+    kAicpuAllReduceSoleMeshTwoShotPatterns, 0);
 
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleNHR, InsV2AllReduceSoleExecutor, TopoMatch1D,
     InsTempAllReduceNHR);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleNHR, AlgEngine::AICPU, "sole[nhr]", COND_NONE, FLAG_NONE, 0);
+    HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleNHR, AlgEngine::AICPU, "sole[nhr]", COND_NONE,
+    kAicpuAllReduceSoleNHRPatterns, 0);
 
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleMeshOneShot, InsV2AllReduceSoleExecutor, TopoMatch1D,
     InsTempAllReduceMesh1DOneShot);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleMeshOneShot, AlgEngine::AICPU, "sole[mesh.one_shot]", COND_NONE,
-    FLAG_NONE, 0);
+    kAicpuAllReduceSoleMeshOneShotPatterns, 0);
 
 #if !defined(AICPU_COMPILE) && MC2_CLIENT_ENABLE_CCU
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLREDUCE, CcuSchedAllReduceSoleNHR, InsV2AllReduceSoleExecutor, TopoMatch1D,
     CcuTempKfcAllReduceNHR1DMem2Mem);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLREDUCE, CcuSchedAllReduceSoleNHR, AlgEngine::CCU, "sole[nhr]", COND_NONE, FLAG_NONE, 0);
+    HcclCMDType::HCCL_CMD_ALLREDUCE, CcuSchedAllReduceSoleNHR, AlgEngine::CCU, "sole[nhr]", COND_NONE,
+    kCcuSchedAllReduceSoleNHRPatterns, 0);
 #endif
 
 #if !defined(AICPU_COMPILE) && MC2_CLIENT_ENABLE_CCU
@@ -306,7 +309,8 @@ REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLREDUCE, CcuSchedAllReduceSoleMesh, InsV2AllReduceSoleExecutor, TopoMatch1D,
     CcuTempKfcAllReduceMesh1DMem2Mem);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLREDUCE, CcuSchedAllReduceSoleMesh, AlgEngine::CCU, "sole[mesh]", COND_NONE, FLAG_NONE, 0);
+    HcclCMDType::HCCL_CMD_ALLREDUCE, CcuSchedAllReduceSoleMesh, AlgEngine::CCU, "sole[mesh]", COND_NONE,
+    kCcuSchedAllReduceSoleMeshPatterns, 0);
 #endif
 
 REGISTER_EXEC_V2(
@@ -314,12 +318,12 @@ REGISTER_EXEC_V2(
     InsTempAllReduceAicpuReduceNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleNHRAicpuReduce, AlgEngine::AICPU, "sole[nhr]", COND_SPECIAL_DT,
-    FLAG_NONE, 0);
+    kAicpuAllReduceSoleNHRAicpuReducePatterns, 0);
 
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleMeshChunkTwoShot, InsV2AllReduceSoleExecutor, TopoMatch1D,
     InsTempAllReduceMesh1DTwoShotMeshChunk);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReduceSoleMeshChunkTwoShot, AlgEngine::AICPU, "sole[mesh.two_shot.chunk]",
-    COND_NONE, FLAG_NONE, 0);
+    COND_NONE, kAicpuAllReduceSoleMeshChunkTwoShotPatterns, 0);
 } // namespace mc2_ops_hccl

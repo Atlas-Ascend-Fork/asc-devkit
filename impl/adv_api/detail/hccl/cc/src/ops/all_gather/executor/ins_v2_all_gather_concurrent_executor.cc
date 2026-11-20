@@ -21,6 +21,7 @@
 #include "ccu_temp_kfc_all_gather_nhr_1D_multi_jetty_mem2mem.h"
 #endif
 #include "alg_meta_registry.h"
+#include "all_gather_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -470,7 +471,7 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     InsTempAllGatherMesh1D, InsTempAllGatherMesh1D);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, AicpuAllGatherConcurMeshNHR, AlgEngine::AICPU, "concur[mesh,nhr]", COND_NONE,
-    FLAG_UBX, 0);
+    kAicpuAllGatherConcurMeshNHRPatterns, 0);
 
 #if !defined(AICPU_COMPILE) && MC2_CLIENT_ENABLE_CCU
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
@@ -478,7 +479,7 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     TopoMatchUBX, CcuTempKfcAllGatherMesh1DMem2Mem, CcuTempKfcAllGatherNHR1DMultiJettyMem2Mem);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, CcuSchedAllGatherConcurMeshNHRMultiLink, AlgEngine::CCU,
-    "concur[mesh,nhr.multi_channel]", COND_NONE, FLAG_UBX, 0);
+    "concur[mesh,nhr.multi_channel]", COND_NONE, kCcuSchedAllGatherConcurMeshNHRMultiLinkPatterns, 0);
 #endif
 
 } // namespace mc2_ops_hccl

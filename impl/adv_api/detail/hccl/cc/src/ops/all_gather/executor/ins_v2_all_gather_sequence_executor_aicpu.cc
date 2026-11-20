@@ -14,6 +14,7 @@
 #include "alg_data_trans_wrapper.h"
 #include "coll_alg_v2_exec_registry.h"
 #include "alg_meta_registry.h"
+#include "all_gather_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -337,6 +338,6 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     TopoMatchMultilevel, InsTempAllGatherMesh1D1DZAxisDetour, InsTempAllGatherNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, AicpuAllGatherSequenceMeshConcurNHR, AlgEngine::AICPU, "sequence[mesh,nhr]",
-    COND_NONE, FLAG_MULTI_LEVEL, 0);
+    COND_NONE, kAicpuAllGatherSequenceMeshConcurNHRPatterns, 0);
 
 } // namespace mc2_ops_hccl

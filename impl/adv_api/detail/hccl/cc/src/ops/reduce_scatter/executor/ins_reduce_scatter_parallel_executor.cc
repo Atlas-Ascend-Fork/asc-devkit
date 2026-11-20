@@ -13,6 +13,7 @@
 #include "ins_temp_reduce_scatter_nhr.h"
 #include "alg_data_trans_wrapper.h"
 #include "alg_meta_registry.h"
+#include "reduce_scatter_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -486,17 +487,17 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     TopoMatchMultilevel, InsTempReduceScatterMesh1D, InsTempReduceScatterNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, InsReduceScatterParallelMesh1DNHR, AlgEngine::AICPU, "parallel[mesh,nhr]",
-    COND_NONE, FLAG_MULTI_LEVEL, 0);
+    COND_NONE, kInsReduceScatterParallelMesh1DNHRPatterns, 0);
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, AicpuReduceScatterParallelMeshNHRUBX, InsReduceScatterParallelExecutor,
     TopoMatchUBX, InsTempReduceScatterMesh1D, InsTempReduceScatterNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, AicpuReduceScatterParallelMeshNHRUBX, AlgEngine::AICPU, "parallel[mesh,nhr]",
-    COND_NONE, FLAG_UBX, 0);
+    COND_NONE, kAicpuReduceScatterParallelMeshNHRUBXPatterns, 0);
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, InsReduceScatterParallelMesh1DNHRPcie, InsReduceScatterParallelExecutor,
     TopoMatchPcieMix, InsTempReduceScatterMesh1D, InsTempReduceScatterNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, InsReduceScatterParallelMesh1DNHRPcie, AlgEngine::AICPU, "parallel[mesh,nhr]",
-    COND_NONE, FLAG_PCIE_MIX, 0);
+    COND_NONE, kInsReduceScatterParallelMesh1DNHRPciePatterns, 0);
 } // namespace mc2_ops_hccl

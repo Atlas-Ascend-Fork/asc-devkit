@@ -326,7 +326,7 @@ TEST_F(CcuStReduceScatter, Selector_2LevelMesh_2Server8Rank_Fp16)
 // ============================================================================
 // 外部名 sole[mesh] 强制定名 true-path（SRS2 §19.1 #1 留档）：COND_PEER_ONLY 与模板
 // 资源期守卫同口径（TP2 且 CalcChannelRequestMesh1D 恰建 1 条对端通道）→ PeerOnly。
-// 走生产强制路径 TryForcedAlgAndPrepareEngine（解析→真 topo→三级漏斗→模板守卫 CalcRes），
+// 走生产强制路径 TryForcedAlgAndPrepareEngine（解析→真 topo→候选定名→模板守卫 CalcRes），
 // 定名即断言面；kernel 执行行为由 peer_only_local_copy_testcase 单独覆盖
 // （本目标尚无 PeerOnly 的场景捕获适配器）。
 // ============================================================================

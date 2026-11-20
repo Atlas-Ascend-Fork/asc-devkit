@@ -18,6 +18,7 @@
 #include "alg_meta_registry.h"
 #include "alg_param.h"
 #include "external_alg_parser.h"
+#include "topo_pattern.h"
 
 namespace mc2_ops_hccl {
 
@@ -25,7 +26,8 @@ struct AlgCandidate {
     std::string registeredName;
     AlgEngine engine;
     int variantCondId;
-    int machineFlagId;
+    const TopoPattern* patterns = nullptr; // TopoPattern 数组（patternCount 计数）
+    uint32_t patternCount = 0;
     int priority; // 同键定序第二级（specificity 降序 > priority 降序 > name 字典序），见 AlgMeta::priority
 };
 
@@ -38,7 +40,7 @@ enum class ResolveStatus {
 };
 
 // 消歧（纯函数，无资源操作——选名与资源分离）:
-//   引擎匹配 -> 变体条件 -> 机型 flag；第一个全过的候选胜出，不做资源实测。
+//   引擎匹配 -> 拓扑模式匹配 -> 变体条件；第一个全过的候选胜出，不做资源实测。
 ResolveStatus ResolveExternalAlg(
     const OpParam& opParam, const TopoInfoWithNetLayerDetails* topoInfo, const ExternalAlgSpec& spec,
     std::string& algName, std::string& errMsg);
@@ -49,13 +51,13 @@ ResolveStatus ResolveExternalAlg(
 const std::vector<AlgCandidate>& GetExternalCandidates(HcclCMDType cmd, const std::string& canonicalExtName);
 
 // 纯函数构建器：按 (Specificity 降序, priority 降序, registeredName 字典序) 三键排序。
-// Specificity = (condId != -1) + (flagId != -1)（约束多者先试，最特化者胜；cond/flag 各计 1 分等权）；
-// priority 仅同特异性时生效（业务声明维度裁决权，当前全 0；flag 重叠场景启用）。
-// 排序键是候选自带数据属性，
-// 与注册顺序/链接顺序/static-init 顺序全部无关（跨 .cc static-init 顺序是 UB，不可依赖）。
+// Specificity = (condId != -1)（带变体条件者先试，最特化者胜；拓扑模式是每行必带的过滤面，
+// 不计入特异性）；priority 仅同特异性时生效（业务声明维度裁决权，当前全 0）。
+// 排序键是候选自带数据属性，与注册顺序/链接顺序/static-init 顺序全部无关
+// （跨 .cc static-init 顺序是 UB，不可依赖）。
 std::map<ExtAlgKey, std::vector<AlgCandidate>> BuildCandidateTable(const std::vector<AlgMetaRow>& rows);
 
-// 漏斗核心：候选集（须已按特异性序）中第一个全过引擎/变体条件/机型flag者胜出，无则 nullptr
+// 候选定名：候选集（须已按特异性序）中第一个全过引擎/拓扑模式/变体条件者胜出，无则 nullptr
 const AlgCandidate* SelectCandidate(
     const std::vector<AlgCandidate>& candidates, const OpParam& opParam, const TopoInfoWithNetLayerDetails* topoInfo);
 

@@ -128,11 +128,13 @@ add_executable(${CCU_UT_TARGET}
     # Source under test (minimal impl dependencies)
     ${HCCL_CC_SRC_DIR}/common/hccl_mc2.cc
     ${HCCL_CC_SRC_DIR}/common/hccl_alloc_ctx_res.cc
-    # external_alg 链（hccl_alloc_ctx_res 改造后引用 parser/resolver 符号；
-    # rules.cc 的 kRuleSelectorBase 需要 AutoSelectorBase 的 vtable（key function Select 在此 .cc））
+    # external_alg 链：hccl_alloc_ctx_res 改造后引用 parser/resolver 符号；
+    # topo_pattern.cc 的 kMatchSelectorBase 需要 AutoSelectorBase 的 vtable（key function Select 在
+    # auto_selector_base.cc）
     ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/alg_meta_registry.cc
     ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/external_alg_rules.cc
     ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/external_alg_resolver.cc
+    ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/topo_pattern.cc
     ${HCCL_CC_SRC_DIR}/ops/op_common/selector/auto_selector_base.cc
 )
 

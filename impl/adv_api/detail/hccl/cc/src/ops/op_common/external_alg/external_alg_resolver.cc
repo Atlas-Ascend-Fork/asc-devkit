@@ -13,6 +13,7 @@
 
 #include "external_alg_rules.h"
 #include "log.h"
+#include "topo_pattern.h"
 
 namespace mc2_ops_hccl {
 namespace {
@@ -52,7 +53,7 @@ const char* EngineName(CommEngine engine)
 }
 
 // 进程级候选表（首次使用时聚合一次；static-init 已全部完成后才可能被调用）。
-// 全量注册构建：外部名候选面 = 注册面（算法选用白名单机制已移除，漏斗确定性兜底）。
+// 全量注册构建：外部名候选面 = 注册面（算法选用白名单机制已移除，定名确定性兜底）。
 const std::map<ExtAlgKey, std::vector<AlgCandidate>>& CandidateTable()
 {
     static const std::map<ExtAlgKey, std::vector<AlgCandidate>> table = [] {
@@ -71,11 +72,11 @@ std::string DescribeCandidates(const std::vector<AlgCandidate>& candidates)
             text += ", ";
         }
         text += cand.registeredName;
+        if (cand.patternCount > 0) {
+            text += "(" + std::to_string(cand.patternCount) + " patterns)";
+        }
         if (cand.variantCondId != -1) {
             text += "(" + std::string(VariantCondName(cand.variantCondId)) + ")";
-        }
-        if (cand.machineFlagId != -1) {
-            text += "(" + std::string(MachineFlagName(cand.machineFlagId)) + ")";
         }
     }
     return text;
@@ -87,14 +88,15 @@ std::map<ExtAlgKey, std::vector<AlgCandidate>> BuildCandidateTable(const std::ve
     std::map<ExtAlgKey, std::vector<AlgCandidate>> table;
     for (const AlgMetaRow& row : rows) {
         table[std::make_pair(row.cmd, std::string(row.meta.externalName))].push_back(AlgCandidate{
-            row.registeredName, row.meta.engine, row.meta.variantCondId, row.meta.machineFlagId, row.meta.priority});
+            row.registeredName, row.meta.engine, row.meta.variantCondId, row.meta.patterns, row.meta.patternCount,
+            row.meta.priority});
     }
     for (auto& entry : table) {
         std::sort(entry.second.begin(), entry.second.end(), [](const AlgCandidate& a, const AlgCandidate& b) {
-            const int specA = (a.variantCondId != -1 ? 1 : 0) + (a.machineFlagId != -1 ? 1 : 0);
-            const int specB = (b.variantCondId != -1 ? 1 : 0) + (b.machineFlagId != -1 ? 1 : 0);
+            const int specA = (a.variantCondId != -1 ? 1 : 0);
+            const int specB = (b.variantCondId != -1 ? 1 : 0);
             if (specA != specB) {
-                return specA > specB; // 键1: 特异性降序（约束多者先试，最特化者胜）
+                return specA > specB; // 键1: 特异性降序（带变体条件者先试，最特化者胜）
             }
             if (a.priority != b.priority) {
                 return a.priority > b.priority; // 键2: priority 降序（同特异性时业务声明谁先；当前全 0）
@@ -113,7 +115,8 @@ const std::vector<AlgCandidate>& GetExternalCandidates(HcclCMDType cmd, const st
     return it == table.end() ? kEmpty : it->second;
 }
 
-// 三级漏斗核心（引擎→变体条件→机型flag）：第一个全过的候选胜出，无则 nullptr
+// 候选定名核心（引擎→拓扑模式→变体条件；拓扑前移短路昂贵谓词 COND_PEER_ONLY 的建链查询，
+// AND 交换律保证选名结果不变）：第一个全过的候选胜出，无则 nullptr
 const AlgCandidate* SelectCandidate(
     const std::vector<AlgCandidate>& candidates, const OpParam& opParam, const TopoInfoWithNetLayerDetails* topoInfo)
 {
@@ -121,14 +124,13 @@ const AlgCandidate* SelectCandidate(
         if (!EngineMatch(cand.engine, opParam)) {
             continue;
         }
-        // 变体条件：下标双边判防注册侧笔误 OOB（Register() 无法校验：rules.h 反向 include 循环依赖）
-        if (cand.variantCondId >= 0 && cand.variantCondId < VARIANT_COND_COUNT &&
-            !VARIANT_COND_TABLE[cand.variantCondId](topoInfo, opParam)) {
+        // len 窗/dtypeSize 恒 (0,0)/0——定名只做拓扑匹配，lenClauses 留给查询接口传真值窗
+        if (topoInfo == nullptr || !MatchAnyPattern(cand.patterns, cand.patternCount, *topoInfo, 0U, 0U, 0U)) {
             continue;
         }
-        // 机型 flag：同上
-        if (cand.machineFlagId >= 0 && cand.machineFlagId < MACHINE_FLAG_COUNT &&
-            !MACHINE_FLAG_TABLE[cand.machineFlagId](topoInfo)) {
+        // 变体条件（必要条件，合取过滤）：下标双边判防注册侧笔误 OOB
+        if (cand.variantCondId >= 0 && cand.variantCondId < VARIANT_COND_COUNT &&
+            !VARIANT_COND_TABLE[cand.variantCondId](topoInfo, opParam)) {
             continue;
         }
         return &cand;

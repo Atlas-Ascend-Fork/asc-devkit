@@ -11,6 +11,7 @@
 #include "ins_temp_reduce_scatter_mesh_1D.h"
 #include "ins_temp_reduce_scatter_mesh_1d_dpu.h"
 #include "alg_meta_registry.h"
+#include "reduce_scatter_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -294,5 +295,5 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     TopoMatchMultilevel, InsTempReduceScatterMesh1D, InsTempReduceScatterMesh1dDpu);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, InsReduceScatterSequenceMeshMeshDPU, AlgEngine::DPU, "sequence[mesh,mesh]",
-    COND_NONE, FLAG_MULTI_LEVEL, 0);
+    COND_NONE, kInsReduceScatterSequenceMeshMeshDPUPatterns, 0);
 } // namespace mc2_ops_hccl

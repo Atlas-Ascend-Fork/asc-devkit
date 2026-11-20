@@ -25,11 +25,16 @@
 #include "ccu/ccu_api/ccu_launch.h"
 #include "ccu_launch_dl.h"
 #include "ccu_kernel_utils.h"
+#include "alg_meta_registry.h"
+#include "topo_pattern.h"
+#include "coll_alg_v2_exec_registry.h"
 #include <new>
 #include "hcomm_host_profiling_dl.h"
 #include "runtime/rt.h"
 #include <cmath>
 #include <ccu/ccu_api/ccu_types.h>
+#include <set>
+#include <securec.h>
 
 using namespace mc2_ops_hccl;
 
@@ -96,6 +101,8 @@ struct Mc2OpArgs {
     HcclDataType dstDataType = HCCL_DATA_TYPE_FP16;
     HcclReduceOp reduceType = HCCL_REDUCE_SUM;
     std::string algConfig;
+    uint64_t dataLenMin = 0; // (0,0)=查询不校验长度；区间为单卡字节（count×dtypeSize）
+    uint64_t dataLenMax = 0;
 };
 
 struct Mc2CcuBuiltinCtx {
@@ -1317,6 +1324,21 @@ uint32_t __attribute__((visibility("default"))) Mc2SetCcReduceType(void* ccArgs,
     return HCCL_SUCCESS;
 }
 
+uint32_t __attribute__((visibility("default"))) Mc2SetCcDataLenRange(void* ccArgs, uint64_t minLen, uint64_t maxLen)
+{
+    CHK_PTR_NULL(ccArgs);
+    if (minLen > maxLen) {
+        HCCL_ERROR(
+            "[Mc2SetCcDataLenRange] invalid range: minLen[%llu] > maxLen[%llu]",
+            static_cast<unsigned long long>(minLen), static_cast<unsigned long long>(maxLen));
+        return HCCL_E_PARA;
+    }
+    auto* args = static_cast<Mc2OpArgs*>(ccArgs);
+    args->dataLenMin = minLen;
+    args->dataLenMax = maxLen;
+    return HCCL_SUCCESS;
+}
+
 uint32_t __attribute__((visibility("default"))) Mc2AcquireCcResCtx(
     HcclComm comm, uint8_t ccType, void* ccArgs, void** ccResCtx, uint32_t* ccResCtxSize)
 {
@@ -1400,5 +1422,131 @@ uint32_t __attribute__((visibility("default"))) Mc2CcKernelLaunch(void* stream, 
             HCCL_ERROR("[Mc2CcKernelLaunch] unsupported commEngine[%d].", static_cast<int>(commEngine));
             return HCCL_E_NOT_SUPPORT;
     }
+}
+
+namespace {
+bool ResolveQueryEngine(uint8_t commEngine, AlgEngine& engine, std::string& errMsg)
+{
+    switch (static_cast<OpExecuteConfig>(commEngine)) {
+        case OpExecuteConfig::CCU_SCHED:
+            engine = AlgEngine::CCU;
+            return true;
+        case OpExecuteConfig::AICPU_TS:
+            engine = AlgEngine::AICPU;
+            return true;
+        case OpExecuteConfig::CCU_MS:
+            errMsg = "unsupported commEngine[" + std::to_string(commEngine) +
+                     "] (CCU_MS): legacy-link engine, use CCU_SCHED";
+            return false;
+        default:
+            errMsg = "unsupported commEngine[" + std::to_string(commEngine) + "]";
+            return false;
+    }
+}
+
+bool TryWriteJson(char* algs, uint32_t len, const std::string& json)
+{
+    if (algs == nullptr || len == 0U || json.size() + 1 > len) {
+        return false;
+    }
+    if (memcpy_s(algs, len, json.c_str(), json.size()) != EOK) {
+        return false;
+    }
+    algs[json.size()] = '\0';
+    return true;
+}
+
+// msg 直接拼入 JSON 不做转义，须免 '"'、'\' 与控制字符
+void WriteErrorJson(char* algs, uint32_t len, const std::string& msg)
+{
+    const std::string json = "{\"count\":0,\"alg_list\":[],\"error_msg\":[\"" + msg + "\"]}";
+    if (algs == nullptr || len == 0U) {
+        return;
+    }
+    if (!TryWriteJson(algs, len, json)) {
+        algs[0] = '\0';
+    }
+}
+
+Mc2Result WriteAlgListJson(char* algs, uint32_t len, const std::set<std::string>& uniq)
+{
+    std::string json = "{\"count\":" + std::to_string(uniq.size()) + ",\"alg_list\":[";
+    bool first = true;
+    for (const std::string& name : uniq) {
+        if (!first) {
+            json += ',';
+        }
+        json += '"';
+        json += name;
+        json += '"';
+        first = false;
+    }
+    json += "],\"error_msg\":[]}";
+    if (!TryWriteJson(algs, len, json)) {
+        const std::string msg = "alg list buffer insufficient: need[" + std::to_string(json.size() + 1U) + "] len[" +
+                                std::to_string(len) + "], recommended 16K";
+        HCCL_ERROR("[WriteAlgListJson] %s", msg.c_str());
+        WriteErrorJson(algs, len, msg);
+        return HCCL_E_NOT_SUPPORT;
+    }
+    return HCCL_SUCCESS;
+}
+} // namespace
+
+Mc2Result __attribute__((visibility("default"))) Mc2GetSupportAlgList(
+    HcclComm comm, uint8_t ccType, void* ccArgs, char* algs, uint32_t len)
+{
+    CHK_PTR_NULL(comm);
+    CHK_PTR_NULL(ccArgs);
+    CHK_PRT_RET(
+        algs == nullptr && len > 0U, HCCL_ERROR("[Mc2GetSupportAlgList] algs is null with len[%u]", len), HCCL_E_PTR);
+    const HcclCMDType opType = static_cast<HcclCMDType>(ccType);
+    if (!IsSupportedMc2OpType(opType)) {
+        HCCL_ERROR("[Mc2GetSupportAlgList] unsupported ccType[%u]", ccType);
+        WriteErrorJson(algs, len, "unsupported ccType[" + std::to_string(ccType) + "]");
+        return HCCL_E_NOT_SUPPORT;
+    }
+    auto* args = static_cast<Mc2OpArgs*>(ccArgs);
+    AlgEngine engine;
+    std::string engineErr;
+    if (!ResolveQueryEngine(args->commEngine, engine, engineErr)) {
+        HCCL_ERROR("[Mc2GetSupportAlgList] %s, commEngine[%u]", engineErr.c_str(), args->commEngine);
+        WriteErrorJson(algs, len, engineErr);
+        return HCCL_E_NOT_SUPPORT;
+    }
+
+    OpParam opParam{};
+    opParam.hcclComm = comm;
+    opParam.opType = opType;
+    CHK_RET(HcclGetOpExpansionMode(comm, opParam));
+    std::unique_ptr<TopoInfoWithNetLayerDetails> topoInfo = std::make_unique<TopoInfoWithNetLayerDetails>();
+    CHK_RET(HcclCalcTopoInfo(comm, opParam, topoInfo));
+
+    std::set<std::string> uniq;
+    // 对齐 selector 的引擎级守卫：pcieMix+bigClosRange 双开时 AICPU 引擎整体拒绝，空名单
+    if (engine == AlgEngine::AICPU && topoInfo->level0PcieMix && topoInfo->level0BigClosRange) {
+        HCCL_INFO(
+            "[Mc2GetSupportAlgList] opType[%u], commEngine[%u], lenMin[%llu], lenMax[%llu], vetoed[1], algNum[0].",
+            ccType, args->commEngine, static_cast<unsigned long long>(args->dataLenMin),
+            static_cast<unsigned long long>(args->dataLenMax));
+        return WriteAlgListJson(algs, len, uniq);
+    }
+
+    const uint32_t dtypeSize = DATATYPE_SIZE_TABLE[args->srcDataType];
+    for (const std::string& name : CollAlgExecRegistryV2::Instance().GetRegisteredTags(opType)) {
+        const AlgMeta* meta = AlgMetaRegistry::Instance().Get(opType, name);
+        if (meta == nullptr || meta->engine != engine ||
+            !MatchAnyPattern(
+                meta->patterns, meta->patternCount, *topoInfo, args->dataLenMin, args->dataLenMax, dtypeSize)) {
+            continue;
+        }
+        uniq.insert(meta->externalName);
+    }
+
+    HCCL_INFO(
+        "[Mc2GetSupportAlgList] opType[%u], commEngine[%u], lenMin[%llu], lenMax[%llu], algNum[%zu].", ccType,
+        args->commEngine, static_cast<unsigned long long>(args->dataLenMin),
+        static_cast<unsigned long long>(args->dataLenMax), uniq.size());
+    return WriteAlgListJson(algs, len, uniq);
 }
 } // extern "C"

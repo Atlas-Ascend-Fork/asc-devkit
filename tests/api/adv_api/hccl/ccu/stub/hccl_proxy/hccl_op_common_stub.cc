@@ -66,6 +66,10 @@ HcclResult g_stubHcomCheckDataTypeResult = HCCL_SUCCESS;
 HcclResult g_stubHcomCheckReductionOpResult = HCCL_SUCCESS;
 // HcclCalcTopoInfo打桩返回值：置非SUCCESS模拟topo准备失败，供外部名定名链失败复位用例使用
 HcclResult g_stubCalcTopoInfoResult = HCCL_SUCCESS;
+// 查询接口 veto 分支注入量（spec §3.3 pass2）：topo 计算成功时写入 topoInfo 的两个拓扑
+// 事实字段；缺省 false 与既有"不动 topoInfo"行为等价（调用方恒传默认构造的全新对象）
+bool g_stubTopoPcieMix = false;
+bool g_stubTopoBigClosRange = false;
 
 HcclResult GetOrCreateCcuCtx(HcclComm comm, const std::string& tag, uint64_t ctxSize, void** ctx)
 {
@@ -171,6 +175,10 @@ HcclResult HcclGetOpExpansionMode(HcclComm comm, OpParam& param)
 
 HcclResult HcclCalcTopoInfo(HcclComm comm, OpParam& param, std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo)
 {
+    if (g_stubCalcTopoInfoResult == HcclResult::HCCL_SUCCESS && topoInfo != nullptr) {
+        topoInfo->level0PcieMix = g_stubTopoPcieMix;
+        topoInfo->level0BigClosRange = g_stubTopoBigClosRange;
+    }
     return g_stubCalcTopoInfoResult;
 }
 
@@ -410,6 +418,35 @@ HcclResult CalcAlgResourceRequest(
         CHK_RET(server->CalcRes(comm, param, topoInfo, algHierarchyInfo, resRequest));
     }
     return HCCL_SUCCESS;
+}
+
+// Register/GetRegisteredTags 与产品实现（coll_alg_v2_exec_registry.cc）同构：本目标不编
+// 该文件，IsRegistered/GetAlgExec 走桩注入，而查询链（hccl_mc2.cc 的 Mc2GetSupportAlgList）
+// 按 tag 在册性枚举候选，需要这两个落库/读取方法，供测试侧镜像产品注册形态。
+// 桩漂移防线：产品侧 coll_alg_v2_exec_registry.cc 改 Register/GetRegisteredTags 语义必须同步
+// 本桩；无机械防线，Task 12 差分 UT（真实产品注册表）为最终背书。
+HcclResult CollAlgExecRegistryV2::Register(
+    const HcclCMDType type, const std::string& tag, const CollExecCreatorV2& collExecCreator)
+{
+    const std::lock_guard<std::mutex> lock(mu_);
+    if (execCreators_[type].count(tag) != 0U) {
+        return HcclResult::HCCL_E_INTERNAL;
+    }
+    execCreators_[type].emplace(tag, collExecCreator);
+    return HcclResult::HCCL_SUCCESS;
+}
+
+std::vector<std::string> CollAlgExecRegistryV2::GetRegisteredTags(const HcclCMDType type) const
+{
+    const std::lock_guard<std::mutex> lock(mu_);
+    std::vector<std::string> tags;
+    const auto it = execCreators_.find(type);
+    if (it != execCreators_.end()) {
+        for (const auto& entry : it->second) {
+            tags.push_back(entry.first);
+        }
+    }
+    return tags;
 }
 
 HcclResult HcclGetAlgRes(

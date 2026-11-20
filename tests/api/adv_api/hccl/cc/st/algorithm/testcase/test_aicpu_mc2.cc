@@ -12,6 +12,7 @@
 #include <cstring>
 #include <functional>
 #include <limits>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -85,6 +86,44 @@ std::string ArgsFieldAt(const Mc2AicpuLaunchStubState& state, uint32_t offset)
         ++len;
     }
     return std::string(field, len);
+}
+
+// D18 查询 helper：调 C ABI（JSON 输出）并解析 alg_list 回 vector，供既有集合语义断言复用。
+// 名单为零转义直拼（字符集白名单已由注册面断言钉死），引号/逗号即完整词法，可机械解析。
+// 解析失败以 EXPECT 记录后返回已解析前缀（ASSERT 不能用于非 void 函数），后续断言自然红。
+std::vector<std::string> QueryAndParseAlgList(HcclComm comm, uint8_t cmd, void* ccArgs)
+{
+    char buf[16384];
+    const Mc2Result ret = Mc2GetSupportAlgList(comm, cmd, ccArgs, buf, sizeof(buf));
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    if (ret != HCCL_SUCCESS) {
+        return {};
+    }
+    std::vector<std::string> out;
+    const char* p = strstr(buf, "\"alg_list\":[");
+    EXPECT_NE(p, nullptr);
+    if (p == nullptr) {
+        return out;
+    }
+    p += strlen("\"alg_list\":[");
+    while (*p != ']') {
+        if (*p != '"') {
+            ADD_FAILURE() << "alg_list 元素未以引号开头: " << buf;
+            return out;
+        }
+        ++p;
+        const char* q = strchr(p, '"');
+        if (q == nullptr) {
+            ADD_FAILURE() << "alg_list 元素缺闭合引号: " << buf;
+            return out;
+        }
+        out.emplace_back(p, static_cast<size_t>(q - p));
+        p = q + 1;
+        if (*p == ',') {
+            ++p;
+        }
+    }
+    return out;
 }
 
 // Per rank result of a concurrent Mc2AcquireCcResCtx run.
@@ -644,6 +683,82 @@ TEST_F(AicpuMc2Test, PrepareCcAlgResourcesRejectsNullArguments)
 
     EXPECT_EQ(PrepareCcAlgResources(nullptr, "", opParam, true), HCCL_E_PTR);
     EXPECT_EQ(PrepareCcAlgResources(comm_, nullptr, opParam, true), HCCL_E_PTR);
+}
+
+// 真拓扑端到端：MESH_1D_CLOS（UBX 标记位建模）上 CCU 引擎查询——名单非空且包含该拓扑
+// 的注册算法（CcuSchedAllToAllVSoleMesh 的 UBX 条目）；AICPU 引擎名单含 AicpuAllToAllVSoleMesh。
+// 单 server 全 phyId 带 MESH_1D_CLOS_PHYID_MARK 时 TopoModel 按 MESH_1D_CLOS 建模。
+TEST_F(AicpuMc2Test, GetSupportAlgListOnMesh1dClosTopo)
+{
+    DestroyComm();
+    SimWorld::Global()->Deinit();
+    ServerMeta server;
+    for (uint32_t rank = 0U; rank < RANK_SIZE; ++rank) {
+        server.push_back(rank | MESH_1D_CLOS_PHYID_MARK);
+    }
+    topoMeta_ = TopoMeta{{server}};
+    SimWorld::Global()->Init(topoMeta_, DevType::DEV_TYPE_950);
+    ASSERT_EQ(aclrtSetDevice(RANK_ID), ACL_SUCCESS);
+    ASSERT_EQ(Sim_HcclCommInitClusterInfo(topoMeta_, RANK_ID, &comm_), HCCL_SUCCESS);
+    ASSERT_NE(comm_, nullptr);
+
+    const uint8_t allToAllVType = static_cast<uint8_t>(HcclCMDType::HCCL_CMD_ALLTOALLV);
+    // AICPU 引擎：该拓扑点命中 AicpuAllToAllVSoleMeshMultiJetty（meshEq=Yes 且 rank>=5 的
+    // else 支条目；AicpuAllToAllVSoleMesh 的 meshEq=Yes 条目仅 rank 2..4）
+    void* ccArgsAicpu = MakeCcArgs(static_cast<uint8_t>(OpExecuteConfig::AICPU_TS), nullptr);
+    ASSERT_NE(ccArgsAicpu, nullptr);
+    const std::vector<std::string> aicpuList = QueryAndParseAlgList(comm_, allToAllVType, ccArgsAicpu);
+    const std::set<std::string> aicpuUniq(aicpuList.begin(), aicpuList.end());
+    EXPECT_EQ(aicpuUniq.count("sole[mesh.multi_channel]"), 1U); // MultiJetty 外部名（真拓扑端到端主路径）
+    EXPECT_EQ(aicpuUniq.count("sole[mesh]"), 0U); // SoleMesh 外部名（rank 8 超其 2..4 条目不命中）
+
+    // CCU 引擎：一层 MESH_1D_CLOS 非 pcieMix 归属 CcuSchedAllToAllVSoleMeshMultiJetty
+    // （upstream 23553cf3e8 已合入；pattern meshEq 两态 × rank<=64，8P 必命中）→ 名单含
+    // 其外部名（真拓扑端到端验证 CCU 查询面）
+    void* ccArgsCcu = MakeCcArgs(static_cast<uint8_t>(OpExecuteConfig::CCU_SCHED), nullptr);
+    ASSERT_NE(ccArgsCcu, nullptr);
+    const std::vector<std::string> ccuList = QueryAndParseAlgList(comm_, allToAllVType, ccArgsCcu);
+    const std::set<std::string> ccuUniq(ccuList.begin(), ccuList.end());
+    EXPECT_EQ(ccuUniq.count("sole[mesh.multi_channel]"), 1U);
+    EXPECT_FALSE(ccuList.empty());
+
+    // ALLGATHER 同拓扑（CCU 引擎）：一层 Mesh 走 CcuSchedAllGatherSoleMesh 条目1 → 名单非空
+    void* ccArgsAg = MakeCcArgs(static_cast<uint8_t>(OpExecuteConfig::CCU_SCHED), nullptr);
+    ASSERT_NE(ccArgsAg, nullptr);
+    const std::vector<std::string> agList =
+        QueryAndParseAlgList(comm_, static_cast<uint8_t>(HcclCMDType::HCCL_CMD_ALLGATHER), ccArgsAg);
+    EXPECT_EQ(std::set<std::string>(agList.begin(), agList.end()).count("sole[mesh]"), 1U);
+
+    EXPECT_EQ(Mc2FreeCcArgs(ccArgsAicpu), HCCL_SUCCESS);
+    EXPECT_EQ(Mc2FreeCcArgs(ccArgsCcu), HCCL_SUCCESS);
+    EXPECT_EQ(Mc2FreeCcArgs(ccArgsAg), HCCL_SUCCESS);
+}
+
+// 并发首调：多线程同时首次调 Mc2GetSupportAlgList（压 CandidateTable 静态构建路径），
+// 各线程名单一致且等于单线程基线。
+TEST_F(AicpuMc2Test, GetSupportAlgListConcurrentFirstCall)
+{
+    const uint8_t allGatherType = static_cast<uint8_t>(HcclCMDType::HCCL_CMD_ALLGATHER);
+    void* ccArgs = MakeCcArgs(static_cast<uint8_t>(OpExecuteConfig::CCU_SCHED), nullptr);
+    ASSERT_NE(ccArgs, nullptr);
+
+    const std::vector<std::string> baseline = QueryAndParseAlgList(comm_, allGatherType, ccArgs);
+
+    constexpr uint32_t THREAD_NUM = 8U;
+    std::vector<std::vector<std::string>> results(THREAD_NUM);
+    std::vector<std::thread> workers;
+    for (uint32_t i = 0U; i < THREAD_NUM; ++i) {
+        workers.emplace_back([this, allGatherType, ccArgs, &results, i]() {
+            results[i] = QueryAndParseAlgList(comm_, allGatherType, ccArgs);
+        });
+    }
+    for (auto& worker : workers) {
+        worker.join();
+    }
+    for (uint32_t i = 0U; i < THREAD_NUM; ++i) {
+        EXPECT_EQ(results[i], baseline) << "thread[" << i << "] 名单与基线不一致";
+    }
+    EXPECT_EQ(Mc2FreeCcArgs(ccArgs), HCCL_SUCCESS);
 }
 
 } // namespace

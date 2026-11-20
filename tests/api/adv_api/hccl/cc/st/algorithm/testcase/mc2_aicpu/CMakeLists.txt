@@ -43,6 +43,7 @@ add_executable(
     ${CC_SRC}/common/hccl_alloc_ctx_res.cc
     ${CC_SRC}/ops/op_common/external_alg/external_alg_rules.cc
     ${CC_SRC}/ops/op_common/external_alg/external_alg_resolver.cc
+    ${CC_SRC}/ops/op_common/external_alg/topo_pattern.cc
     ${CC_SRC}/ops/op_common/topo/physical_level_build.cc
     ${CC_SRC}/ops/op_common/topo/physical_level_normalize.cc
 )

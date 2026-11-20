@@ -16,21 +16,18 @@
 
 namespace mc2_ops_hccl {
 
-// 零侵入复用 AutoSelectorBase 的 const 成员函数（类无状态，单实例安全）
 namespace {
-const AutoSelectorBase kRuleSelectorBase;
-
 constexpr u64 RS_2P_DETOUR_DATA_SIZE = 4ULL * 1024 * 1024;                 // 4MB
 constexpr u64 RS_1D_TWO_LEVEL_DATA_SIZE_THRESHOLD = 1536ULL * 1024 * 1024; // 1536MB
 } // namespace
 
-// 两层阈值取 RS 值 1536MB（AG 是 1GB；本条件仅 RS 候选消费）
+// 两层阈值取 RS 值 1536MB（AG 是 1GB；本条件仅 RS 候选消费）。
+// 拓扑面（twoLevelNet）已由 ZAxisDetour 的 TopoPattern 承载（spec D2，模式匹配先于谓词，
+// AND 交换律选名不变），谓词只留数据量条件。rank>=3 总量支虽被模式 rankSize={2,2} 在模式
+// 遮蔽不可达，谓词级保留保语义完整（CondZAxisAlignsWithHccl 覆盖）
 bool CondZAxis(const TopoInfoWithNetLayerDetails* topo, const OpParam& opParam)
 {
     if (topo == nullptr) {
-        return false;
-    }
-    if (!kRuleSelectorBase.IsTwoLevelNetLayer(topo)) {
         return false;
     }
     const u64 dataSize = opParam.DataDes.count * DATATYPE_SIZE_TABLE[opParam.DataDes.dataType];
@@ -56,7 +53,7 @@ bool CondPeerOnly(const TopoInfoWithNetLayerDetails* topo, const OpParam& opPara
     }
     const uint32_t peerRank = (topo->userRank == 0U) ? 1U : 0U;
 
-    // 引擎协议优先级与建链同源（漏斗① EngineMatch 先于②，谓词求值时 param.engine 即候选行引擎）
+    // 引擎协议优先级与建链同源（EngineMatch 先于谓词，谓词求值时 param.engine 即候选行引擎）
     std::vector<CommProtocol> expectedProtocols;
     if (GetProtocolByEngine(opParam, expectedProtocols) != HCCL_SUCCESS || expectedProtocols.empty()) {
         return false;
@@ -105,40 +102,6 @@ bool CondSpecialDt(const TopoInfoWithNetLayerDetails* topo, const OpParam& opPar
     return Is64BitDataType(opParam.DataDes.dataType) || opParam.reduceType == HcclReduceOp::HCCL_REDUCE_PROD;
 }
 
-bool FlagPcieMix(const TopoInfoWithNetLayerDetails* topo)
-{
-    if (topo == nullptr) {
-        return false;
-    }
-    return topo->level0Topo == Level0Shape::MESH_1D_CLOS && topo->level0PcieMix &&
-           !kRuleSelectorBase.IsLayerAllConnetedWithTopo(topo, 0U, CommTopo::COMM_TOPO_1DMESH);
-}
-
-bool FlagUbx(const TopoInfoWithNetLayerDetails* topo)
-{
-    if (topo == nullptr) {
-        return false;
-    }
-    return topo->level0Topo == Level0Shape::MESH_1D_CLOS && !topo->level0PcieMix;
-}
-
-bool FlagMultiLevel(const TopoInfoWithNetLayerDetails* topo)
-{
-    if (topo == nullptr) {
-        return false;
-    }
-    return topo->topoLevelNums > 1U && topo->level0Topo == Level0Shape::MESH_1D;
-}
-
-// A2A 裸名专用
-bool FlagFlat1D(const TopoInfoWithNetLayerDetails* topo)
-{
-    if (topo == nullptr) {
-        return false;
-    }
-    return topo->level0Topo != Level0Shape::MESH_1D_CLOS;
-}
-
 // DPU 行服务 CPU 引擎请求；AICPU 行兼容 AICPU_TS
 bool EngineMatch(AlgEngine candEngine, const OpParam& opParam)
 {
@@ -164,25 +127,9 @@ constexpr VariantCond VARIANT_COND_BINDING[VARIANT_COND_COUNT] = {
     CondPeerOnly,  // COND_PEER_ONLY
     CondSpecialDt, // COND_SPECIAL_DT
 };
-constexpr MachineFlag MACHINE_FLAG_BINDING[MACHINE_FLAG_COUNT] = {
-    FlagPcieMix,    // FLAG_PCIE_MIX
-    FlagUbx,        // FLAG_UBX
-    FlagMultiLevel, // FLAG_MULTI_LEVEL
-    FlagFlat1D,     // FLAG_FLAT_1D
-};
 
 // 枚举新增槽位而内表漏填时尾部为 nullptr，编译期拦截
 constexpr bool NoHole(const VariantCond* table, int count)
-{
-    for (int i = 0; i < count; ++i) {
-        if (table[i] == nullptr) {
-            return false;
-        }
-    }
-    return true;
-}
-
-constexpr bool NoHole(const MachineFlag* table, int count)
 {
     for (int i = 0; i < count; ++i) {
         if (table[i] == nullptr) {
@@ -196,12 +143,7 @@ constexpr bool NoHole(const MachineFlag* table, int count)
 static_assert(VARIANT_COND_BINDING[COND_Z_AXIS] == CondZAxis, "table binding drifted");
 static_assert(VARIANT_COND_BINDING[COND_PEER_ONLY] == CondPeerOnly, "table binding drifted");
 static_assert(VARIANT_COND_BINDING[COND_SPECIAL_DT] == CondSpecialDt, "table binding drifted");
-static_assert(MACHINE_FLAG_BINDING[FLAG_PCIE_MIX] == FlagPcieMix, "table binding drifted");
-static_assert(MACHINE_FLAG_BINDING[FLAG_UBX] == FlagUbx, "table binding drifted");
-static_assert(MACHINE_FLAG_BINDING[FLAG_MULTI_LEVEL] == FlagMultiLevel, "table binding drifted");
-static_assert(MACHINE_FLAG_BINDING[FLAG_FLAT_1D] == FlagFlat1D, "table binding drifted");
 static_assert(NoHole(VARIANT_COND_BINDING, VARIANT_COND_COUNT), "variant cond binding has holes");
-static_assert(NoHole(MACHINE_FLAG_BINDING, MACHINE_FLAG_COUNT), "machine flag binding has holes");
 
 const VariantCond VARIANT_COND_TABLE[VARIANT_COND_COUNT] = {
     VARIANT_COND_BINDING[COND_Z_AXIS],
@@ -209,22 +151,9 @@ const VariantCond VARIANT_COND_TABLE[VARIANT_COND_COUNT] = {
     VARIANT_COND_BINDING[COND_SPECIAL_DT],
 };
 
-const MachineFlag MACHINE_FLAG_TABLE[MACHINE_FLAG_COUNT] = {
-    MACHINE_FLAG_BINDING[FLAG_PCIE_MIX],
-    MACHINE_FLAG_BINDING[FLAG_UBX],
-    MACHINE_FLAG_BINDING[FLAG_MULTI_LEVEL],
-    MACHINE_FLAG_BINDING[FLAG_FLAT_1D],
-};
-
 const char* VariantCondName(int id)
 {
     static const char* NAMES[VARIANT_COND_COUNT] = {"COND_Z_AXIS", "COND_PEER_ONLY", "COND_SPECIAL_DT"};
     return (id >= 0 && id < VARIANT_COND_COUNT) ? NAMES[id] : "n/a";
-}
-
-const char* MachineFlagName(int id)
-{
-    static const char* NAMES[MACHINE_FLAG_COUNT] = {"FLAG_PCIE_MIX", "FLAG_UBX", "FLAG_MULTI_LEVEL", "FLAG_FLAT_1D"};
-    return (id >= 0 && id < MACHINE_FLAG_COUNT) ? NAMES[id] : "n/a";
 }
 } // namespace mc2_ops_hccl

@@ -26,6 +26,7 @@
 #include "ccu_temp_all_to_all_mesh_1D.h"
 #endif
 #include "alg_meta_registry.h"
+#include "all_to_all_v_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -325,7 +326,8 @@ REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMesh, InsV2AlltoAllVSoleExecutor, TopoMatch1D,
     InsTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMesh, AlgEngine::AICPU, "sole[mesh]", COND_NONE, FLAG_NONE, 0);
+    HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMesh, AlgEngine::AICPU, "sole[mesh]", COND_NONE,
+    kAicpuAllToAllVSoleMeshPatterns, 0);
 // 对齐 hccl ins_v2_all_to_all_v_sole_executor.cc:611-620：AicpuAllToAllVSolePairwise（跨框 MESH_1D
 // pairwise 配对模板，TopoMatchOneLevel 单层扁平化 hierarchy）；topo 约束
 // （MESH_1D 多级 + 每框 8 卡 + rankSize%16==0 + level0Symmetric + <=128P）由
@@ -336,55 +338,61 @@ REGISTER_EXEC_V2(
     InsTempAllToAllVPairwise);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSolePairwise, AlgEngine::AICPU, "sole[mesh.pairwise]", COND_NONE,
-    FLAG_NONE, 0);
+    kAicpuAllToAllVSolePairwisePatterns, 0);
+// 手写模式（spec §7.2，模式镜像 hccl 分支，devkit selector 恒选多通道 token 不选本算法）：
+// SingleChannel 是 sole[mesh.single_channel] 键的独占候选，定名 len=0 跳过 TOTAL 子句不影响本键
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMeshSingleChannel, InsV2AlltoAllVSoleExecutor, TopoMatch1D,
     InsTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMeshSingleChannel, AlgEngine::AICPU, "sole[mesh.single_channel]",
-    COND_NONE, FLAG_NONE, 0);
+    COND_NONE, kAicpuAllToAllSoleMeshSingleChannelPatterns, 0);
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMesh, InsV2AlltoAllVSoleExecutor, TopoMatch1D,
     InsTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMesh, AlgEngine::AICPU, "sole[mesh]", COND_NONE, FLAG_FLAT_1D, 0);
+    HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMesh, AlgEngine::AICPU, "sole[mesh]", COND_NONE,
+    kAicpuAllToAllSoleMeshPatterns, 0);
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMeshUBX, InsV2AlltoAllVSoleExecutor, TopoMatchUBX1d,
     InsTempUBXAllToAllVMesh1D);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMeshUBX, AlgEngine::AICPU, "sole[mesh]", COND_NONE, FLAG_UBX, 0);
+    HcclCMDType::HCCL_CMD_ALLTOALL, AicpuAllToAllSoleMeshUBX, AlgEngine::AICPU, "sole[mesh]", COND_NONE,
+    kAicpuAllToAllSoleMeshUBXPatterns, 0);
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMeshMultiJetty, InsV2AlltoAllVSoleExecutor, TopoMatchUBX,
     InsTempUBXAllToAllVMesh1D);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALLV, AicpuAllToAllVSoleMeshMultiJetty, AlgEngine::AICPU, "sole[mesh.multi_channel]",
-    COND_NONE, FLAG_UBX, 0);
+    COND_NONE, kAicpuAllToAllVSoleMeshMultiJettyPatterns, 0);
 
 #if !defined(AICPU_COMPILE) && MC2_CLIENT_ENABLE_CCU
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMesh, InsV2AlltoAllVSoleExecutor, TopoMatch1D,
     CcuTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMesh, AlgEngine::CCU, "sole[mesh]", COND_NONE, FLAG_NONE, 0);
+    HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMesh, AlgEngine::CCU, "sole[mesh]", COND_NONE,
+    kCcuSchedAllToAllVSoleMeshPatterns, 0);
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMeshMultiJetty, InsV2AlltoAllVSoleExecutor, TopoMatchUBX1d,
     CcuTempAlltoAllVMesh1D);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALLV, CcuSchedAllToAllVSoleMeshMultiJetty, AlgEngine::CCU, "sole[mesh.multi_channel]",
-    COND_NONE, FLAG_UBX, 0);
+    COND_NONE, kCcuSchedAllToAllVSoleMeshMultiJettyPatterns, 0);
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALL, CcuSchedAllToAllMesh1DMultiJetty, InsV2AlltoAllVSoleExecutor, TopoMatchUBX1d,
     CcuTempAllToAllMesh1DMultiJetty);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLTOALL, CcuSchedAllToAllMesh1DMultiJetty, AlgEngine::CCU, "sole[mesh.multi_channel]",
-    COND_NONE, FLAG_UBX, 0);
+    COND_NONE, kCcuSchedAllToAllMesh1DMultiJettyPatterns, 0);
 #endif
 #ifndef AICPU_COMPILE
 REGISTER_EXEC_V2(
     HcclCMDType::HCCL_CMD_ALLTOALL, CcuSchedAllToAllSoleMesh, InsV2AlltoAllVSoleExecutor, TopoMatch1D,
     CcuTempAlltoAllMesh1D);
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_ALLTOALL, CcuSchedAllToAllSoleMesh, AlgEngine::CCU, "sole[mesh]", COND_NONE, FLAG_NONE, 0);
+    HcclCMDType::HCCL_CMD_ALLTOALL, CcuSchedAllToAllSoleMesh, AlgEngine::CCU, "sole[mesh]", COND_NONE,
+    kCcuSchedAllToAllSoleMeshPatterns, 0);
 #endif
 
 } // namespace mc2_ops_hccl

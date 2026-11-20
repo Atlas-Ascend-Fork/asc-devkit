@@ -16,6 +16,7 @@
 #include "ins_temp_all_gather_omnipipe_nhr.h"
 #include "omnipipe_data_slice_calc.h"
 #include "alg_meta_registry.h"
+#include "all_reduce_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -722,6 +723,6 @@ REGISTER_EXEC_V2_MULTI(
     InsTempAllGatherOmniPipeMesh1D, InsTempAllGatherOmniPipeNHR, InsTempAllGatherOmniPipeNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLREDUCE, AicpuAllReducePipeLinePcie, AlgEngine::AICPU, "pipeline[mesh,nhr]", COND_NONE,
-    FLAG_PCIE_MIX, 0);
+    kAicpuAllReducePipeLinePciePatterns, 0);
 
 } // namespace mc2_ops_hccl

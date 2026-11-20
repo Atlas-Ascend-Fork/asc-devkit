@@ -22,6 +22,7 @@
 #include "topo_match_two_level.h"
 #include "omnipipe_template_utils.h"
 #include "alg_meta_registry.h"
+#include "all_gather_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -680,13 +681,13 @@ REGISTER_EXEC_V2_MULTI(
     InsTempAllGatherOmniPipeMesh1D, InsTempAllGatherOmniPipeNHR, InsTempAllGatherOmniPipeNHRDPU);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, AicpuAllGatherPipeLineMeshNHR, AlgEngine::AICPU, "pipeline[mesh,nhr]", COND_NONE,
-    FLAG_UBX, 0);
+    kAicpuAllGatherPipeLineMeshNHRPatterns, 0);
 
 REGISTER_EXEC_V2_MULTI(
     HcclCMDType::HCCL_CMD_ALLGATHER, AicpuAllGatherPipeLinePcie, InsV2AllGatherOmniPipeExecutor, TopoMatchPcieMix,
     InsTempAllGatherOmniPipeMesh1D, InsTempAllGatherOmniPipeNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, AicpuAllGatherPipeLinePcie, AlgEngine::AICPU, "pipeline[mesh,nhr]", COND_NONE,
-    FLAG_PCIE_MIX, 0);
+    kAicpuAllGatherPipeLinePciePatterns, 0);
 
 } // namespace mc2_ops_hccl

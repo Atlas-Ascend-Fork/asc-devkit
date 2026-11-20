@@ -11,8 +11,9 @@
 # ==========================================================================================================
 # Target : HCCL 外部算法名映射专属 UT
 # 与 AIC 目标 (-DAICPU_COMPILE) 不同，本目标无 AICPU 守卫且 -DMC2_CLIENT_ENABLE_CCU=1，
-# 全量编译所有注册现场（15 个 executor 文件 / 全部 selector / template），46 行 sidecar 全部注册，
-# 承载 external_alg 全部 UT（含 V2 注册表与 AlgMetaRegistry 的满射断言与 46 行精确锚）。
+# 全量编译所有注册现场（18 个 executor 文件 / 全部 selector / template），55 行 sidecar 全部注册
+# （COLL_CMDS 域内 54 行 + HALF_ALLTOALLV 域外 1 行），承载 external_alg 全部 UT
+# （含 V2 注册表与 AlgMetaRegistry 的满射断言与 54 行精确锚）。
 # ==========================================================================================================
 set(HCCL_EXTERNAL_ALG_TARGET ascendc_ut_hccl_cc_external_alg)
 set(HCCL_CC_SRC_DIR ${ASCENDC_DIR}/impl/adv_api/detail/hccl/cc/src)
@@ -29,9 +30,9 @@ set(EXT_ALG_UTILS_TOPO_MODEL_DIR ${EXT_ALG_UTILS_HCCL_PROXY_DIR}/topo_model)
 # ---- 增长面：注册现场全量收集（未来新增算法文件自动纳入满射断言守护，免人肉同步）----
 # executor/selector 只收 4 个集合通信算子目录；不收 kfc_server——若编入将注册（本目标
 # AICPU_COMPILE / HCCL_CANN_COMPAT_850 均未定义，ins_kfc_server_sole_executor.cc 的注册行
-# 生效），超出 46 行 sidecar 范围，故 GLOB 不收；interface_graph_mode 无 executor/selector/
+# 生效），超出 55 行 sidecar 范围，故 GLOB 不收；interface_graph_mode 无 executor/selector/
 # template，天然不收。
-# 局限：未来新增 ops/<new_op>/executor 目录不会被本 GLOB 收集，且 46 锚对新 cmd 静默——
+# 局限：未来新增 ops/<new_op>/executor 目录不会被本 GLOB 收集，且 54 锚对新 cmd 静默——
 # 新增 op 时需同步本清单与测试侧 COLL_CMDS。
 file(GLOB EXT_ALG_EXECUTORS CONFIGURE_DEPENDS
     ${HCCL_CC_SRC_DIR}/ops/all_gather/executor/*.cc
@@ -51,12 +52,12 @@ file(GLOB EXT_ALG_TEMPLATES CONFIGURE_DEPENDS
     ${HCCL_CC_SRC_DIR}/ops/*/template/ccu/kernel/*.cc)
 # kfc_server 模板经 ops/*/template/ccu 通配进入，剔除：若编入将注册（本目标
 # AICPU_COMPILE / HCCL_CANN_COMPAT_850 均未定义，kfc_server 注册行生效），超出
-# 46 行 sidecar 范围，故 GLOB 不收
+# 55 行 sidecar 范围，故 GLOB 不收
 list(FILTER EXT_ALG_TEMPLATES EXCLUDE REGEX "kfc_server")
 list(FILTER EXT_ALG_TEMPLATES EXCLUDE REGEX "_a6\.cc$")
 # 与产品构建对齐：all_gather / reduce_scatter 的 Legacy direct-launch ccu 模板产品已停编
 # （对应各 template/ccu/CMakeLists.txt 的注释行，原由：引用已废弃的旧 hcomm::CcuKernelArg
-# API，当前头文件体系下不可编）。46 行 sidecar 的注册行均不引用它们（CCU 注册只引用
+# API，当前头文件体系下不可编）。55 行 sidecar 的注册行均不引用它们（CCU 注册只引用
 # KFC Mem2Mem 系列与 all_to_all_v direct-launch 系列，后者用现行 CcuKernelArgBase API）。
 # all_reduce / all_to_all_v 的 ccu 模板产品全编，无需排除。
 set(EXT_ALG_EXCLUDED_TEMPLATES
@@ -106,6 +107,7 @@ set(EXT_ALG_FIXED_SOURCES
     ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/alg_meta_registry.cc
     ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/external_alg_resolver.cc
     ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/external_alg_rules.cc
+    ${HCCL_CC_SRC_DIR}/ops/op_common/external_alg/topo_pattern.cc
     # common 链（hccl_alloc_ctx_res / hccl_mc2 及其依赖）
     ${HCCL_CC_SRC_DIR}/common/hccl_alloc_ctx_res.cc
     ${HCCL_CC_SRC_DIR}/common/hccl_mc2.cc
@@ -208,6 +210,8 @@ add_executable(${HCCL_EXTERNAL_ALG_TARGET}
     ../main.cc
     external_alg_testcase.cc
     external_alg_full_testcase.cpp
+    test_topo_pattern.cpp
+    test_pattern_differential.cpp
     ../half_alltoallv_selector_testcase.cc
     ${EXT_ALG_EXECUTORS}
     ${EXT_ALG_SELECTORS}

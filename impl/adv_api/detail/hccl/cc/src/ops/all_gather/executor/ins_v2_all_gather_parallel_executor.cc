@@ -23,6 +23,7 @@
 #include "topo_match_multilevel.h"
 #include "topo_match_ubx.h"
 #include "alg_meta_registry.h"
+#include "all_gather_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -585,26 +586,26 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     InsTempAllGatherMesh1D, InsTempAllGatherNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, InsAllGatherParallelMesh1DNHR, AlgEngine::AICPU, "parallel[mesh,nhr]", COND_NONE,
-    FLAG_MULTI_LEVEL, 0);
+    kInsAllGatherParallelMesh1DNHRPatterns, 0);
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_ALLGATHER, InsAllGatherParallelMesh1DNHRMultiJetty, InsV2AllGatherParallelExecutor,
     TopoMatchUBX, InsTempAllGatherMesh1D, InsTempAllGatherNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, InsAllGatherParallelMesh1DNHRMultiJetty, AlgEngine::AICPU,
-    "parallel[mesh,nhr.multi_channel]", COND_NONE, FLAG_UBX, 0);
+    "parallel[mesh,nhr.multi_channel]", COND_NONE, kInsAllGatherParallelMesh1DNHRMultiJettyPatterns, 0);
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_ALLGATHER, InsAllGatherParallelMesh1DNHRPcie, InsV2AllGatherParallelExecutor,
     TopoMatchPcieMix, InsTempAllGatherMesh1D, InsTempAllGatherNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, InsAllGatherParallelMesh1DNHRPcie, AlgEngine::AICPU, "parallel[mesh,nhr]",
-    COND_NONE, FLAG_PCIE_MIX, 0);
+    COND_NONE, kInsAllGatherParallelMesh1DNHRPciePatterns, 0);
 #if !defined(AICPU_COMPILE) && MC2_CLIENT_ENABLE_CCU
 REGISTER_EXECUTOR_BY_TWO_TEMPS(
     HcclCMDType::HCCL_CMD_ALLGATHER, CcuSchedAllGatherParallelMeshNHRMultiLink, InsV2AllGatherParallelExecutor,
     TopoMatchUBX, CcuTempKfcAllGatherMesh1DMem2Mem, CcuTempKfcAllGatherNHR1DMultiJettyMem2Mem);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, CcuSchedAllGatherParallelMeshNHRMultiLink, AlgEngine::CCU,
-    "parallel[mesh,nhr.multi_channel]", COND_NONE, FLAG_UBX, 0);
+    "parallel[mesh,nhr.multi_channel]", COND_NONE, kCcuSchedAllGatherParallelMeshNHRMultiLinkPatterns, 0);
 #endif
 } // namespace mc2_ops_hccl
 // 算法注册

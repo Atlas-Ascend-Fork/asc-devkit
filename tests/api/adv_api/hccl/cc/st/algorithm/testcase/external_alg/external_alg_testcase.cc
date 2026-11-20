@@ -159,10 +159,10 @@ TEST(ExtAlgV2Registry, EnumerateRegisteredTags)
 {
     auto& registry = CollAlgExecRegistryV2::Instance();
     const std::vector<std::string> agTags = registry.GetRegisteredTags(HcclCMDType::HCCL_CMD_ALLGATHER);
-    // 本目标全量编译（-DMC2_CLIENT_ENABLE_CCU=1，无 AICPU_COMPILE 守卫裁剪），AG 应为 13 条：
-    // 10 条 AICPU 注册（含 omnipipe）+ 4 条 CCU 注册（CcuSchedAllGatherSoleMesh /
-    // CcuSchedAllGatherSoleNHR / CcuSchedAllGatherParallelMeshNHRMultiLink /
-    // CcuSchedAllGatherConcurMeshNHRMultiLink）；
+    // 本目标全量编译（-DMC2_CLIENT_ENABLE_CCU=1，无 AICPU_COMPILE 守卫裁剪），AG 应为 15 条：
+    // 10 条 AICPU 注册（含 omnipipe）+ 1 条 DPU 注册（InsAllGatherMeshNhrDPU）+ 4 条 CCU 注册
+    // （CcuSchedAllGatherSoleMesh / CcuSchedAllGatherSoleNHR / CcuSchedAllGatherParallelMeshNHRMultiLink /
+    // CcuSchedAllGatherConcurMeshNHRMultiLink）；InsAllGatherParallelMesh1DNHRUBX 注册已删除；
     // 此断言同时防止枚举接口漏实现
     EXPECT_FALSE(agTags.empty());
     for (const std::string& tag : agTags) {
@@ -183,6 +183,28 @@ TEST(ExtAlgMetaRegistry, RegisterAndQuery)
     EXPECT_EQ(std::string(meta->externalName), "sole[mesh]");
 }
 
+// Register 空 patterns 防御：count==0 的行（零长数组或缺省聚合）经 MatchAnyPattern 对 0
+// 条模式恒不命中——入库即永不可选的静默死行，须注册期拒绝且不入库（HCCL_E_PARA + Get 查无）。
+// 宏路径由 PatternCountOf 的数组引用推导天然免疫零长数组（N=0 推导失败即编译错），此防御覆盖
+// 绕过宏的直接 Register 调用。KFC cmd 不触碰满射断言的 5 个 COLL_CMDS；拒绝的行不入库，
+// 54/55 行计数锚与候选表均不受影响
+TEST(ExtAlgMetaRegistry, RegisterRejectsEmptyPatternArray)
+{
+    static const TopoPattern kEmptyPatterns[] = {}; // 零长数组：合法指针 + count 0
+    const AlgMeta emptyArrMeta{AlgEngine::AICPU, "sole[mesh]", COND_NONE, kEmptyPatterns, 0U, 0};
+    EXPECT_EQ(
+        AlgMetaRegistry::Instance().Register(HcclCMDType::HCCL_CMD_KFC_SERVER, "TestEmptyPatternArray", emptyArrMeta),
+        HCCL_E_PARA);
+    // 缺省聚合（patterns nullptr / count 0，漏写 patterns 字段的直接构造形态）同拒
+    const AlgMeta defaultMeta{AlgEngine::AICPU, "sole[mesh]", COND_NONE};
+    EXPECT_EQ(
+        AlgMetaRegistry::Instance().Register(HcclCMDType::HCCL_CMD_KFC_SERVER, "TestDefaultPatternMeta", defaultMeta),
+        HCCL_E_PARA);
+    // 拒绝的行不入库（防死行被 Get/候选表误消费）
+    EXPECT_EQ(AlgMetaRegistry::Instance().Get(HcclCMDType::HCCL_CMD_KFC_SERVER, "TestEmptyPatternArray"), nullptr);
+    EXPECT_EQ(AlgMetaRegistry::Instance().Get(HcclCMDType::HCCL_CMD_KFC_SERVER, "TestDefaultPatternMeta"), nullptr);
+}
+
 namespace {
 const HcclCMDType COLL_CMDS[] = {
     HcclCMDType::HCCL_CMD_ALLGATHER, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, HcclCMDType::HCCL_CMD_ALLREDUCE,
@@ -191,8 +213,10 @@ const HcclCMDType COLL_CMDS[] = {
 } // namespace
 
 // 不变量：V2 注册表 ↔ AlgMetaRegistry 双向满射。本目标全量编译所有注册现场
-// （15 个 executor 文件，-DMC2_CLIENT_ENABLE_CCU=1 且无 AICPU_COMPILE 守卫裁剪），可见全部
-// 57 行 sidecar——按 cmd 分布：AG 15 / RS 18 / AR 10 / A2A 7 / A2AV 7。
+// （18 个 executor 文件，-DMC2_CLIENT_ENABLE_CCU=1 且无 AICPU_COMPILE 守卫裁剪），可见全部
+// 58 行 sidecar（COLL_CMDS 域内 57 行 + HALF_ALLTOALLV 域外 1 行）——COLL_CMDS 按 cmd 分布：
+// AG 15 / RS 18 / AR 10 / A2A 7 / A2AV 7（含 upstream 新迁 CcuSchedAllToAllVSoleMeshMultiJetty）。 Mc2GetSupportAlgList
+// TopoPattern 化
 TEST(ExtAlgSurjectivity, V2AndMetaRegistryAreBijective)
 {
     for (HcclCMDType cmd : COLL_CMDS) {
@@ -207,13 +231,13 @@ TEST(ExtAlgSurjectivity, V2AndMetaRegistryAreBijective)
         std::sort(metaNames.begin(), metaNames.end());
         EXPECT_EQ(v2Tags, metaNames) << "cmd=" << static_cast<u32>(cmd);
     }
-    // 各 cmd 精确分布锚（AG 15 / RS 18 / AR 10 / A2A 7 / A2AV 5 = 55），失败时定位更直接
+    // 各 cmd 精确分布锚（AG 15 / RS 18 / AR 10 / A2A 7 / A2AV 5 + AR SoleNHR pattern 补挂 = 55），失败时定位更直接
     EXPECT_EQ(CollAlgExecRegistryV2::Instance().GetRegisteredTags(HcclCMDType::HCCL_CMD_ALLGATHER).size(), 15U);
     EXPECT_EQ(CollAlgExecRegistryV2::Instance().GetRegisteredTags(HcclCMDType::HCCL_CMD_REDUCE_SCATTER).size(), 18U);
     EXPECT_EQ(CollAlgExecRegistryV2::Instance().GetRegisteredTags(HcclCMDType::HCCL_CMD_ALLREDUCE).size(), 10U);
     EXPECT_EQ(CollAlgExecRegistryV2::Instance().GetRegisteredTags(HcclCMDType::HCCL_CMD_ALLTOALL).size(), 7U);
     EXPECT_EQ(CollAlgExecRegistryV2::Instance().GetRegisteredTags(HcclCMDType::HCCL_CMD_ALLTOALLV).size(), 7U);
-    // 本目标全量编译（MC2_CLIENT_ENABLE_CCU=1，无 AICPU_COMPILE）：57 行精确锚
+    // 本目标全量编译（MC2_CLIENT_ENABLE_CCU=1，无 AICPU_COMPILE）：58 行精确锚（COLL_CMDS 57 + HALF 1）
     size_t total = 0;
     for (HcclCMDType cmd : COLL_CMDS) {
         for (const AlgMetaRow& row : AlgMetaRegistry::Instance().GetAll()) {
@@ -223,6 +247,13 @@ TEST(ExtAlgSurjectivity, V2AndMetaRegistryAreBijective)
         }
     }
     EXPECT_EQ(total, 57U);
+    // 域外行（HALF_ALLTOALLV）双射锚：该 cmd 是 AllToAllvWrite 的辅助 cmd（Mc2AllToAllvWrite
+    // 内部派生下发），非用户外部名域——COLL_CMDS 循环与 54 锚有意不含；其单注册行的
+    // V2 tags ↔ meta registeredName 双射同样钉住（sidecar 与主注册脱离同生共死时先于计数漂移暴露）
+    EXPECT_EQ(
+        CollAlgExecRegistryV2::Instance().GetRegisteredTags(HcclCMDType::HCCL_CMD_HALF_ALLTOALLV),
+        (std::vector<std::string>{"CcuHalfAll2AllVMesh1D"}));
+    EXPECT_NE(AlgMetaRegistry::Instance().Get(HcclCMDType::HCCL_CMD_HALF_ALLTOALLV, "CcuHalfAll2AllVMesh1D"), nullptr);
 }
 
 // 不变量：注册行 externalName 字面量必须自身就是规范形（"与 parser 产出同构"的机器契约）。
@@ -231,7 +262,7 @@ TEST(ExtAlgSurjectivity, V2AndMetaRegistryAreBijective)
 TEST(ExtAlgSurjectivity, ExternalNameLiteralsAreCanonical)
 {
     const std::vector<AlgMetaRow> rows = AlgMetaRegistry::Instance().GetAll();
-    ASSERT_FALSE(rows.empty()); // 全量编译目标：56 行产品 sidecar + 测试夹具
+    ASSERT_FALSE(rows.empty()); // 全量编译目标：57 行产品 sidecar（COLL_CMDS 56 + HALF_ALLTOALLV 1）+ 测试夹具
     for (const AlgMetaRow& row : rows) {
         ExternalAlgSpec spec;
         std::string errMsg;
@@ -240,6 +271,22 @@ TEST(ExtAlgSurjectivity, ExternalNameLiteralsAreCanonical)
             << "\" err=" << errMsg;
         EXPECT_EQ(spec.canonical(), std::string(row.meta.externalName))
             << "registeredName=" << row.registeredName << "（字面量非规范形，将成为死行）";
+    }
+}
+
+// D18 JSON 零转义契约的机器验证：externalName 字符集白名单 = 标识符字符 + [ ] . , _——
+// 逗号是 sequence[mesh,nhr] / concur[mesh,mesh] 等多层名的既成分隔符（实测注册面在用，
+// 原设 [A-Za-z0-9_.\[\]] 漏列）。白名单外的任何字符（尤其需要 JSON 转义的 " 与 \）当场红：
+// Mc2GetSupportAlgList 的 C ABI 输出按名裸拼 JSON 数组，无转义路径，字符集越界即契约破坏
+TEST(ExtAlgSurjectivity, ExternalNameCharsetStaysJsonEscapeFree)
+{
+    for (const AlgMetaRow& row : AlgMetaRegistry::Instance().GetAll()) {
+        for (const char ch : std::string(row.meta.externalName)) {
+            const bool allowed = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') ||
+                                 ch == '_' || ch == '.' || ch == ',' || ch == '[' || ch == ']';
+            EXPECT_TRUE(allowed) << "registeredName=" << row.registeredName << " externalName=\""
+                                 << row.meta.externalName << "\" 含白名单外字符 '" << ch << "'";
+        }
     }
 }
 
@@ -254,6 +301,7 @@ TopoInfoWithNetLayerDetails MakeFlatMesh1DTopo(u32 rankSize = 8U)
     topo.serverNum = 1U;
     topo.topoLevelNums = 1U;
     topo.level0Topo = Level0Shape::MESH_1D;
+    topo.level0MeshType = Level0MeshType::SINGLE_DIE; // 真实 topo 对 MESH_1D 必填实际值（topo_host.cc）
     topo.netLayerDetails.netLayerNum = 1U;
     topo.netLayerDetails.netLayers = {0U};
     topo.netLayerDetails.localNetInsSizeOfLayer = {1U};
@@ -294,10 +342,32 @@ TopoInfoWithNetLayerDetails MakePcieMixTopo(u32 rankSize = 16U)
     return topo;
 }
 
+// UBX mesh == clos 形态（默认 4 卡）：concur 系算法要求 CheckMeshNumEqualToClosNum 命中且
+// rank <= 4，MakeUbxTopo 的 mesh 恒 8 卡覆盖不到 meshEqClos 分支——在其基础上把 level0 mesh
+// 卡数（rankNumForTopoType[COMM_TOPO_1DMESH]）改为与 CLOS 域一致（rankSize），其余字段沿用
+// UBX 不变量（localNetInsSizeOfLayer[0] == CLOS rank 数，topoInstDetailsOfLayer[CLOS] = rankSize）
+TopoInfoWithNetLayerDetails MakeUbxEqualTopo(u32 rankSize = 4U)
+{
+    TopoInfoWithNetLayerDetails topo = MakeUbxTopo(rankSize);
+    topo.topoInstDetailsOfLayer[0].rankNumForTopoType[COMM_TOPO_1DMESH] = {rankSize};
+    return topo;
+}
+
 TopoInfoWithNetLayerDetails MakeMultiLevelTopo(u32 rankSize = 16U)
 {
     TopoInfoWithNetLayerDetails topo = MakeFlatMesh1DTopo(rankSize);
     topo.topoLevelNums = 2U;
+    return topo;
+}
+
+// A2AV Pairwise 形态：IsSupportedTopology（ins_temp_all_to_all_v_pairwise.cc:51-58，与 selector
+// 共用守卫）要求多级 MESH_1D + level0Symmetric + 每框 8 卡 + rank 16 的倍数；MakeMultiLevelTopo
+// 未置 symmetric/deviceNumPerModule（各默认 false/0），在此补齐两字段
+TopoInfoWithNetLayerDetails MakePairwiseTopo(u32 rankSize = 16U)
+{
+    TopoInfoWithNetLayerDetails topo = MakeMultiLevelTopo(rankSize);
+    topo.level0Symmetric = true;
+    topo.deviceNumPerModule = 8U;
     return topo;
 }
 
@@ -328,9 +398,22 @@ TopoInfoWithNetLayerDetails MakeTwoLevelNetLayerTopo(u32 rankSize = 16U)
     topo.level0Topo = Level0Shape::MESH_1D;
     topo.netLayerDetails.netLayerNum = 2U;
     topo.netLayerDetails.netLayers = {0U, 1U};
-    topo.netLayerDetails.localNetInsSizeOfLayer = {2U, 1U}; // level0 实例数>1
+    topo.netLayerDetails.localNetInsSizeOfLayer = {2U, 1U}; // level0 本实例卡数>1
     topo.topoInstDetailsOfLayer.resize(2U);
     topo.topoInstDetailsOfLayer[1].rankNumForTopoType[COMM_TOPO_CLOS] = {rankSize}; // level1 有 CLOS
+    return topo;
+}
+
+// 单层 MESH_1D + 两层网（twoLevelNet 与 topoLevelNums 解耦形态）：IsTwoLevelNetLayer 读
+// localNetInsSizeOfLayer[0]（本实例卡数）不读 netInstNumOfLayer（实例总数），L0 单实例覆盖
+// 全卡（topoLevelNums=1）时两层网仍可为真——RS selector 的 twoLevel 分支
+// （SelectMeshAlgoAicpuForMesh1D，仅单层路径 :470-471 调用）与 ZAxisDetour 强制变体均定义在
+// 此形态上；MakeTwoLevelNetLayerTopo 写成 2 级拓扑（真实 selector 2 级走多级路径，永不读
+// twoLevelNet），模式化后 golden 用例改用本夹具表达真语义
+TopoInfoWithNetLayerDetails MakeSingleLevelTwoLevelNetTopo(u32 rankSize = 16U)
+{
+    TopoInfoWithNetLayerDetails topo = MakeTwoLevelNetLayerTopo(rankSize);
+    topo.topoLevelNums = 1U;
     return topo;
 }
 
@@ -348,13 +431,17 @@ OpParam MakeOpParam(
 
 TEST(ExtAlgRules, CondZAxisAlignsWithHccl)
 {
-    // IsTwoLevelNetLayer && (2P 且 dataSize>=4MB 或 dataSize*rankSize>1536MB)
+    // (2P 且 dataSize>=4MB 或 dataSize*rankSize>1536MB)；两层网拓扑面已由 ZAxisDetour 的
+    // TopoPattern 承载（spec D2），谓词不查 IsTwoLevelNetLayer，数据量条件独立成立
     // dataSize = count × dtypeSize，FP32 为 4B/元素
     TopoInfoWithNetLayerDetails twoLevel = MakeTwoLevelNetLayerTopo();
     TopoInfoWithNetLayerDetails flat = MakeFlatMesh1DTopo();
 
-    EXPECT_FALSE(CondZAxis(&flat, MakeOpParam(HCCL_DATA_TYPE_FP32, 100U * 1024 * 1024))); // 非两层网
-    EXPECT_FALSE(CondZAxis(&twoLevel, MakeOpParam(HCCL_DATA_TYPE_FP32, 1024U)));          // 两层网小数据
+    // 非两层网 + 大数据：总量 400MB×8=3200MB > 1536MB，数据量支独立命中（旧谓词被
+    // IsTwoLevelNetLayer 前置拦截为 false，拓扑面移交 TopoPattern 后的谓词级预期变化；
+    // 定名侧由模式 twoLevelNet=Yes 补齐，选名不变）
+    EXPECT_TRUE(CondZAxis(&flat, MakeOpParam(HCCL_DATA_TYPE_FP32, 100U * 1024 * 1024)));
+    EXPECT_FALSE(CondZAxis(&twoLevel, MakeOpParam(HCCL_DATA_TYPE_FP32, 1024U))); // 小数据
     // 2P + 4MB 边界：1M FP32 元素恰为 4MB
     TopoInfoWithNetLayerDetails twoRank = MakeTwoLevelNetLayerTopo(2U);
     EXPECT_TRUE(CondZAxis(&twoRank, MakeOpParam(HCCL_DATA_TYPE_FP32, 1024U * 1024)));
@@ -498,30 +585,6 @@ TEST(ExtAlgRules, CondPeerOnlyNoCcuChannelOnAnyLayerMisses)
     DestroySimComm(comm);
 }
 
-TEST(ExtAlgRules, MachineFlagsAreMutuallyExclusive)
-{
-    TopoInfoWithNetLayerDetails flat = MakeFlatMesh1DTopo();
-    TopoInfoWithNetLayerDetails ubx = MakeUbxTopo();
-    TopoInfoWithNetLayerDetails pcie = MakePcieMixTopo();
-    TopoInfoWithNetLayerDetails multi = MakeMultiLevelTopo();
-
-    EXPECT_FALSE(FlagPcieMix(&flat));
-    EXPECT_FALSE(FlagUbx(&flat));
-    EXPECT_FALSE(FlagMultiLevel(&flat));
-    EXPECT_TRUE(FlagFlat1D(&flat));
-
-    EXPECT_TRUE(FlagUbx(&ubx));
-    EXPECT_FALSE(FlagPcieMix(&ubx));
-    EXPECT_FALSE(FlagFlat1D(&ubx));
-
-    EXPECT_TRUE(FlagPcieMix(&pcie));
-    EXPECT_FALSE(FlagUbx(&pcie));
-
-    EXPECT_TRUE(FlagMultiLevel(&multi));
-    EXPECT_FALSE(FlagUbx(&multi));
-    EXPECT_TRUE(FlagFlat1D(&multi));
-}
-
 TEST(ExtAlgRules, EngineMatchMatrix)
 {
     OpParam op = MakeOpParam();
@@ -568,25 +631,39 @@ TEST(ExtAlgResolver, GoldenAllEngines)
     TopoInfoWithNetLayerDetails multi = MakeMultiLevelTopo();
     TopoInfoWithNetLayerDetails clos = MakeSingleLevelClosTopo();
     TopoInfoWithNetLayerDetails twoLevel = MakeTwoLevelNetLayerTopo();
+    // 单层 twoLevelNet 形态（twoLevelNet 与 topoLevelNums 解耦，见夹具注释）：RS sole[mesh] 的
+    // twoLevelNet=Yes 模式面 / ZAxisDetour 拓扑面定义在此形态上
+    TopoInfoWithNetLayerDetails singleLevelTwoLevel = MakeSingleLevelTwoLevelNetTopo();
+    // UBX 4 卡 mesh == clos 形态：concur 系算法要求 CheckMeshNumEqualToClosNum 命中且 rank <= 4
+    // （MakeUbxTopo 的 mesh 恒 8 卡，覆盖不到 meshEqClos 分支）
+    TopoInfoWithNetLayerDetails ubxEqual = MakeUbxEqualTopo();
+    // A2AV Pairwise 形态：多级 MESH_1D + 对称 + 每框 8 卡 + 16 倍数 rank
+    // （真实 selector 由 IsSupportedTopology 前置守卫）
+    TopoInfoWithNetLayerDetails pairwise = MakePairwiseTopo();
 
     const Case cases[] = {
-        // ---- 纯查表组合（AICPU/DPU）----
+        // ---- 纯查表组合（AICPU/DPU）。AG 行模式化后拓扑须命中对应 TopoPattern
+        // （sole[nhr] 至少两层非 NHR；sole[nhr.multi_channel] 单层 CLOS；concur 系 UBX mesh == clos 且 rank <= 4）
         {HcclCMDType::HCCL_CMD_ALLGATHER, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_AICPU_TS, "InsAllGatherMesh1D"},
-        {HcclCMDType::HCCL_CMD_ALLGATHER, "sole[nhr]", &flat, CommEngine::COMM_ENGINE_AICPU_TS,
+        {HcclCMDType::HCCL_CMD_ALLGATHER, "sole[nhr]", &multi, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllGatherSoleNHR"},
-        {HcclCMDType::HCCL_CMD_ALLGATHER, "sole[nhr.multi_channel]", &flat, CommEngine::COMM_ENGINE_AICPU_TS,
+        {HcclCMDType::HCCL_CMD_ALLGATHER, "sole[nhr.multi_channel]", &clos, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllGatherSoleNHRMultiLink"},
         {HcclCMDType::HCCL_CMD_ALLGATHER, "parallel[mesh,nhr.multi_channel]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsAllGatherParallelMesh1DNHRMultiJetty"},
-        {HcclCMDType::HCCL_CMD_ALLGATHER, "concur[mesh,nhr]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
+        {HcclCMDType::HCCL_CMD_ALLGATHER, "concur[mesh,nhr]", &ubxEqual, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllGatherConcurMeshNHR"},
         {HcclCMDType::HCCL_CMD_ALLGATHER, "pipeline[mesh,nhr]", &pcie, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllGatherPipeLinePcie"},
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[mesh.chunk]", &flat, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuReduceScatterSoleMeshChunk"},
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sequence[mesh,nhr]", &multi, CommEngine::COMM_ENGINE_AICPU_TS,
+        // RS·sequence[mesh,nhr]：模式化后两层 Mesh 需 level0 本实例卡数 > 1（GT 例外）；
+        // multi 夹具 inst[0]==1 在真实 selector 走 :460 单实例支选 NHR，改 twoLevel 真命中
+        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sequence[mesh,nhr]", &twoLevel, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsReduceScatterSequenceMesh1DNhr"},
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "concur[mesh,nhr]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
+        // RS·concur[mesh,nhr]：模式面需全互联 mesh==clos（同 AG concur 先例用 ubxEqual；
+        // MakeUbxTopo 的 mesh 恒 8 卡覆盖不到 meshEqClos 分支）
+        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "concur[mesh,nhr]", &ubxEqual, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuReduceScatterConcurMeshNHR"},
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "pipeline[mesh,nhr]", &pcie, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuReduceScatterPipeLinePcie"},
@@ -598,70 +675,86 @@ TEST(ExtAlgResolver, GoldenAllEngines)
          "AicpuAllReduceSoleMeshChunkTwoShot"},
         {HcclCMDType::HCCL_CMD_ALLTOALL, "sole[mesh.single_channel]", &flat, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllToAllSoleMeshSingleChannel"},
-        {HcclCMDType::HCCL_CMD_ALLTOALL, "concur[mesh,mesh]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
+        // A2A·concur[mesh,mesh]：模式面需 mesh==clos 且 rank <= 4（AICPU 版 ELEMENT 子句在
+        // 定名 len=0 下跳过，拓扑面同 CCU 版），ubx 形态（mesh 8 != clos 16 且 rank 16）两候选
+        // 皆不命中——改 ubxEqual 真命中（同 AG concur 先例）
+        {HcclCMDType::HCCL_CMD_ALLTOALL, "concur[mesh,mesh]", &ubxEqual, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllToAllSoleMeshConcurrent"},
         {HcclCMDType::HCCL_CMD_ALLTOALLV, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllToAllVSoleMesh"},
-        {HcclCMDType::HCCL_CMD_ALLTOALLV, "sole[mesh.pairwise]", &multi, CommEngine::COMM_ENGINE_AICPU_TS,
+        // A2AV·sole[mesh.pairwise]：Pairwise 模式面 = 多级 MESH_1D + 对称 + 每框 8 卡 + 16 倍数
+        // rank（真实 selector 由 IsSupportedTopology 前置守卫），改 pairwise 夹具真命中
+        {HcclCMDType::HCCL_CMD_ALLTOALLV, "sole[mesh.pairwise]", &pairwise, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllToAllVSolePairwise"},
         {HcclCMDType::HCCL_CMD_ALLTOALLV, "sole[mesh.multi_channel]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllToAllVSoleMeshMultiJetty"},
-        {HcclCMDType::HCCL_CMD_ALLTOALLV, "concur[mesh,mesh]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
+        // A2AV·concur[mesh,mesh]：mesh==clos 且 rank <= 4（A2AV 版不读长度，无 len 子句），改
+        // ubxEqual 真命中
+        {HcclCMDType::HCCL_CMD_ALLTOALLV, "concur[mesh,mesh]", &ubxEqual, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllToAllVSoleMeshConcurrent"},
         // ---- 纯查表组合（CCU）----
         {HcclCMDType::HCCL_CMD_ALLGATHER, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllGatherSoleMesh"},
         {HcclCMDType::HCCL_CMD_ALLGATHER, "parallel[mesh,nhr.multi_channel]", &ubx, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllGatherParallelMeshNHRMultiLink"},
-        {HcclCMDType::HCCL_CMD_ALLGATHER, "concur[mesh,nhr.multi_channel]", &ubx, CommEngine::COMM_ENGINE_CCU,
+        {HcclCMDType::HCCL_CMD_ALLGATHER, "concur[mesh,nhr.multi_channel]", &ubxEqual, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllGatherConcurMeshNHRMultiLink"},
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr.multi_channel]", &ubx, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedReduceScatterSoleNHRMultiLink"},
-        // CCU·RS·sole[nhr]：无机型约束，flat/单层 CLOS/UBX 均直接命中
+        // CCU·RS·sole[nhr]：模式化后仅两层 Mesh（单实例 EQ 1）与单层 CLOS 命中；
+        // flat/UBX 真实 selector 走 SoleMesh/SoleNHRMultiLink（sole[mesh]/sole[nhr.multi_channel]
+        // 键），sole[nhr] 键全灭——见本测试尾部的 ERROR_INVALID 追加断言
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr]", &multi, CommEngine::COMM_ENGINE_CCU,
-         "CcuSchedReduceScatterSoleNHR"},
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr]", &flat, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedReduceScatterSoleNHR"},
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr]", &clos, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedReduceScatterSoleNHR"},
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr]", &ubx, CommEngine::COMM_ENGINE_CCU,
-         "CcuSchedReduceScatterSoleNHR"},
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr.multi_channel]", &flat, CommEngine::COMM_ENGINE_AICPU_TS,
+        // AICPU·RS·sole[nhr.multi_channel]：一层 CLOS 面（flat 在真实 selector 走 Mesh1D/Chunk）
+        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[nhr.multi_channel]", &clos, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuReduceScatterSoleNHRMultiLink"},
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "concur[mesh,nhr.multi_channel]", &ubx, CommEngine::COMM_ENGINE_CCU,
+        // RS·concur[mesh,nhr.multi_channel]·CCU：模式面需全互联 mesh==clos 且 rank <= 4
+        // （同 AG concur 先例用 ubxEqual；ubx 形态真实 selector 走 SoleNHRMultiLink）
+        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "concur[mesh,nhr.multi_channel]", &ubxEqual, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedReduceScatterConcurMeshNHRMultiLink"},
         {HcclCMDType::HCCL_CMD_ALLREDUCE, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllReduceSoleMesh"},
         {HcclCMDType::HCCL_CMD_ALLTOALL, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_CCU, "CcuSchedAllToAllSoleMesh"},
         {HcclCMDType::HCCL_CMD_ALLTOALL, "sole[mesh.multi_channel]", &ubx, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllToAllMesh1DMultiJetty"},
-        {HcclCMDType::HCCL_CMD_ALLTOALL, "concur[mesh,mesh]", &ubx, CommEngine::COMM_ENGINE_CCU,
+        // A2A·CCU·concur[mesh,mesh]：模式面需 mesh==clos 且 rank <= 4（PER_RANK 字节子句在
+        // 定名 len=0 下跳过），改 ubxEqual 真命中（同上 AICPU 版）
+        {HcclCMDType::HCCL_CMD_ALLTOALL, "concur[mesh,mesh]", &ubxEqual, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllToAllSoleMeshConcurrent"},
         {HcclCMDType::HCCL_CMD_ALLTOALLV, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllToAllVSoleMesh"},
         {HcclCMDType::HCCL_CMD_ALLTOALLV, "sole[mesh.multi_channel]", &ubx, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedAllToAllVSoleMeshMultiJetty"},
         // ---- 8 处一对多 ----
-        // AICPU·RS·sole[mesh]：小数据走裸名（大数据触发在下一用例）
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[mesh]", &twoLevel, CommEngine::COMM_ENGINE_AICPU_TS,
+        // AICPU·RS·sole[mesh]：两层网小数据走裸名（大数据触发在下一用例）。twoLevelNet 与
+        // topoLevelNums 解耦（IsTwoLevelNetLayer 不读实例总数），改单层 twoLevelNet 夹具真命中
+        // Mesh1D 的 twoLevelNet=Yes 面（旧 twoLevel 夹具是 2 级拓扑，真实 selector 走多级路径）
+        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[mesh]", &singleLevelTwoLevel, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsReduceScatterMesh1D"},
         // CCU·RS·sole[mesh]：UT 无真实 comm，COND_PEER_ONLY 保守不命中 -> 裸名兜底
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[mesh]", &flat, CommEngine::COMM_ENGINE_CCU,
          "CcuSchedReduceScatterSoleMesh"},
-        // AICPU·AG·parallel[mesh,nhr] 两 flag 互斥分流（UBX 走 MultiJetty 的 parallel[mesh,nhr.multi_channel]）
-        {HcclCMDType::HCCL_CMD_ALLGATHER, "parallel[mesh,nhr]", &multi, CommEngine::COMM_ENGINE_AICPU_TS,
+        // AICPU·AG·parallel[mesh,nhr] 拓扑分流（模式化后；UBX 变体注册已删除，
+        // 其单层形态不再有候选命中）。两层 Mesh 需 level0 本实例卡数 > 1（NE 1）
+        {HcclCMDType::HCCL_CMD_ALLGATHER, "parallel[mesh,nhr]", &twoLevel, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsAllGatherParallelMesh1DNHR"},
         {HcclCMDType::HCCL_CMD_ALLGATHER, "parallel[mesh,nhr]", &pcie, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsAllGatherParallelMesh1DNHRPcie"},
-        // AICPU·RS·parallel[mesh,nhr]
-        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "parallel[mesh,nhr]", &multi, CommEngine::COMM_ENGINE_AICPU_TS,
+        // AICPU·RS·parallel[mesh,nhr]：模式化后两层 Mesh 需 level0 本实例卡数 > 1（GT 例外），
+        // multi 夹具 inst[0]==1 在真实 selector 走 :460 单实例支选 NHR，改 twoLevel 真命中（同 AR 先例）
+        {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "parallel[mesh,nhr]", &twoLevel, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsReduceScatterParallelMesh1DNHR"},
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "parallel[mesh,nhr]", &ubx, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuReduceScatterParallelMeshNHRUBX"},
         {HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "parallel[mesh,nhr]", &pcie, CommEngine::COMM_ENGINE_AICPU_TS,
          "InsReduceScatterParallelMesh1DNHRPcie"},
-        // AICPU·AR·parallel[mesh,nhr]（无 UBX 变体）
-        {HcclCMDType::HCCL_CMD_ALLREDUCE, "parallel[mesh,nhr]", &multi, CommEngine::COMM_ENGINE_AICPU_TS,
+        // AICPU·AR·parallel[mesh,nhr]（无 UBX 变体）。模式化后两层 Mesh 需 level0 本实例卡数 > 1
+        // （NE 1）且 ExcludeE 已排除对称+8卡+uboe——multi 夹具 inst[0]==1 在真实 selector 走
+        // SoleNHR 单实例支，改用 twoLevel（inst[0]==2）真命中基模式 7 ×E1
+        {HcclCMDType::HCCL_CMD_ALLREDUCE, "parallel[mesh,nhr]", &twoLevel, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllReduceParallelMeshNHR"},
         {HcclCMDType::HCCL_CMD_ALLREDUCE, "parallel[mesh,nhr]", &pcie, CommEngine::COMM_ENGINE_AICPU_TS,
          "AicpuAllreduceParallelMeshNHRPcie"},
@@ -687,6 +780,19 @@ TEST(ExtAlgResolver, GoldenAllEngines)
             << "ext=" << c.extName << " engine=" << static_cast<int>(c.engine) << " err=" << errMsg;
         EXPECT_EQ(algName, std::string(c.expected)) << "ext=" << c.extName;
     }
+
+    // CCU·RS·sole[nhr] 的 flat/UBX 形态：CcuSchedReduceScatterSoleNHR 的模式面无单层 Mesh
+    // 与 UBX 条目（真实 selector 分别走 SoleMesh / SoleNHRMultiLink，属 sole[mesh] /
+    // sole[nhr.multi_channel] 键），本键无候选命中 → 整键全灭（golden 适配：旧机型 flag 无拓扑闸时曾误命中）
+    ASSERT_TRUE(ParseExternalAlg("sole[nhr]", spec, errMsg));
+    {
+        OpParam opCcu = MakeResolveParam(HcclCMDType::HCCL_CMD_REDUCE_SCATTER, CommEngine::COMM_ENGINE_CCU);
+        std::string algName;
+        EXPECT_EQ(ResolveExternalAlg(opCcu, &flat, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
+        EXPECT_NE(errMsg.find("sole[nhr]"), std::string::npos);
+        EXPECT_EQ(ResolveExternalAlg(opCcu, &ubx, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
+        EXPECT_NE(errMsg.find("sole[nhr]"), std::string::npos);
+    }
 }
 
 TEST(ExtAlgResolver, VariantPairDisambiguation)
@@ -695,19 +801,23 @@ TEST(ExtAlgResolver, VariantPairDisambiguation)
     std::string errMsg;
     std::string algName;
     TopoInfoWithNetLayerDetails twoLevel = MakeTwoLevelNetLayerTopo();
-    TopoInfoWithNetLayerDetails multi = MakeMultiLevelTopo();
+    // 单层 twoLevelNet + TP2 夹具（twoLevelNet 与 topoLevelNums 解耦，见夹具注释）：模式化后
+    // ZAxisDetour 拓扑面 = 单层 MESH_1D + rankSize 2 + twoLevelNet，大数据（rank==2 且 >= 4MB）
+    // 触发 COND_Z_AXIS → ZAxisDetour；小数据 → 裸 Mesh1D 的 twoLevelNet=Yes 面。
+    // 旧用例以 2 级 twoLevel 夹具走 ZAxis 是旧机型 flag 无拓扑闸的误命中（真实 selector 2 级走多级路径）
+    TopoInfoWithNetLayerDetails twoRankTwoLevel = MakeSingleLevelTwoLevelNetTopo(2U);
 
     // 两层网 + 大数据 -> ZAxisDetour；小数据 -> 裸 Mesh1D
     ASSERT_TRUE(ParseExternalAlg("sole[mesh]", spec, errMsg));
     OpParam big = MakeResolveParam(HcclCMDType::HCCL_CMD_REDUCE_SCATTER, CommEngine::COMM_ENGINE_AICPU_TS);
     big.DataDes.dataType = HCCL_DATA_TYPE_FP32;
-    big.DataDes.count = 24U * 1024 * 1024 + 1U; // 96MB+4B，x16 rank > 1536MB
-    EXPECT_EQ(ResolveExternalAlg(big, &twoLevel, spec, algName, errMsg), ResolveStatus::RESOLVED);
+    big.DataDes.count = 24U * 1024 * 1024 + 1U; // 96MB+4B >= 4MB，经 rank==2 支触发
+    EXPECT_EQ(ResolveExternalAlg(big, &twoRankTwoLevel, spec, algName, errMsg), ResolveStatus::RESOLVED);
     EXPECT_EQ(algName, "InsReduceScatterMesh1DZAxisDetour");
 
     OpParam small = big;
     small.DataDes.count = 1024U;
-    EXPECT_EQ(ResolveExternalAlg(small, &twoLevel, spec, algName, errMsg), ResolveStatus::RESOLVED);
+    EXPECT_EQ(ResolveExternalAlg(small, &twoRankTwoLevel, spec, algName, errMsg), ResolveStatus::RESOLVED);
     EXPECT_EQ(algName, "InsReduceScatterMesh1D");
 
     // specialDT -> AicpuReduceNHR；否则裸 NHR
@@ -730,11 +840,11 @@ TEST(ExtAlgResolver, VariantPairDisambiguation)
     EXPECT_EQ(ResolveExternalAlg(arSum, &twoLevel, spec, algName, errMsg), ResolveStatus::RESOLVED);
     EXPECT_EQ(algName, "AicpuAllReduceSoleNHR");
 
-    // AG sequence[mesh,nhr] 引擎消歧：AICPU 命中 AicpuAllGatherSequenceMeshConcurNHR（多层 Mesh1D），
-    // DPU 行仅 CPU 引擎命中（CPU -> InsAllGatherMeshNhrDPU 由 GoldenAllEngines 覆盖）
+    // AG sequence[mesh,nhr] 引擎消歧：AICPU 命中 AicpuAllGatherSequenceMeshConcurNHR（两层 Mesh1D
+    // 且 level0 本实例卡数 > 1），DPU 行仅 CPU 引擎命中（CPU -> InsAllGatherMeshNhrDPU 由 GoldenAllEngines 覆盖）
     ASSERT_TRUE(ParseExternalAlg("sequence[mesh,nhr]", spec, errMsg));
     OpParam aicpu = MakeResolveParam(HcclCMDType::HCCL_CMD_ALLGATHER, CommEngine::COMM_ENGINE_AICPU_TS);
-    EXPECT_EQ(ResolveExternalAlg(aicpu, &multi, spec, algName, errMsg), ResolveStatus::RESOLVED);
+    EXPECT_EQ(ResolveExternalAlg(aicpu, &twoLevel, spec, algName, errMsg), ResolveStatus::RESOLVED);
     EXPECT_EQ(algName, "AicpuAllGatherSequenceMeshConcurNHR");
 }
 
@@ -751,13 +861,13 @@ TEST(ExtAlgResolver, ErrorCasesCarryThreeElements)
     EXPECT_EQ(ResolveExternalAlg(op, &flat, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
     EXPECT_NE(errMsg.find("pipeline[mesh,nhr,nhr]"), std::string::npos); // 三要素: 外部名原文
 
-    // 规则全灭（AG parallel[mesh,nhr] 在单层 flat 拓扑：三 flag 全不命中）
+    // 规则全灭（AG parallel[mesh,nhr] 在单层 flat 拓扑：两条 pattern 均不命中，UBX 行已删除注册）
     ASSERT_TRUE(ParseExternalAlg("parallel[mesh,nhr]", spec, errMsg));
     EXPECT_EQ(ResolveExternalAlg(op, &flat, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
     EXPECT_NE(errMsg.find("parallel[mesh,nhr]"), std::string::npos);
 
-    // 规则全灭（RS sole[nhr.multi_channel]·CCU：唯一 CCU 候选 CcuSchedReduceScatterSoleNHRMultiLink 带
-    // FLAG_UBX，单层 flat 拓扑不命中，无裸名兜底 -> 整键全灭回退）
+    // 规则全灭（RS sole[nhr.multi_channel]·CCU：唯一 CCU 候选 CcuSchedReduceScatterSoleNHRMultiLink
+    // 的模式面均为 MESH_1D_CLOS UBX 形态，单层 flat 拓扑不命中，无裸名兜底 -> 整键全灭回退）
     OpParam opRsCcu = MakeResolveParam(HcclCMDType::HCCL_CMD_REDUCE_SCATTER, CommEngine::COMM_ENGINE_CCU);
     ASSERT_TRUE(ParseExternalAlg("sole[nhr.multi_channel]", spec, errMsg));
     EXPECT_EQ(ResolveExternalAlg(opRsCcu, &flat, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
@@ -793,7 +903,7 @@ TEST(ExtAlgResolver, CandidateTableIsDeterministic)
             }
         }
     }
-    // 覆盖数锚（限 5 个集合通信 CMD）：34 个 (op,外部名) 键（56 行归并；MultiLink
+    // 覆盖数锚（限 5 个集合通信 CMD）：34 个 (op,外部名) 键（57 行归并；MultiLink
     // 外部名修正为 sole[nhr.multi_channel]、MultiJetty 修正为 sole[mesh.multi_channel]
     // 后各自从原裸名键分立，新增这两个键；AllToAllV sole[mesh.multi_channel] 键
     // 由 AICPU 版（upstream d1c00ab999）与 CCU 版（本迁移）双引擎共享）；
@@ -821,15 +931,15 @@ TEST(ExtAlgResolver, CandidateTableIsDeterministic)
 
 TEST(ExtAlgResolver, SpecificityOrdering)
 {
-    // 特异性排序：特化候选(带 cond/flag)在前，裸名(双-1)在后；同特异性内字典序
+    // 特异性排序：特化候选(带 cond)在前，裸名(无 cond)在后；同特异性内字典序
     const std::vector<AlgCandidate>& cands = GetExternalCandidates(HcclCMDType::HCCL_CMD_REDUCE_SCATTER, "sole[mesh]");
-    // 本目标全量：4 候选 = ZAxisDetour(COND) / CcuSchedReduceScatterSoleMesh(裸) /
-    //              CcuSchedReduceScatterSoleMeshPeerOnly(COND) / InsReduceScatterMesh1D(裸)
+    // 本目标全量：4 候选 = ZAxisDetour(COND) / CcuSchedReduceScatterSoleMesh(无cond) /
+    //              CcuSchedReduceScatterSoleMeshPeerOnly(COND) / InsReduceScatterMesh1D(无cond)
     ASSERT_EQ(cands.size(), 4U);
-    int lastSpecificity = 2;
+    int lastSpecificity = 1;
     for (const AlgCandidate& cand : cands) {
-        const int specificity = (cand.variantCondId != COND_NONE ? 1 : 0) + (cand.machineFlagId != FLAG_NONE ? 1 : 0);
-        EXPECT_LE(specificity, lastSpecificity); // 降序
+        const int specificity = (cand.variantCondId != COND_NONE ? 1 : 0); // 与 BuildCandidateTable 排序键镜像
+        EXPECT_LE(specificity, lastSpecificity);                           // 降序
         lastSpecificity = specificity;
     }
     EXPECT_EQ(cands[0].registeredName, "CcuSchedReduceScatterSoleMeshPeerOnly"); // 特化字典序在前
@@ -838,10 +948,29 @@ TEST(ExtAlgResolver, SpecificityOrdering)
     EXPECT_EQ(cands[3].registeredName, "InsReduceScatterMesh1D");
 }
 
-// 显式 priority 注册可用性：REGISTER_ALG_META 第 7 参落库（KFC cmd 不触碰满射断言的 5 个 COLL_CMDS）。
-// externalName 须为规范形——ExternalNameLiteralsAreCanonical 往返自检覆盖所有注册行，含测试夹具
+// 显式 priority 注册可用性：REGISTER_ALG_META 第 7 参落库（KFC cmd 不触碰满射断言的 5 个
+// COLL_CMDS）。externalName 须为规范形——ExternalNameLiteralsAreCanonical 往返自检覆盖所有注册行，
+// 含测试夹具。模式面取全 Any 单条：本夹具只验证 priority 落库机制，不验证拓扑语义（定名与
+// patternCount/patterns 语义由 TestPatternMacro 覆盖）
+namespace {
+const TopoPattern PRIO_ANY_PATTERNS[] = {{}};
+} // namespace
 REGISTER_ALG_META(
-    HcclCMDType::HCCL_CMD_KFC_SERVER, TestPrioMacro, AlgEngine::AICPU, "sole[mesh]", COND_NONE, FLAG_NONE, 7);
+    HcclCMDType::HCCL_CMD_KFC_SERVER, TestPrioMacro, AlgEngine::AICPU, "sole[mesh]", COND_NONE, PRIO_ANY_PATTERNS, 7);
+
+// 模式宏注册行：同样走 KFC cmd 豁免（CandidateTableIsDeterministic 的 34/44 锚限定 COLL_CMDS）。
+// 独占 (KFC, sole[nhr]) 键——不与 TestPrioMacro 的 (KFC, sole[mesh]) 键混叠，保证下述
+// "不匹配拓扑 → ERROR_INVALID" 不被键内其他候选兜底。两条 pattern 各钉一种单层形态：
+// flat MESH_1D（MakeFlatMesh1DTopo 命中）与纯 CLOS（MakeSingleLevelClosTopo 命中），
+// UBX 的 MESH_1D_CLOS 两不沾
+namespace {
+const TopoPattern TEST_PATTERNS[] = {
+    {{1U, 1U}, Level0Shape::MESH_1D}, // level={1,1}（单层），level0=MESH_1D，其余默认任意
+    {{1U, 1U}, Level0Shape::CLOS},    // level={1,1}（单层），level0=CLOS
+};
+} // namespace
+REGISTER_ALG_META(
+    HcclCMDType::HCCL_CMD_KFC_SERVER, TestPatternMacro, AlgEngine::AICPU, "sole[nhr]", COND_NONE, TEST_PATTERNS, 0);
 
 // 三键排序语义（specificity 降序 > priority 降序 > name 字典序）——纯函数构建器直接验证，
 // 测试内构造行（KFC cmd）+ 逆序传入（同时验证顺序无关性）。
@@ -854,15 +983,23 @@ TEST(ExtAlgResolver, PriorityOrdering)
     EXPECT_EQ(macroMeta->priority, 7);
 
     std::vector<AlgMetaRow> rows = {
-        {HcclCMDType::HCCL_CMD_KFC_SERVER, "TestPrioLow", {AlgEngine::AICPU, "test[prio]", COND_NONE, FLAG_UBX, 1}},
-        {HcclCMDType::HCCL_CMD_KFC_SERVER, "TestPrioHigh", {AlgEngine::AICPU, "test[prio]", COND_NONE, FLAG_UBX, 5}},
-        {HcclCMDType::HCCL_CMD_KFC_SERVER, "TestPrioSameA", {AlgEngine::AICPU, "test[prio]", COND_NONE, FLAG_UBX, 5}},
-        // priority=99 的裸名：特异性第一级不可被 priority 越级，仍排单挂之后
-        {HcclCMDType::HCCL_CMD_KFC_SERVER, "TestBareName", {AlgEngine::AICPU, "test[prio]", COND_NONE, FLAG_NONE, 99}},
-        // 双挂（cond+flag）：特异性 2 分最特化，排最前
         {HcclCMDType::HCCL_CMD_KFC_SERVER,
-         "TestDoubleSlot",
-         {AlgEngine::AICPU, "test[prio]", COND_SPECIAL_DT, FLAG_UBX, 0}},
+         "TestPrioLow",
+         {AlgEngine::AICPU, "test[prio]", COND_NONE, PRIO_ANY_PATTERNS, PatternCountOf(PRIO_ANY_PATTERNS), 1}},
+        {HcclCMDType::HCCL_CMD_KFC_SERVER,
+         "TestPrioHigh",
+         {AlgEngine::AICPU, "test[prio]", COND_NONE, PRIO_ANY_PATTERNS, PatternCountOf(PRIO_ANY_PATTERNS), 5}},
+        {HcclCMDType::HCCL_CMD_KFC_SERVER,
+         "TestPrioSameA",
+         {AlgEngine::AICPU, "test[prio]", COND_NONE, PRIO_ANY_PATTERNS, PatternCountOf(PRIO_ANY_PATTERNS), 5}},
+        // priority=99 的无 cond 行：特异性第一级不可被 priority 越级，仍排带 cond 之后
+        {HcclCMDType::HCCL_CMD_KFC_SERVER,
+         "TestBareName",
+         {AlgEngine::AICPU, "test[prio]", COND_NONE, PRIO_ANY_PATTERNS, PatternCountOf(PRIO_ANY_PATTERNS), 99}},
+        // 带 cond：特异性 1 分最特化，排最前
+        {HcclCMDType::HCCL_CMD_KFC_SERVER,
+         "TestCondSlot",
+         {AlgEngine::AICPU, "test[prio]", COND_SPECIAL_DT, PRIO_ANY_PATTERNS, PatternCountOf(PRIO_ANY_PATTERNS), 0}},
     };
     std::reverse(rows.begin(), rows.end()); // 逆序传入：排序与输入序无关
     const std::map<ExtAlgKey, std::vector<AlgCandidate>> table = BuildCandidateTable(rows);
@@ -870,16 +1007,45 @@ TEST(ExtAlgResolver, PriorityOrdering)
     ASSERT_NE(it, table.end());
     const std::vector<AlgCandidate>& cands = it->second;
     ASSERT_EQ(cands.size(), 5U);
-    // 键1 特异性：双挂(2) > 单挂(1) > 裸名(0)
-    EXPECT_EQ(cands[0].registeredName, "TestDoubleSlot");
-    // 键2 priority：同单挂特异性，5 > 1（大者优先）
-    EXPECT_EQ(cands[1].registeredName, "TestPrioHigh");
-    EXPECT_EQ(cands[1].priority, 5);
+    // 键1 特异性：带 cond(1) > 无 cond(0)
+    EXPECT_EQ(cands[0].registeredName, "TestCondSlot");
+    // 键2 priority：同特异性，99 > 5（大者优先）
+    EXPECT_EQ(cands[1].registeredName, "TestBareName");
+    EXPECT_EQ(cands[1].priority, 99);
     // 键3 字典序：同特异性同 priority(5)，"TestPrioHigh" < "TestPrioSameA"
-    EXPECT_EQ(cands[2].registeredName, "TestPrioSameA");
-    EXPECT_EQ(cands[3].registeredName, "TestPrioLow");
-    // 裸名兜底：priority=99 仍排最后（特异性不可越级）
-    EXPECT_EQ(cands[4].registeredName, "TestBareName");
+    EXPECT_EQ(cands[2].registeredName, "TestPrioHigh");
+    EXPECT_EQ(cands[3].registeredName, "TestPrioSameA");
+    EXPECT_EQ(cands[4].registeredName, "TestPrioLow");
+}
+
+// 注册行最小闭环：①宏落库（PatternCountOf 数组计数 / patterns 指针即注册数组）
+// ②模式匹配路径（匹配拓扑两形态命中定名；不匹配拓扑无兜底 → 全灭；topoInfo=nullptr 防御拒绝）
+TEST(ExtAlgResolver, PatternMacroFallsThroughTopoFunnel)
+{
+    // ① 宏落库
+    const AlgMeta* meta = AlgMetaRegistry::Instance().Get(HcclCMDType::HCCL_CMD_KFC_SERVER, "TestPatternMacro");
+    ASSERT_NE(meta, nullptr);
+    EXPECT_EQ(meta->patternCount, 2U);
+    EXPECT_EQ(meta->patterns, TEST_PATTERNS); // 指针透传，指向静态数组本体
+
+    // ② 模式匹配路径：两条 pattern 各覆盖一种单层形态
+    ExternalAlgSpec spec;
+    std::string errMsg;
+    ASSERT_TRUE(ParseExternalAlg("sole[nhr]", spec, errMsg));
+    OpParam op = MakeResolveParam(HcclCMDType::HCCL_CMD_KFC_SERVER, CommEngine::COMM_ENGINE_AICPU_TS);
+    TopoInfoWithNetLayerDetails flat = MakeFlatMesh1DTopo();
+    TopoInfoWithNetLayerDetails clos = MakeSingleLevelClosTopo();
+    TopoInfoWithNetLayerDetails ubx = MakeUbxTopo();
+    std::string algName;
+    EXPECT_EQ(ResolveExternalAlg(op, &flat, spec, algName, errMsg), ResolveStatus::RESOLVED);
+    EXPECT_EQ(algName, "TestPatternMacro");
+    EXPECT_EQ(ResolveExternalAlg(op, &clos, spec, algName, errMsg), ResolveStatus::RESOLVED);
+    EXPECT_EQ(algName, "TestPatternMacro");
+    // 不匹配拓扑（MESH_1D_CLOS 两 pattern 均不命中）且键内无其他候选 → 全灭
+    EXPECT_EQ(ResolveExternalAlg(op, &ubx, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
+    EXPECT_NE(errMsg.find("sole[nhr]"), std::string::npos);
+    // topoInfo=nullptr：模式分支 null 防御直接拒绝
+    EXPECT_EQ(ResolveExternalAlg(op, nullptr, spec, algName, errMsg), ResolveStatus::ERROR_INVALID);
 }
 
 // extern 表转发初始化器的运行时绑定断言
@@ -888,11 +1054,6 @@ TEST(ExtAlgResolver, RuleTableBinding)
     EXPECT_EQ(VARIANT_COND_TABLE[COND_Z_AXIS], &CondZAxis);
     EXPECT_EQ(VARIANT_COND_TABLE[COND_PEER_ONLY], &CondPeerOnly);
     EXPECT_EQ(VARIANT_COND_TABLE[COND_SPECIAL_DT], &CondSpecialDt);
-    EXPECT_EQ(MACHINE_FLAG_TABLE[FLAG_PCIE_MIX], &FlagPcieMix);
-    EXPECT_EQ(MACHINE_FLAG_TABLE[FLAG_UBX], &FlagUbx);
-    EXPECT_EQ(MACHINE_FLAG_TABLE[FLAG_MULTI_LEVEL], &FlagMultiLevel);
-    EXPECT_EQ(MACHINE_FLAG_TABLE[FLAG_FLAT_1D], &FlagFlat1D);
     EXPECT_STREQ(VariantCondName(COND_Z_AXIS), "COND_Z_AXIS");
-    EXPECT_STREQ(MachineFlagName(FLAG_FLAT_1D), "FLAG_FLAT_1D");
     EXPECT_STREQ(VariantCondName(-1), "n/a");
 }

@@ -166,6 +166,20 @@ extern Mc2Result __attribute__((visibility("default"))) Mc2SetCcDstDataType(void
 extern Mc2Result __attribute__((visibility("default"))) Mc2SetCcReduceType(void* ccArgs, uint8_t reduceType);
 
 /**
+ * @brief Set the per-rank data length range for MC2 builtin API arguments.
+ * @param ccArgs Opaque argument object created by Mc2GetCcArgs.
+ * @param minLen Minimum per-rank data length in bytes (count * dtypeSize), window included.
+ * @param maxLen Maximum per-rank data length in bytes (count * dtypeSize), window included.
+ *               The closed window [minLen, maxLen] is consumed by pattern length clauses
+ *               with existential semantics (a pattern matches when the window intersects
+ *               the clause solution set). (0, 0) means no length check when querying
+ *               supported algorithms; minLen > maxLen is rejected.
+ * @return HCCL_SUCCESS on success, otherwise a failure code.
+ */
+extern Mc2Result __attribute__((visibility("default"))) Mc2SetCcDataLenRange(
+    void* ccArgs, uint64_t minLen, uint64_t maxLen);
+
+/**
  * @brief Allocate the opaque ccResCtx object for MC2 builtin APIs.
  * @param comm Communication domain handle.
  * @param ccType MC2 operation type.
@@ -177,6 +191,26 @@ extern Mc2Result __attribute__((visibility("default"))) Mc2SetCcReduceType(void*
  */
 extern Mc2Result __attribute__((visibility("default"))) Mc2AcquireCcResCtx(
     HcclComm comm, uint8_t ccType, void* ccArgs, void** ccResCtx, uint32_t* ccResCtxSize);
+
+/**
+ * @brief Query the supported algorithm names of the given MC2 op on the current communication
+ *        domain and serialize them as a NUL-terminated JSON string into the caller buffer.
+ * @param comm A pointer identifying the communication resource based on.
+ * @param ccType The MC2 operation type (HcclCMDType).
+ * @param ccArgs Opaque argument object created by Mc2GetCcArgs and filled by Mc2SetCc* APIs.
+ * @param algs Output buffer holding the JSON result.
+ * @param len Output buffer size in bytes.
+ * @return HcclResult - HCCL_SUCCESS on success, error code otherwise.
+ *
+ * @note The error_msg field of the output JSON is empty on success and non-empty on failure;
+ *       a truncated JSON is never written (see the API doc for the full two-state contract and
+ *       the buffer degradation chain).
+ * @note The list is the full availability set for (ccType, engine): a pattern is listed when
+ *       the optional dataLen window (Mc2SetCcDataLenRange) intersects its length clauses.
+ * @note This interface neither allocates communication resources nor launches any kernel.
+ */
+extern Mc2Result __attribute__((visibility("default"))) Mc2GetSupportAlgList(
+    HcclComm comm, uint8_t ccType, void* ccArgs, char* algs, uint32_t len);
 
 /**
  * @brief Launch MC2 builtin kernel from the prepared resource context.

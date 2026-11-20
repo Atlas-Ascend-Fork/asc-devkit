@@ -13,6 +13,7 @@
 #include "ins_temp_all_gather_nhr_dpu.h"
 #include "coll_alg_v2_exec_registry.h"
 #include "alg_meta_registry.h"
+#include "all_gather_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -228,5 +229,5 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     InsTempAllGatherMesh1D, InsTempAllGatherNHRDPU);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_ALLGATHER, InsAllGatherMeshNhrDPU, AlgEngine::DPU, "sequence[mesh,nhr]", COND_NONE,
-    FLAG_MULTI_LEVEL, 0);
+    kInsAllGatherMeshNhrDPUPatterns, 0);
 } // namespace mc2_ops_hccl

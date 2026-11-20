@@ -13,6 +13,7 @@
 #include "ins_temp_reduce_scatter_nhr.h"
 #include "alg_data_trans_wrapper.h"
 #include "alg_meta_registry.h"
+#include "reduce_scatter_alg_patterns.h"
 #include "external_alg_rules.h"
 
 namespace mc2_ops_hccl {
@@ -276,6 +277,6 @@ REGISTER_EXECUTOR_BY_TWO_TEMPS(
     TopoMatchMultilevel, InsTempReduceScatterMesh1DZAxisDetour, InsTempReduceScatterNHR);
 REGISTER_ALG_META(
     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, InsReduceScatterSequenceMesh1DNhr, AlgEngine::AICPU, "sequence[mesh,nhr]",
-    COND_NONE, FLAG_MULTI_LEVEL, 0);
+    COND_NONE, kInsReduceScatterSequenceMesh1DNhrPatterns, 0);
 
 } // namespace mc2_ops_hccl

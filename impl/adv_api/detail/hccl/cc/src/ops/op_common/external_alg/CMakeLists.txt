@@ -12,6 +12,7 @@ set(src_list
     ${CMAKE_CURRENT_SOURCE_DIR}/alg_meta_registry.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/external_alg_resolver.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/external_alg_rules.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/topo_pattern.cc
 )
 
 target_sources(mc2_client PRIVATE
