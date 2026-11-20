@@ -31,6 +31,8 @@
 
 ## 功能说明
 
+头文件路径为：`"utils/debug/asc_assert.h"`。
+
 在SIMT代码中调用此接口会中断算子的运行，适用于核函数（Kernel）侧异常场景的调试。
 
 ## 函数原型
@@ -51,19 +53,13 @@ inline void __trap()
 
 无
 
-## 需要包含的头文件
-
-使用该接口需要包含"utils/debug/asc\_assert.h"头文件。
-
-```cpp
-#include "utils/debug/asc_assert.h"
-```
-
 ## 调用示例
 
 -   SIMT编程场景：
 
     ```cpp
+    #include "utils/debug/asc_assert.h"
+
     __global__ __launch_bounds__(1024) inline void SimtKernel(float* dst, float* x)
     {
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -77,6 +73,8 @@ inline void __trap()
 -   SIMD与SIMT混合编程场景：
 
     ```cpp
+    #include "utils/debug/asc_assert.h"
+
     __simt_vf__ __launch_bounds__(1024) inline void SimtKernel(__gm__ float* dst, __gm__ float* x)
     {
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
