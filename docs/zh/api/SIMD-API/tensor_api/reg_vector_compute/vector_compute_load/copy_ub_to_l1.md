@@ -110,7 +110,7 @@ UB到L1 Buffer通路使用`copy_ub_to_l1{}`作为搬运操作对象，默认trai
 - 搬运长度和源/目的间隔以32字节DataBlock为粒度。ND和DN区域大小不能整除DataBlock元素数时，接口按DataBlock粒度向上取整，调用方必须保证源、目的缓冲区具备相应空间。
 - Layout推导出的参数必须满足底层`asc_copy_ub2l1`指令的字段范围。有效搬运的数据块个数取值范围为[1, 4095]，单块长度取值范围为[1, 65535]个DataBlock，源、目的块间间隔取值范围均为[0, 65535]个DataBlock。
 - Tensor API要求源、目的Layout以及区域搬运Shape合法，不能依赖数据块个数或单块长度为0表示空操作。
-- 连续执行多个`copy`且目的L1 Buffer区域存在重叠时，必须在两次搬运之间插入MTE2流水同步，例如调用`PipeBarrier<PIPE_MTE2>()`，避免后一次搬运覆盖前一次尚未完成的数据。
+- 连续执行多个`copy`且目的L1 Buffer区域存在重叠时，必须在两次搬运之间插入MTE3流水同步，例如调用`PipeBarrier<PIPE_MTE3>()`，避免后一次搬运覆盖前一次尚未完成的数据。
 
 ## 关键特性说明
 

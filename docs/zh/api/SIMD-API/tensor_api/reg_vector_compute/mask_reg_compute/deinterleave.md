@@ -57,7 +57,7 @@ __simd_callee__ inline reg_pair<bool> deinterleave(
 - `first.reg`保存解交织后的偶数索引分组。
 - `second.reg`保存解交织后的奇数索引分组。
 
-返回对象只保证`first.reg`和`second.reg`有效，不会初始化两者的`mask`成员。
+`first.mask`和`second.mask`均为和数据类型DataType相关的满mask。
 
 ## 约束说明
 

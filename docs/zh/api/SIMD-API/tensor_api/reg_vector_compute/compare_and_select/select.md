@@ -43,12 +43,12 @@ __simd_callee__ inline reg_tensor<T> select(
 | 参数 | 输入/输出 | 描述 |
 | --- | --- | --- |
 | condition | 输入 | 选择条件，类型为 `reg_tensor<bool>`。每个元素决定对应位置选择 `src0` 还是 `src1`。 |
-| src0 | 输入 | 条件为 `true` 时选择的源操作数，类型为 `reg_tensor<T>`。其 `mask` 作为返回值的有效元素掩码。 |
+| src0 | 输入 | 条件为 `true` 时选择的源操作数，类型为 `reg_tensor<T>`。 |
 | src1 | 输入 | 条件为 `false` 时选择的源操作数，类型为 `reg_tensor<T>`。 |
 
 ## 返回值说明
 
-返回 `reg_tensor<T>`，包含逐元素选择的结果。返回值的 `mask` 与 `src0.mask` 相同。
+返回 `reg_tensor<T>`，其`reg`保存根据`condition.reg`逐元素选择的结果，`mask`原样复制`src0.mask`。该`mask`不表示本次选择计算的写入范围，仅供后续依赖mask的计算或搬出操作使用。
 
 ## 数据类型
 
@@ -56,7 +56,8 @@ __simd_callee__ inline reg_tensor<T> select(
 
 ## 约束说明
 
-通过src0的mask参数控制的未选中的元素是未定义行为。
+- 本次选择计算仅使用`condition.reg`，不使用`condition.mask`、`src0.mask`或`src1.mask`屏蔽计算位置。各位置均根据`condition.reg`选择对应的源数据，须保证被选中的源数据已初始化。
+- `src0.mask`仅复制到返回对象，调用前须初始化该成员。其为0的位置仍执行选择，但不保证被选中的源数据具有业务上的有效值。处理尾块时，不应仅因本接口执行了选择就扩大返回值的mask；只有确认新增位置所选的源数据已初始化且符合后续计算要求时，才可通过`with_mask`扩大有效范围。
 
 ## 调用示例
 

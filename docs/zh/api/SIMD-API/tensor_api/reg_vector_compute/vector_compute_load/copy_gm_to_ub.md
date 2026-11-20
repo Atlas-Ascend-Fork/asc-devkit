@@ -210,7 +210,7 @@ ND通路沿行方向生成搬运块，DN通路沿列方向生成搬运块。NZ�
     - 当`left_padding_count`和`right_padding_count`均为`0`时，通过上述手动或自动填充方式将每个数据块分别补齐至32字节对齐。
     - 当`left_padding_count`或`right_padding_count`非`0`时，`enable_constant_pad`不生效，必须在搬运前调用`set_copy_pad_val`配置填充值。若单块长度与左右Padding的总字节数非32字节对齐，硬件会在右侧继续填充dummy假数据至32字节对齐，dummy假数据的值为`set_copy_pad_val`配置的值。
 
-例如，元素类型为`half`，源Tensor的Layout为ND分形，Shape为`(3, 24)`，目的Tensor的Layout为ND分形，Shape为`(3, 24)`，若Stride为`(24, 1)`，Layout为紧凑排列；此时为Compact模式，若Stride为`(32, 1)`，Layout为紧凑排列，此时为Normal模式，分别对应下表两种情况。
+例如，元素类型为`half`，源Tensor的Layout为ND分形，Shape为`(3, 24)`，目的Tensor的Layout为ND分形，Shape为`(3, 24)`，若Stride为`(24, 1)`，Layout为紧凑排列，此时为Compact模式；若Stride为`(32, 1)`，Layout为非紧凑排列，此时为Normal模式，分别对应下表两种情况。
 
 | 搬运模式 | 目的Tensor行步长 | 推导出的目的步长 | 数据块在UB中的起始偏移 | 32字节对齐补齐方式 |
 | :--- | :--- | :--- | :--- | :--- |

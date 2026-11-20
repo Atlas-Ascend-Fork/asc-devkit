@@ -43,14 +43,15 @@ srcReg.second.with_mask(mask);
 
 ## 计算接口中的mask传递
 
-下表列举计算使用的mask和返回对象保存的mask。若一个接口同时满足多个条件，按“已有`dst`→满mask结果→显式mask→常规接口”的顺序判定；比较运算符始终按其特殊规则处理。
+下表列举计算使用的mask和返回对象保存的mask。若一个接口同时满足多个条件，按“已有`dst`→满mask结果→显式mask→常规接口”的顺序判定；比较运算符和`select`始终按其特殊规则处理。
 
 | 规则或类别 | 接口或计算形式 | 计算使用的mask | 返回对象的mask |
 | --- | --- | --- | --- |
 | 已有dst作为入参 | `axpy(dst, src, scalar)`、`madd(dst, src0, src1)`、`mula(dst, src0, src1)`、`fill(dst, value, mask)`、`fill(dst, src, mask)`、`move(dst, src)`、`histograms(dst, src)` | `axpy`、`move`和`histograms`使用`src.mask`；`madd`和`mula`使用`dst.mask`；`fill`使用其操作模式规定的输入或显式mask。 | 返回对象保留调用前的`dst.mask`。该规则优先于显式mask规则。 |
 | 语义为按照全有效mask处理的接口 | `pack<part>(src)`、`unpack<part>(src)`、寄存器`gather(src, index)`、`expand<T>(mask)`、`iota<order>(start)`、数据或掩码`interleave(src0, src1)`和`deinterleave(src0, src1)`、`move_mask<Offset>(src)` | 均不使用输入对象的有效性mask；`expand`中的`mask.reg`用于生成前缀计数索引，不作为输出有效性mask。 | 将返回对象的mask设置为对应元素类型的全有效mask；返回`reg_pair`时两个成员均设置。 |
 | 显式传入mask | 不带`dst`的`fill(value, mask)`和`fill(src, mask)`、`load_gather` | 显式传入的`mask.reg`或`gather_mask.reg`。 | 将返回对象的mask设置为显式mask的`reg`。 |
-| 常规接口 | `cast<DstType>(src)`、`muls_cast<DstType>(src, scalar)`、带`position`的`exp_diff`、`reduce_sum(src)`、`reduce_max(src)`、`reduce_min(src)`、`abs(src)`、`exp(src)`、`compress(src)`、掩码单参数`move(src)`、`src + scalar`、`scalar * src`、`src0 + src1`、`fma(src0, src1, src2)`、`select(condition, src0, src1)`、`add_carry`、`sub_carry`和`mull` | 单输入接口使用`src.mask`；多输入接口使用第一个数据输入`src0.mask`。 | 单输入接口复制`src.mask`；多输入接口复制`src0.mask`。返回`reg_pair`时，`first.mask`和`second.mask`均按相同规则设置。类型或布局变化时，不按目标位宽、结果位置或归约后的结果数量重新映射。 |
+| 常规接口 | `cast<DstType, opt>(src)`、`muls_cast<Layout, DstType>(src, scalar)`、带`position`的`exp_diff`、`reduce_sum(src)`、`reduce_max(src)`、`reduce_min(src)`、`abs(src)`、`exp(src)`、`compress(src)`、掩码单参数`move(src)`、`src + scalar`、`scalar * src`、`src0 + src1`、`fma(src0, src1, src2)`、`add_carry`、`sub_carry`和`mull` | 单输入接口使用`src.mask`；多输入接口使用第一个数据输入`src0.mask`。 | 单输入接口复制`src.mask`；多输入接口复制`src0.mask`。返回`reg_pair`时，`first.mask`和`second.mask`均按相同规则设置。类型或布局变化时，不按目标位宽、结果位置或归约后的结果数量重新映射。 |
+| 特殊：选择接口 | `select(condition, src0, src1)` | 仅使用`condition.reg`逐元素选择源数据，不使用输入对象的mask屏蔽计算。 | 原样复制`src0.mask`，供后续依赖mask的操作使用；该mask不表示本次选择计算的写入范围。 |
 | 特殊：比较运算符 | `operator==`、`operator!=`、`operator<`、`operator<=`、`operator>`、`operator>=`的寄存器和标量重载 | 寄存器与寄存器比较使用`src0.mask`；与标量比较使用寄存器操作数的mask。 | 不初始化返回对象的mask。 |
 
 - 按照全有效mask处理的接口返回的对象的mask为全有效，不保证返回对象的所有位置都具有可使用的数值。例如，`pack`未写入的另一半寄存器仍不应作为有效结果使用；类型转换、归约和压缩后的有效结果范围也应遵循对应接口约束，必要时在写回前重新绑定mask。
