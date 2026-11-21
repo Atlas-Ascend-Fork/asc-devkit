@@ -83,12 +83,12 @@ bool CollectCompilationEnvironment(PreparedKernelCompilationPlan& plan)
         if (!CollectEnvironmentVariables(command.executable, command.diagnosticLabel.c_str(), plan.environmentValues)) {
             return false;
         }
-        usesSourceDirectory |= command.executable.find(SOURCE_REFERENCE) != std::string::npos;
+        usesSourceDirectory = usesSourceDirectory || (command.executable.find(SOURCE_REFERENCE) != std::string::npos);
         for (const std::string& argument : command.arguments) {
             if (!CollectEnvironmentVariables(argument, command.diagnosticLabel.c_str(), plan.environmentValues)) {
                 return false;
             }
-            usesSourceDirectory |= argument.find(SOURCE_REFERENCE) != std::string::npos;
+            usesSourceDirectory = usesSourceDirectory || (argument.find(SOURCE_REFERENCE) != std::string::npos);
         }
     }
     for (const ManifestConstant& constant : plan.constants) {
@@ -96,7 +96,7 @@ bool CollectCompilationEnvironment(PreparedKernelCompilationPlan& plan)
         if (!CollectEnvironmentVariables(targetFile, constant.GetName().c_str(), plan.environmentValues)) {
             return false;
         }
-        usesSourceDirectory |= targetFile.find(SOURCE_REFERENCE) != std::string::npos;
+        usesSourceDirectory = usesSourceDirectory || (targetFile.find(SOURCE_REFERENCE) != std::string::npos);
     }
     if (!usesSourceDirectory) {
         return true;
