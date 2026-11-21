@@ -35,3 +35,6 @@ from .ascendc_constants import KernelMetaType, STR_TO_KERNEL_TYPE_V220, TilingKe
 from .ascendc_compile_base import compile_multi_tilingkey, link_relocatable, fatbin_objs
 from .ascendc_compile_v200 import gen_compile_cmd_v200
 from .ascendc_compile_gen_code import get_code_for_l2_cache, gen_global_isolation_macro
+from .cce_runtime import build_elf_platform_metadata
+from .static_kernel_platform import get_chip_version, validate_super_kernel_support
+from .super_kernel_sub_op_compile import build_aclgraph_static_sk_options

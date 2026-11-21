@@ -16,10 +16,10 @@ Paser op json info and generate kernel name
 import json
 import hashlib
 import asc_op_compile_base.common.utils.log as logger
-from opc_common import LogLevel
-from opc_common import opc_log_full
-from constant import CompileParam, OpcOptions, OpParamType
-from op_manager import get_attr_info_from_opstore
+from asc_opc_tool.opc_common import LogLevel
+from asc_opc_tool.opc_common import opc_log_full
+from asc_opc_tool.constant import CompileParam, OpcOptions, OpParamType
+from asc_opc_tool.op_manager import get_attr_info_from_opstore
 
 
 class TensorData:

@@ -28,10 +28,10 @@ from asc_op_compile_base.common.buildcfg import build_config
 from asc_op_compile_base.common.context import op_context
 from asc_op_compile_base.common.platform import platform_info
 from asc_op_compile_base.common.utils import log as logger
-from constant import CompileParam, OpcOptions, OpcCompileMode, GraphDefParam, OptionalInOutMode, OpImplType
+from asc_opc_tool.constant import CompileParam, OpcOptions, OpcCompileMode, GraphDefParam, OptionalInOutMode, OpImplType
 
-from single_op_post_compile import SingleOpPostCompile
-from op_manager import (
+from asc_opc_tool.single_op_post_compile import SingleOpPostCompile
+from asc_opc_tool.op_manager import (
     get_single_op_operator,
     get_core_type_from_op_content,
     get_dynamic_compile_static,
@@ -39,7 +39,7 @@ from op_manager import (
     is_valid_module_path,
     get_enable_vector_core_from_opstore,
 )
-from opc_common import (
+from asc_opc_tool.opc_common import (
     check_is_dynamic,
     get_except_msg,
     get_int64_mode,
@@ -52,9 +52,9 @@ from opc_common import (
     get_file_real_path,
     normalize_optional_impl_mode,
 )
-from op_info_parser import OpInfoParser
-from single_op_compile import SingleOpCompile
-from op_compile_info_check import check_op_compilation_json, check_op_compilation_dict
+from asc_opc_tool.op_info_parser import OpInfoParser
+from asc_opc_tool.single_op_compile import SingleOpCompile
+from asc_opc_tool.op_compile_info_check import check_op_compilation_json, check_op_compilation_dict
 
 
 class OpCompilation:
@@ -238,6 +238,33 @@ class OpCompilation:
         elif impl_mode_default and (impl_mode_default.default != "") and (impl_mode_str == impl_mode_default.default):
             opt_impl_mode_flag = True
         return impl_mode_str, opt_impl_mode_flag
+
+    @staticmethod
+    def __get_impl_mode_parameter(op_func, func_name):
+        parameter = inspect.signature(op_func).parameters.get(OpcOptions.IMPL_MODE)
+        allowed = (inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        if parameter is not None and parameter.kind not in allowed:
+            raise RuntimeError("impl_mode of op func[%s] is %s", func_name, parameter)
+        return parameter
+
+    @classmethod
+    def resolve_operator_implementation(cls, op_type, shape_config):
+        """按编译流程选择 Python 实现，不调用算子函数，也不修改传入的 shape 描述。"""
+        op_info = dict(shape_config)
+        op_info[OpcOptions.IS_DYNAMIC] = check_is_dynamic(op_info[CompileParam.INPUTS]) or check_is_dynamic(
+            op_info[CompileParam.OUTPUTS]
+        )
+        op_func = cls.__get_single_op_operator(op_type, op_info)
+        if op_func is None:
+            raise ValueError(f"missing operator implementation for {op_type}")
+        return op_func
+
+    @classmethod
+    def resolve_impl_mode_for_shape(cls, op_type, shape_config):
+        """Inspect the selected implementation without calling its compilation function."""
+        op_func = cls.resolve_operator_implementation(op_type, shape_config)
+        parameter = cls.__get_impl_mode_parameter(op_func, op_type)
+        return cls.__check_update_impl_mode(shape_config[OpcOptions.IMPL_MODE], parameter)
 
     def __set_impl_mode(self, op_info):
         """
@@ -821,7 +848,7 @@ class OpCompilation:
 
 
 def asc_op_compile(opc_compile_args) -> bool:
-    from op_info_store import load_op_info_store
+    from asc_opc_tool.op_info_store import load_op_info_store
 
     load_op_info_store(opc_compile_args.get(OpcOptions.SOC_VERSION))
     op_compile = OpCompilation(opc_compile_args)

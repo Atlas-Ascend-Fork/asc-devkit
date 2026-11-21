@@ -229,6 +229,42 @@ def _add_core_type(title_dict, core_type_info, mix):
     return title_dict
 
 
+def build_elf_platform_metadata(core_type, task_ratio, has_ffts, short_soc=None):
+    """Return loading fields for the effective core type of a specialized static ELF.
+
+    Initialize the compile platform for the same target before calling.
+    A None FFTS flag means DFX did not record the layout and the static
+    entry's platform rule must be used.
+    """
+    from asc_op_compile_base.common.platform import get_soc_spec
+    from .ascendc_common_utility import CommonUtility
+    from .static_kernel_platform import compile_soc
+
+    short_soc = short_soc or get_soc_spec("SHORT_SOC_VERSION")
+    metadata = {"coreType": core_type}
+    mix = "MIX" if core_type == "MIX" else None
+    physical_core = core_type
+    if mix:
+        metadata["taskRation"] = task_ratio
+        physical_core = "VectorCore" if task_ratio == "0:1" else "AiCore"
+    with compile_soc(short_soc):
+        if has_ffts is None:
+            no_ffts = (
+                CommonUtility.is_c310()
+                or CommonUtility.is_920r1()
+                or CommonUtility.is_920r2()
+                or CommonUtility.is_m510()
+            )
+            has_ffts = bool(mix) and not no_ffts
+        metadata.update(_add_kernel_magic(short_soc, physical_core, has_ffts, mix))
+        if not mix:
+            core_info = {"core_type": {"VectorCore": "AIV", "AiCore": "AIC"}[core_type]}
+            _add_core_type(metadata, core_info, None)
+    # A MIX resource declares synchronization even when its entry has no FFTS pointer.
+    metadata["intercoreSync"] = 1 if mix else int(has_ffts)
+    return metadata
+
+
 # 'pylint: disable=too-many-arguments
 def init_json_info(
     target: any,

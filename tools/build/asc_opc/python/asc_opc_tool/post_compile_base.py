@@ -20,8 +20,8 @@ import stat
 
 from shutil import copy as file_copy
 from asc_op_compile_base.common.utils import log as logger
-from opc_common import opc_log_full, LogLevel
-from constant import CompileParam, SupportInfo, OpcOptions, GraphDefParam
+from asc_opc_tool.opc_common import opc_log_full, LogLevel
+from asc_opc_tool.constant import CompileParam, SupportInfo, OpcOptions, GraphDefParam
 
 
 class PostCompilation:

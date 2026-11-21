@@ -20,10 +20,10 @@ import sys
 from asc_op_compile_base.common.utils import log as logger
 from asc_op_compile_base.common.utils.AscendLog import AscendLog
 
-from constant import OpcOptions, OpcCompileMode, OptionalInOutMode
-from opc_common import compiling_option_keys, check_and_normalize_impl_mode
-from op_compilation import OpCompilation
-from op_info_store import load_op_info_store
+from asc_opc_tool.constant import OpcOptions, OpcCompileMode, OptionalInOutMode
+from asc_opc_tool.opc_common import compiling_option_keys, check_and_normalize_impl_mode
+from asc_opc_tool.op_compilation import OpCompilation
+from asc_opc_tool.op_info_store import load_op_info_store
 
 log_level_dict = {"debug": 0, "info": 1, "warning": 2, "error": 3}
 

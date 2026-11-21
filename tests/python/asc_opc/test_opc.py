@@ -22,19 +22,19 @@ THIS_FILE_NAME = __file__
 FILE_PATH = os.path.dirname(os.path.realpath(THIS_FILE_NAME))
 TOP_PATH = os.path.join(FILE_PATH, "../../../")
 FRAMEWORK_PATH = os.path.join(TOP_PATH, "tools/build/")
-ASC_OPC_PATH = os.path.join(TOP_PATH, "tools/build/asc_opc/python/asc_opc_tool/")
+ASC_OPC_PATH = os.path.join(TOP_PATH, "tools/build/asc_opc/python/")
 OPC_STUB_PATH = os.path.join(TOP_PATH, "tests/python/asc_opc/stub/")
 sys.path.insert(0, FRAMEWORK_PATH)
 sys.path.insert(0, ASC_OPC_PATH)
 sys.path.insert(0, OPC_STUB_PATH)
 
-from opc import OpcOptionParser
-import opc as opc
-import opc_api as opc_api
-from constant import OpcOptions
-from opc_common import get_int64_mode
+from asc_opc_tool.opc import OpcOptionParser
+import asc_opc_tool.opc as opc
+import asc_opc_tool.opc_api as opc_api
+from asc_opc_tool.constant import OpcOptions
+from asc_opc_tool.opc_common import get_int64_mode
 import asc_op_compile_base.common.utils.log as logger
-from op_compile_info_check import check_op_optional_paramtype
+from asc_opc_tool.op_compile_info_check import check_op_optional_paramtype
 import tempfile
 
 

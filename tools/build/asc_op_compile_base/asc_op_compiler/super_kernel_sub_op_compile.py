@@ -15,7 +15,10 @@ super kernel sub op compile
 
 import os
 import subprocess
+from threading import RLock
+from types import SimpleNamespace
 from asc_op_compile_base.common.context import get_context
+from asc_op_compile_base.common.context.op_context import OpContext
 from asc_op_compile_base.common.error_mgr import raise_tbe_python_err, TBE_DEFAULT_PYTHON_ERROR_CODE
 from .global_storage import global_var_storage
 from .ascendc_common_utility import CommonUtility
@@ -30,6 +33,16 @@ from .super_kernel_constants import (
     SuperKernelEarlyStartMode,
     SuperKernelFeedSyncAllMode,
 )
+
+
+_ACLGRAPH_STATIC_SK_FLAGS = {
+    "sub_operator_early_start_set_flag": "ascendc_sub_super_kernel_early_start_set_flag",
+    "sub_operator_early_start_wait_flag": "ascendc_sub_super_kernel_early_start_wait_flag",
+    "sub_operator_call_dcci_before_kernel_start": "ascendc_sub_super_kernel_call_dcci_before_kernel_start",
+    "sub_operator_call_dcci_after_kernel_end": "ascendc_sub_super_kernel_call_dcci_after_kernel_end",
+    "sub_operator_call_dcci_disable_on_kernel": "ascendc_sub_super_kernel_call_dcci_disable_on_kernel",
+}
+_ACLGRAPH_STATIC_SK_LOCK = RLock()
 
 
 def match_kernel_name_patern(op_type, op_list, use_regex=False):
@@ -177,6 +190,49 @@ def gen_sub_super_kernel_compile_options(compile_option_tuple, tiling_info, comp
 
     gen_gm_get_set_value_dcci_compile_options(compile_option_tuple, compile_info, tiling_info.static_shape_flag)
     return
+
+
+def build_aclgraph_static_sk_options(sk_info, block_dim, op_type):
+    """Build argv and JSON flags for ACLGraph static kernel specialization.
+
+    Match DCCI options against the operator type without changing the kernel's
+    actual symbol name. Requests that need early-start source analysis must use OPC.
+    """
+    from .super_kernel_option_parse import parse_super_kernel_options
+
+    if not isinstance(op_type, str) or not op_type:
+        raise ValueError("SK options require the current task operator type")
+    text = sk_info.get("super_kernel_options") or ""
+    if not isinstance(text, str):
+        raise ValueError("super_kernel_options must be a string")
+
+    with _ACLGRAPH_STATIC_SK_LOCK, OpContext("static") as context:
+        context.add_addition("super_kernel_sub_combine", True)
+        context.add_addition("super_kernel_sub_info", sk_info)
+        options = parse_super_kernel_options(text)
+        if options.get("early-start") == "1" and options.get("debug-sync-all") != "1":
+            raise ValueError("early-start requires source capability analysis; use OPC")
+        info = SimpleNamespace(
+            kernel_name=op_type,
+            op_type=op_type,
+            super_kernel_info={"sp_options": options},
+            super_kernel_early_start_set_flag=False,
+            super_kernel_early_start_wait_flag=False,
+        )
+        compile_options = SimpleNamespace(compile_options=[])
+        static_tiling = SimpleNamespace(block_num=block_dim, static_shape_flag=True)
+        storage = global_var_storage
+        saved = {key: storage.get_variable(key) for key in _ACLGRAPH_STATIC_SK_FLAGS.values()}
+        try:
+            for key in saved:
+                storage.set_variable(key, False)
+            gen_sub_super_kernel_compile_options(compile_options, static_tiling, info)
+            flags = tuple((field, storage.get_variable(key)) for field, key in _ACLGRAPH_STATIC_SK_FLAGS.items())
+        finally:
+            for key, value in saved.items():
+                storage.set_variable(key, value)
+
+    return ("--enable-super-kernel", *compile_options.compile_options), flags
 
 
 def split_kernel(sub_kernels_dict, func_name, obj_path, split_mode, compile_log_path):

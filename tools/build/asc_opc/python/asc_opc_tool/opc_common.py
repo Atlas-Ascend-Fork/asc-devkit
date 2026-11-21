@@ -29,7 +29,7 @@ from enum import unique
 
 from asc_op_compile_base.common.utils import log as logger
 
-from constant import (
+from asc_opc_tool.constant import (
     CompileParam,
     OpcOptions,
     OpImplType,

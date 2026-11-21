@@ -13,18 +13,60 @@
 opc api
 """
 
-import sys
 from asc_op_compile_base.common.utils import log as logger
-from opc import OpcOptionParser
-from op_compilation import OpCompilation
-from op_info_store import load_op_info_store
-from constant import OpcOptions, OpcCompileMode
+from asc_opc_tool.constant import OpcOptions, OpcCompileMode
+from asc_opc_tool.opc_common import get_int64_mode
+from asc_opc_tool.single_op_post_compile import SingleOpPostCompile
+
+
+__all__ = ["build_static_support_info", "compile_op", "get_int64_mode", "get_operator_metadata", "resolve_impl_mode"]
+
+
+def build_static_support_info(shape_config, op_debug_config=""):
+    """复用 OPC 规则生成静态 JSON 的 supportInfo，包括 staticKey 和输入输出描述处理"""
+    return SingleOpPostCompile.build_static_support_info(shape_config, op_debug_config)
+
+
+def get_operator_metadata(op_type, shape_config, soc_version):
+    """查询所选 Python 实现的元数据，返回初始化映射、MC2 名称元组及源码绝对路径。"""
+    if not isinstance(op_type, str) or not op_type:
+        raise ValueError("op_type must be a non-empty string")
+    from asc_opc_tool.op_compilation import OpCompilation
+    from asc_opc_tool.op_info_store import load_op_info_store
+    from asc_opc_tool.operator_metadata import read_operator_metadata
+
+    try:
+        load_op_info_store(soc_version)
+        op_func = OpCompilation.resolve_operator_implementation(op_type, shape_config)
+        return read_operator_metadata(op_func, op_type)
+    except Exception as error:
+        raise ValueError("cannot read Python operator metadata for {}: {}".format(op_type, error)) from error
+
+
+def resolve_impl_mode(op_type, shape_config, soc_version):
+    """查询所选 Python 实现的默认模式，处理 optional 模式及追加匹配 key 的规则"""
+    mode = shape_config.get(OpcOptions.IMPL_MODE)
+    if mode is None or mode == "":
+        return mode, False
+
+    from asc_opc_tool.op_compilation import OpCompilation
+    from asc_opc_tool.op_info_store import load_op_info_store
+
+    try:
+        load_op_info_store(soc_version)
+        return OpCompilation.resolve_impl_mode_for_shape(op_type, shape_config)
+    except Exception as error:
+        raise ValueError(f"cannot resolve implementation mode for {op_type}: {error}") from error
 
 
 def compile_op(op_params, build_options):
     """
     Provides API compile operator for external callers.
     """
+    from asc_opc_tool.opc import OpcOptionParser
+    from asc_opc_tool.op_compilation import OpCompilation
+    from asc_opc_tool.op_info_store import load_op_info_store
+
     opt_parser = OpcOptionParser()
     res = opt_parser.parse_build_options(build_options)
     if not res:

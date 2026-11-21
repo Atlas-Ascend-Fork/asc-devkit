@@ -18,14 +18,36 @@ import json
 import copy
 
 from asc_op_compile_base.common.utils import log as logger
-from opc_common import str_to_sha256_hash, opc_log_full, LogLevel
-from opc_common import read_json_file, update_json_file
-from simplified_key_utils import generate_simplified_key
-from constant import CompileParam, SupportInfo, OpcOptions, OptionalInOutMode, GraphDtype, OpcCompileMode
-from post_compile_base import PostCompilation
+from asc_opc_tool.opc_common import str_to_sha256_hash, opc_log_full, LogLevel, get_int64_mode
+from asc_opc_tool.opc_common import read_json_file, update_json_file
+from asc_opc_tool.simplified_key_utils import generate_simplified_key
+from asc_opc_tool.constant import CompileParam, SupportInfo, OpcOptions, OptionalInOutMode, GraphDtype, OpcCompileMode
+from asc_opc_tool.post_compile_base import PostCompilation
 
 
 class SingleOpPostCompile(PostCompilation):
+    @classmethod
+    def build_static_support_info(cls, shape_config, op_debug_config):
+        """Build matching metadata from a normalized static shape, without reading a kernel JSON."""
+        helper = cls({OpcOptions.OP_COMPILE_MODE: OpcCompileMode.SINGLE_OP_CONFIG_FILE_MODE}, False, False, "0")
+        info = {key: copy.deepcopy(shape_config.get(key)) for key in ("inputs", "outputs", "attrs", "impl_mode")}
+        info["status_check"] = shape_config.get("status_check", "true")
+        static_key = helper.__generate_static_key({}, info)
+        if shape_config.get("optional_impl_mode_flag"):
+            static_key += "," + helper.__generate_single_op_static_key({}, info, None)
+
+        support = {key: copy.deepcopy(shape_config.get(key, [])) for key in ("inputs", "outputs", "attrs")}
+        int64_mode = get_int64_mode(info["inputs"]) or get_int64_mode(info["outputs"])
+        support.update(opMode="static", int64Mode=int64_mode, staticKey=static_key)
+        helper.gen_notnone_param(support, "implMode", shape_config.get("impl_mode"))
+        # Normalize the published descriptors after calculating the key from the original shape.
+        for category in ("inputs", "outputs"):
+            helper.__change_inoroutputs(support[category])
+            helper.adjust_support_info_inputoutput(support[category])
+        if op_debug_config != "":
+            support["op_debug_config"] = op_debug_config
+        return support
+
     def update_info_to_json_file(self, op, op_info, json_file_path):
         """
         single op after compile, write support info and compile info to json file

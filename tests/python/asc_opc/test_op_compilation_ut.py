@@ -26,7 +26,7 @@ THIS_FILE_NAME = __file__
 FILE_PATH = os.path.dirname(os.path.realpath(THIS_FILE_NAME))
 TOP_PATH = os.path.join(FILE_PATH, "../../../")
 FRAMEWORK_PATH = os.path.join(TOP_PATH, "tools/build/")
-ASC_OPC_PATH = os.path.join(TOP_PATH, "tools/build/asc_opc/python/asc_opc_tool/")
+ASC_OPC_PATH = os.path.join(TOP_PATH, "tools/build/asc_opc/python/")
 OPC_STUB_PATH = os.path.join(TOP_PATH, "tests/python/asc_opc/stub/")
 sys.path.insert(0, FRAMEWORK_PATH)
 sys.path.insert(0, ASC_OPC_PATH)
@@ -35,15 +35,15 @@ sys.path.insert(0, OPC_STUB_PATH)
 import asc_op_compile_base.common.utils.log as logger
 from asc_op_compile_base.common.context import op_context
 
-from constant import OpcCompileMode
-from op_compilation import OpCompilation, OpcOptions, CompileParam
-from post_compile_base import PostCompilation
-from single_op_post_compile import SingleOpPostCompile
-from single_op_compile import SingleOpCompile
-from op_info_store import SubOpInfoStore, load_op_info_store, load_set_op_content
-from opc_common import update_compile_info, normalize_optional_impl_mode, get_new_attrs_for_op_compile
-from op_manager import get_core_type_from_op_content
-from op_compile_info_check import check_op_compilation_json, check_op_compilation_dict
+from asc_opc_tool.constant import OpcCompileMode
+from asc_opc_tool.op_compilation import OpCompilation, OpcOptions, CompileParam
+from asc_opc_tool.post_compile_base import PostCompilation
+from asc_opc_tool.single_op_post_compile import SingleOpPostCompile
+from asc_opc_tool.single_op_compile import SingleOpCompile
+from asc_opc_tool.op_info_store import SubOpInfoStore, load_op_info_store, load_set_op_content
+from asc_opc_tool.opc_common import update_compile_info, normalize_optional_impl_mode, get_new_attrs_for_op_compile
+from asc_opc_tool.op_manager import get_core_type_from_op_content
+from asc_opc_tool.op_compile_info_check import check_op_compilation_json, check_op_compilation_dict
 
 
 class TestOpCompilationUt(unittest.TestCase):
@@ -746,7 +746,7 @@ class TestOpCompilationUt(unittest.TestCase):
         logger.debug("End to execute ============ test_get_new_attrs_for_op_compile ============")
 
     def test_SingleOpCompile_will_trans_deterministic_option_to_kwargs(self):
-        with unittest.mock.patch("single_op_compile.build_config") as build_config:
+        with unittest.mock.patch("asc_opc_tool.single_op_compile.build_config") as build_config:
             test_op_func = unittest.mock.MagicMock()
 
             op_info = {
@@ -819,7 +819,7 @@ class TestOpCompilationUt(unittest.TestCase):
                     OpcOptions.RELOCATABLE_BIN: relocatable,
                 }
 
-                with patch("single_op_compile.build_config") as build_config:
+                with patch("asc_opc_tool.single_op_compile.build_config") as build_config:
                     SingleOpCompile(op, op_info, compile_args).op_compile()
 
                 self.assertEqual(captured_context["mode"], mode)
@@ -853,7 +853,7 @@ class TestOpCompilationUt(unittest.TestCase):
             self.assertIs(context.get_addition("super_kernel_sub_info"), expected_info)
 
     def test_SingleOpCompile_will_jit_compile_option_to_kwargs(self):
-        with unittest.mock.patch("single_op_compile.build_config") as build_config:
+        with unittest.mock.patch("asc_opc_tool.single_op_compile.build_config") as build_config:
             test_op_func = unittest.mock.MagicMock()
 
             op = {
@@ -923,8 +923,8 @@ class TestOpCompilationUt(unittest.TestCase):
             ],
         }
 
-        with patch("op_compilation.SingleOpCompile") as patchSingleOpCompile:
-            with patch("op_compilation.get_single_op_operator") as patch_get_single_op_operator:
+        with patch("asc_opc_tool.op_compilation.SingleOpCompile") as patchSingleOpCompile:
+            with patch("asc_opc_tool.op_compilation.get_single_op_operator") as patch_get_single_op_operator:
                 # 由于算子实际不存在，通过patch返回模拟的算子脚本main_func
                 patch_get_single_op_operator.return_value = MagicMock()
 
@@ -1237,7 +1237,7 @@ class TestOpCompilation_WithDeterministic:
 
     class MockSingleOpCompile:
         def __init__(self, will_output):
-            self._patch_SingleOpCompile = patch("op_compilation.SingleOpCompile")
+            self._patch_SingleOpCompile = patch("asc_opc_tool.op_compilation.SingleOpCompile")
 
             self.patch_SingleOpCompile = self._patch_SingleOpCompile.start()
             self.patch_op_compile = MagicMock(side_effect=self.create_op_bin)
@@ -1276,7 +1276,7 @@ class TestOpCompilation_WithDeterministic:
 
         testMock = self.MockSingleOpCompile([(test_arg.temp_output.meta_dir, test_arg.temp_output.output_bin, {})])
 
-        with patch("op_compilation.get_single_op_operator"):
+        with patch("asc_opc_tool.op_compilation.get_single_op_operator"):
             test_op_compilation = OpCompilation(opc_compile_args)
             test_compile_result = test_op_compilation.single_op_compilation(test_arg.op_json)
             assert test_compile_result is True
@@ -1295,7 +1295,7 @@ class TestOpCompilation_WithDeterministic:
             [(test_arg.temp_output.meta_dir, test_arg.temp_output.output_bin, {"deterministic": "true"})]
         )
 
-        with patch("op_compilation.get_single_op_operator"):
+        with patch("asc_opc_tool.op_compilation.get_single_op_operator"):
             test_op_compilation = OpCompilation(opc_compile_args)
             test_compile_result = test_op_compilation.single_op_compilation(test_arg.op_json)
 
@@ -1322,7 +1322,7 @@ class TestOpCompilation_WithDeterministic:
             ]
         )
 
-        with patch("op_compilation.get_single_op_operator"):
+        with patch("asc_opc_tool.op_compilation.get_single_op_operator"):
             test_op_compilation = OpCompilation(opc_compile_args)
             test_compile_result = test_op_compilation.single_op_compilation(test_arg.op_json)
 
@@ -1343,7 +1343,7 @@ class TestOpCompilation_WithDeterministic:
             [(test_arg.temp_output.meta_dir, test_arg.temp_output.output_bin, {"deterministic": "ignore"})]
         )
 
-        with patch("op_compilation.get_single_op_operator"):
+        with patch("asc_opc_tool.op_compilation.get_single_op_operator"):
             test_op_compilation = OpCompilation(opc_compile_args)
             test_compile_result = test_op_compilation.single_op_compilation(test_arg.op_json)
 
@@ -1365,7 +1365,7 @@ class TestOpCompilation_WithDeterministic:
             ]
         )
 
-        with patch("op_compilation.get_single_op_operator"):
+        with patch("asc_opc_tool.op_compilation.get_single_op_operator"):
             test_op_compilation = OpCompilation(opc_compile_args)
             test_compile_result = test_op_compilation.single_op_compilation(test_arg.op_json)
 

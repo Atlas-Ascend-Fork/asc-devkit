@@ -13,8 +13,8 @@
 
 import json
 from asc_op_compile_base.common.utils import log as logger
-from op_manager import get_inout_info_from_opstore
-from constant import CompileParam, OpDataType, OpFormatType, OpcOptions, OptionalInOutMode, OpParamType
+from asc_opc_tool.op_manager import get_inout_info_from_opstore
+from asc_opc_tool.constant import CompileParam, OpDataType, OpFormatType, OpcOptions, OptionalInOutMode, OpParamType
 
 
 CUSTOM_BINARY_JSON_META = "_ascendc_custom_binary_json"

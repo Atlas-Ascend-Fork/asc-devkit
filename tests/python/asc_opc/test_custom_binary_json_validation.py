@@ -22,7 +22,7 @@ import pytest
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 TOP_PATH = os.path.join(FILE_PATH, "../../../")
 FRAMEWORK_PATH = os.path.join(TOP_PATH, "tools/build/")
-ASC_OPC_PATH = os.path.join(TOP_PATH, "tools/build/asc_opc/python/asc_opc_tool/")
+ASC_OPC_PATH = os.path.join(TOP_PATH, "tools/build/asc_opc/python/")
 OPC_STUB_PATH = os.path.join(TOP_PATH, "tests/python/asc_opc/stub/")
 UTIL_PATH = os.path.join(TOP_PATH, "cmake/asc/fwk_modules/util/")
 
@@ -46,15 +46,15 @@ def custom_binary_modules(monkeypatch):
     monkeypatch.setitem(sys.modules, "asc_op_compile_base.common.utils", utils_stub)
     monkeypatch.setitem(sys.modules, "asc_op_compile_base.common.utils.log", log_stub)
 
-    op_manager_stub = types.ModuleType("op_manager")
+    op_manager_stub = types.ModuleType("asc_opc_tool.op_manager")
     op_manager_stub.get_inout_info_from_opstore = lambda _op_type: (None, None)
-    monkeypatch.setitem(sys.modules, "op_manager", op_manager_stub)
-    monkeypatch.delitem(sys.modules, "op_compile_info_check", raising=False)
+    monkeypatch.setitem(sys.modules, "asc_opc_tool.op_manager", op_manager_stub)
+    monkeypatch.delitem(sys.modules, "asc_opc_tool.op_compile_info_check", raising=False)
     monkeypatch.delitem(sys.modules, "split_opc_json_with_op_list", raising=False)
 
-    check_module = importlib.import_module("op_compile_info_check")
+    check_module = importlib.import_module("asc_opc_tool.op_compile_info_check")
     split_module = importlib.import_module("split_opc_json_with_op_list")
-    constant_module = importlib.import_module("constant")
+    constant_module = importlib.import_module("asc_opc_tool.constant")
     return check_module, split_module.split_json_files, constant_module.OpcOptions
 
 

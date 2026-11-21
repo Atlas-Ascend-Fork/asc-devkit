@@ -19,7 +19,7 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-ASC_OPC_PATH = REPO_ROOT / "tools/build/asc_opc/python/asc_opc_tool"
+ASC_OPC_PATH = REPO_ROOT / "tools/build/asc_opc/python"
 
 
 @pytest.fixture
@@ -39,10 +39,11 @@ def simplified_key_module(monkeypatch):
     monkeypatch.setitem(sys.modules, "asc_op_compile_base.common", common_stub)
     monkeypatch.setitem(sys.modules, "asc_op_compile_base.common.utils", utils_stub)
     monkeypatch.setitem(sys.modules, "asc_op_compile_base.common.utils.log", log_stub)
-    monkeypatch.delitem(sys.modules, "simplified_key_utils", raising=False)
-    monkeypatch.delitem(sys.modules, "opc_common", raising=False)
+    monkeypatch.delitem(sys.modules, "asc_opc_tool.simplified_key_utils", raising=False)
+    monkeypatch.delitem(sys.modules, "asc_opc_tool.opc_common", raising=False)
+    monkeypatch.delitem(sys.modules, "asc_opc_tool.constant", raising=False)
 
-    return importlib.import_module("simplified_key_utils")
+    return importlib.import_module("asc_opc_tool.simplified_key_utils")
 
 
 class RecordingLogger:

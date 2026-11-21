@@ -38,6 +38,7 @@ from .ascendc_compile_dfx import DFXSectionGenerator
 from .super_kernel_sub_op_compile import add_sub_super_kernel_info
 from .super_kernel_constants import SuperKernelStreamFusionMode
 from .ascendc_kernel_feature_manager import global_ascendc_kernel_feature_manager
+from .static_kernel_platform import SuperKernelRestriction, get_super_kernel_unsupported_reason
 
 
 def _get_kernel_type_dict(compile_info: CompileInfo, tiling_key: int):
@@ -739,26 +740,29 @@ def _json_post_process(
         else:
             js["deterministic"] = "false"
 
-    superkernel_black_op_list = ["MoeInitRoutingV3", "MoeInitRoutingV2", "MoeInitRoutingQuant"]
-    if op_info.op_type not in superkernel_black_op_list or not CommonUtility.is_v220():
+    sk_restriction = get_super_kernel_unsupported_reason(
+        op_info.op_type,
+        tiling_info.local_memory_size,
+        lambda: _get_simt_type_in_staic(tiling_info, compile_info, obj_path),
+    )
+    if sk_restriction is None:
         js["supportSuperKernel"] = 1
-    else:
+    elif sk_restriction is SuperKernelRestriction.OPERATOR:
+        # 保留原 OPC 行为：黑名单只告警，不覆盖编译器已有的能力声明。
         CommonUtility.print_compile_log(
             compile_info.kernel_name,
             f"The operator {op_info.op_type} has not been adapted to superkernel. Therefore, \
 the superkernel cannot be integrated with the operator.",
             AscendCLogLevel.LOG_WARNING,
         )
-
-    if CommonUtility.is_c310():
-        if tiling_info.local_memory_size > 0 or _get_simt_type_in_staic(tiling_info, compile_info, obj_path):
-            js["supportSuperKernel"] = 0
-            CommonUtility.print_compile_log(
-                compile_info.kernel_name,
-                f"The current soc version does not support merging simt type operator:{op_info.op_type} \
+    else:
+        js["supportSuperKernel"] = 0
+        CommonUtility.print_compile_log(
+            compile_info.kernel_name,
+            f"The current soc version does not support merging simt type operator:{op_info.op_type} \
     into superkernel",
-                AscendCLogLevel.LOG_INFO,
-            )
+            AscendCLogLevel.LOG_INFO,
+        )
 
     def _safe_int_conversion(value, default=-1):
         if value is None:

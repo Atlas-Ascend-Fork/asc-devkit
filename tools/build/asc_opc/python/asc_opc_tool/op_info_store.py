@@ -18,8 +18,8 @@ import json
 from pathlib import Path
 from asc_op_compile_base.common.platform import platform_info
 from asc_op_compile_base.common.utils import log as logger
-from constant import OpParamType, AttrtypeMapDict
-from opc_common import read_json_file
+from asc_opc_tool.constant import OpParamType, AttrtypeMapDict
+from asc_opc_tool.opc_common import read_json_file
 
 
 class InOrOutputInfo:

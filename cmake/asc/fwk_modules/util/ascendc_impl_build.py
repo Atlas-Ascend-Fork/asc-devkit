@@ -246,14 +246,27 @@ def {}({}, kernel_name="{}"{}):
 """
 
 
+OPERATOR_METADATA_API = '''
+def get_operator_metadata():
+    """Return fresh metadata lists shared by compilation and metadata queries."""
+    return {{
+        "init_value_list": {},
+        "mc2_ctx": {},
+    }}
+
+'''
+
+
 COMPILE_OP_API = """
     msg = "start compile Ascend C Operator {}, kernel name is " + kernel_name
     CommonUtility.print_compile_log("", msg, AscendCLogLevel.LOG_INFO)
     op_type = "{}"
     code_channel = get_code_channel(src, kernel_name, op_type, options)
+    __operator_metadata__ = get_operator_metadata()
     op_info = OpInfo(kernel_name = kernel_name, op_type = op_type, inputs = __inputs__, outputs = __outputs__,\\
         attrs = __attrs__ {}, origin_inputs=[{}], origin_outputs = [{}],\\
-                param_type_dynamic = {}, mc2_ctx = {}, param_type_list = {}, init_value_list = {},\\
+                param_type_dynamic = {}, mc2_ctx = __operator_metadata__["mc2_ctx"], param_type_list = {},\\
+                init_value_list = __operator_metadata__["init_value_list"],\\
                 output_shape_depend_on_compute = {})
     compile_op(src, origin_func_name, op_info, options, code_channel, '{}', {})
 """
@@ -262,9 +275,11 @@ COMPILE_OP_API_BUILT_IN = """
     CommonUtility.print_compile_log("", msg, AscendCLogLevel.LOG_INFO)
     op_type = "{}"
     code_channel = get_code_channel(src, kernel_name, op_type, options)
+    __operator_metadata__ = get_operator_metadata()
     op_info = OpInfo(kernel_name = kernel_name, op_type = op_type, inputs = __inputs__, outputs = __outputs__,\\
         attrs = __attrs__ {}, origin_inputs=[{}], origin_outputs = [{}],\\
-                param_type_dynamic = {}, mc2_ctx = {}, param_type_list = {}, init_value_list = {},\\
+                param_type_dynamic = {}, mc2_ctx = __operator_metadata__["mc2_ctx"], param_type_list = {},\\
+                init_value_list = __operator_metadata__["init_value_list"],\\
                 output_shape_depend_on_compute = {})
 
     op_compile_option = '{}'
@@ -397,6 +412,7 @@ class AdpBuilder(opdesc_parser.OpDesc):
             self._write_head(fd, src_ini_config)
             self._write_argparse(fd)
             self._get_impl_mode()
+            fd.write(OPERATOR_METADATA_API.format(self.output_init_value, self._build_mc2_ctx()))
             self._write_impl(fd, impl_path, src_ini_config)
             if self.op_chk_support:
                 self._write_cap("check_supported", fd)
@@ -731,9 +747,7 @@ class AdpBuilder(opdesc_parser.OpDesc):
                     ", ".join(self.input_name),
                     ", ".join(self.output_name),
                     self.param_type_dynamic,
-                    self._build_mc2_ctx(),
                     self.input_type + self.output_type,
-                    self.output_init_value,
                     self.output_shape_depend_on_compute,
                     self.op_compile_option,
                     abs_rel_kernel_src_path,
@@ -749,9 +763,7 @@ class AdpBuilder(opdesc_parser.OpDesc):
                     ", ".join(self.input_name),
                     ", ".join(self.output_name),
                     self.param_type_dynamic,
-                    self._build_mc2_ctx(),
                     self.input_type + self.output_type,
-                    self.output_init_value,
                     self.output_shape_depend_on_compute,
                     self.op_compile_option,
                     repr(extend_opt),

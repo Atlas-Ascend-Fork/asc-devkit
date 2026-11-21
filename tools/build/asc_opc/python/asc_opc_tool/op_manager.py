@@ -22,9 +22,9 @@ import sys
 from pathlib import Path
 import asc_op_compile_base.common.register as tbe_register
 from asc_op_compile_base.common.utils import log as logger
-from constant import OpcOptions
-from opc_common import normalize_func_name, get_file_real_path, LogLevel, opc_log_full
-from op_info_store import SubOpInfoStore, OpPathParse
+from asc_opc_tool.constant import OpcOptions
+from asc_opc_tool.opc_common import normalize_func_name, get_file_real_path, LogLevel, opc_log_full
+from asc_opc_tool.op_info_store import SubOpInfoStore, OpPathParse
 
 MIDDLE_PATH_LIST = ("op_impl/ai_core/tbe", "op_impl/vector_core/tbe")
 

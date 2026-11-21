@@ -23,10 +23,10 @@ from asc_op_compile_base.common.buildcfg import build_config
 from asc_op_compile_base.common.context import op_context
 from asc_op_compile_base.common.context import op_info as operator_info
 
-from simplified_key_utils import infer_simplified_key_mode
-from constant import OpcOptions, CompileParam, GraphDefParam, OpModeType
-from op_manager import get_dynamic_compile_static_from_opstore
-from opc_common import (
+from asc_opc_tool.simplified_key_utils import infer_simplified_key_mode
+from asc_opc_tool.constant import OpcOptions, CompileParam, GraphDefParam, OpModeType
+from asc_opc_tool.op_manager import get_dynamic_compile_static_from_opstore
+from asc_opc_tool.opc_common import (
     get_new_attrs_for_op_compile,
     update_compile_info,
     get_json_file_path,

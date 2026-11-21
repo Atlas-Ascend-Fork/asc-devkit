@@ -12,8 +12,8 @@
 
 
 from asc_op_compile_base.common.utils import log as logger
-from constant import OpcOptions, CompileParam, OpImplType, OpFormatType, OpDataType, OpParamType
-from opc_common import check_input_and_output_for_simplified_key, check_attr_for_simpilified_key
+from asc_opc_tool.constant import OpcOptions, CompileParam, OpImplType, OpFormatType, OpDataType, OpParamType
+from asc_opc_tool.opc_common import check_input_and_output_for_simplified_key, check_attr_for_simpilified_key
 
 
 SIMPLIFIED_KEY_MAX_LEN = 1024
