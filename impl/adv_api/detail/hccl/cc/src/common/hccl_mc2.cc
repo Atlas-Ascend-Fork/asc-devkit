@@ -121,7 +121,7 @@ bool IsSupportedMc2OpType(HcclCMDType opType)
 {
     return opType == HcclCMDType::HCCL_CMD_ALLGATHER || opType == HcclCMDType::HCCL_CMD_ALLREDUCE ||
            opType == HcclCMDType::HCCL_CMD_REDUCE_SCATTER || opType == HcclCMDType::HCCL_CMD_ALLTOALLV ||
-           opType == HcclCMDType::HCCL_CMD_ALLTOALL;
+           opType == HcclCMDType::HCCL_CMD_ALLTOALL || opType == HcclCMDType::HCCL_CMD_HALF_ALLTOALLV;
 }
 
 HcclResult CheckMc2CcDeviceType(const char* apiName)
@@ -756,7 +756,8 @@ HcclResult PrepareCcOpParam(
     opParam.commOpExpansionMode = HcclOpExpansionMode::HCCL_OP_EXPANSION_MODE_AI_CPU;
     opParam.reduceType = isReduce ? args.reduceType : HCCL_REDUCE_SUM;
 
-    if (opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALL || opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALLV) {
+    if (opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALL || opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALLV ||
+        opParam.opType == HcclCMDType::HCCL_CMD_HALF_ALLTOALLV) {
         opParam.varMemSize = ALL_TO_ALL_V_VECTOR_NUM * rankSize * sizeof(uint64_t);
         opParam.all2AllVDataDes.sendType = args.srcDataType;
         opParam.all2AllVDataDes.recvType = args.dstDataType;
@@ -777,9 +778,11 @@ HcclResult PrepareCcOpParam(
 HcclResult Mc2AcquireCcResCtxAicpu(HcclComm comm, uint8_t ccType, void* ccArgs, void** ccResCtx, uint32_t* ccResCtxSize)
 {
     const auto& args = *static_cast<const Mc2OpArgs*>(ccArgs);
+    // HalfAlltoAllV 仅有 CCU 执行路径，AICPU 直发入口直接拒绝
     CHK_PRT_RET(
-        !IsSupportedMc2OpType(static_cast<HcclCMDType>(ccType)),
-        HCCL_ERROR("[Mc2AcquireCcResCtxAicpu] unsupported ccType[%u]", ccType), HCCL_E_NOT_SUPPORT);
+        !IsSupportedMc2OpType(static_cast<HcclCMDType>(ccType)) ||
+            ccType == static_cast<uint8_t>(HcclCMDType::HCCL_CMD_HALF_ALLTOALLV),
+        HCCL_ERROR("[Mc2AcquireCcResCtxAicpu] unsupported ccType[%u] on AICPU engine", ccType), HCCL_E_NOT_SUPPORT);
 
     HcclUs startut = TIME_NOW();
     CHK_RET(InitEnvConfig());
