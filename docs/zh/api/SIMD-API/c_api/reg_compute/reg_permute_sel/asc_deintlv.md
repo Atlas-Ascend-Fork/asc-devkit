@@ -159,7 +159,6 @@ bisheng example.asc -o main --npu-arch=dav-3510 && ./main
 #include <iostream>
 #include <vector>
 #include "c_api/asc_simd.h"
-#include "utils/std/cmath.h"
 #include "acl/acl.h"
 
 namespace {
@@ -175,43 +174,25 @@ void print_data(const char* label, const std::vector<T>& values)
     std::cout << std::endl;
 }
 
-template <typename T>
-bool compare_data(const std::vector<T>& actual, const std::vector<T>& expected, double tolerance = 0.0)
-{
-    if (actual.size() != expected.size()) return false;
-    for (size_t i = 0; i < actual.size(); ++i) {
-        if (actual[i] == expected[i]) continue;
-        const double diff = static_cast<double>(actual[i]) - static_cast<double>(expected[i]);
-        if (diff > tolerance || diff < -tolerance) return false;
-    }
-    return true;
-}
-
+// dav-3510的矢量寄存器可容纳64个float元素。
 constexpr uint32_t ELEMENTS_PER_REGISTER = 64;
-constexpr uint32_t DATA_BYTES = 133 * sizeof(float);
-// 统一记录实际处理长度，用于计算迭代次数并限制尾轮的有效范围。
-constexpr uint32_t TOTAL_LENGTH = DATA_BYTES / sizeof(float);
-// 按单轮处理能力向上取整，确保非整寄存器长度的尾块也被处理。
-constexpr uint32_t REPEAT_COUNT =
-    (TOTAL_LENGTH + ELEMENTS_PER_REGISTER - 1) / ELEMENTS_PER_REGISTER;
-// 按完整寄存器块扩展UB容量，避免尾轮整寄存器访问越界；有效范围仍由掩码控制。
+constexpr uint32_t TOTAL_LENGTH = 133;
+constexpr uint32_t REPEAT_COUNT = (TOTAL_LENGTH + ELEMENTS_PER_REGISTER - 1) / ELEMENTS_PER_REGISTER;
+// 补零至完整寄存器，保证最后一轮的整寄存器读写在缓冲区内。
 constexpr uint32_t PADDED_ELEMENT_COUNT = REPEAT_COUNT * ELEMENTS_PER_REGISTER;
+
 __simd_vf__ inline void rearrange(__ubuf__ float* dst0, __ubuf__ float* dst1,
-    __ubuf__ float* src0, __ubuf__ float* src1, uint32_t one_repeat_size, uint16_t repeat_time)
+    __ubuf__ float* src0, __ubuf__ float* src1)
 {
-    // 补零区域也参与计算，确保搬出的所有UB元素均已写入。
-    uint32_t remaining_length = PADDED_ELEMENT_COUNT;
-    for (uint16_t i = 0; i < repeat_time; ++i) {
-        const uint32_t offset = i * one_repeat_size;
+    vector_bool full_mask = asc_create_mask_b32(PAT_ALL);
+    for (uint32_t i = 0; i < REPEAT_COUNT; ++i) {
+        const uint32_t offset = i * ELEMENTS_PER_REGISTER;
         vector_float dst0_reg, dst1_reg, src0_reg, src1_reg;
-        vector_bool mask = asc_update_mask_b32(remaining_length);
-        vector_bool mask_dst0, mask_dst1;
-        asc_deintlv_b32(mask_dst0, mask_dst1, mask, mask);
         asc_loadalign(src0_reg, src0 + offset);
         asc_loadalign(src1_reg, src1 + offset);
         asc_deintlv(dst0_reg, dst1_reg, src0_reg, src1_reg);
-        asc_storealign(dst0 + offset, dst0_reg, mask_dst0);
-        asc_storealign(dst1 + offset, dst1_reg, mask_dst1);
+        asc_storealign(dst0 + offset, dst0_reg, full_mask);
+        asc_storealign(dst1 + offset, dst1_reg, full_mask);
     }
 }
 __global__ __vector__ void asc_deintlv_kernel(__gm__ float* dst0, __gm__ float* dst1,
@@ -225,10 +206,8 @@ __global__ __vector__ void asc_deintlv_kernel(__gm__ float* dst0, __gm__ float* 
     asc_copy_gm2ub_align(src1_local, src1, PADDED_ELEMENT_COUNT * sizeof(float));
     asc_unlock(PIPE_MTE2, MUTEX_ID);
 
-    uint32_t one_repeat_size = static_cast<uint32_t>(asc_get_vf_len() / sizeof(float));
-    uint16_t repeat_time = static_cast<uint16_t>(AscendC::Std::ceil_div(TOTAL_LENGTH, one_repeat_size));
     asc_lock(PIPE_V, MUTEX_ID);
-    asc_vf_call<rearrange>(dst0_local, dst1_local, src0_local, src1_local, one_repeat_size, repeat_time);
+    asc_vf_call<rearrange>(dst0_local, dst1_local, src0_local, src1_local);
     asc_unlock(PIPE_V, MUTEX_ID);
 
     asc_lock(PIPE_MTE3, MUTEX_ID);
