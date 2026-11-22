@@ -60,10 +60,11 @@ __aicore__ inline void MulImpl(
     Internal::VecBinaryImplTemplate<func, isSetMask, true>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
 }
 
-template <typename T, bool isSetMask = true, const DivConfig& config = DEFAULT_DIV_CONFIG>
-__aicore__ inline void DivImpl(
-    __ubuf__ T* dst, __ubuf__ T* src0, __ubuf__ T* src1, const uint64_t mask[], const uint8_t repeatTime,
-    const BinaryRepeatParams& repeatParams)
+namespace Internal {
+template <typename T, bool isSetMask, bool isMaskBitMode, const DivConfig& config>
+__aicore__ inline void DivLevel0Impl(
+    __ubuf__ T* dst, __ubuf__ T* src0, __ubuf__ T* src1, const uint64_t maskArray[], const uint64_t maskCount,
+    const uint8_t repeatTime, const BinaryRepeatParams& repeatParams)
 {
     static_assert(
         (SupportType<T, uint16_t, int16_t, uint32_t, int32_t, half, float>()),
@@ -79,7 +80,8 @@ __aicore__ inline void DivImpl(
         static constexpr Reg::DivSpecificMode mode = {
             Reg::MaskMergeMode::ZEROING, false, DivAlgo::PRECISION_1ULP_FTZ_TRUE};
         constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, true>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
+        VecBinaryImplTemplate<func, isSetMask, isMaskBitMode>(
+            dst, src0, src1, maskArray, maskCount, repeatTime, repeatParams);
     } else if constexpr (
 #if !defined(__ASC_FTZ__)
         config.algo == DivAlgo::PRECISION_0ULP_FTZ_TRUE
@@ -90,7 +92,8 @@ __aicore__ inline void DivImpl(
         static constexpr AscendC::Reg::DivSpecificMode mode = {
             Reg::MaskMergeMode::ZEROING, true, DivAlgo::PRECISION_0ULP_FTZ_TRUE};
         constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, true>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
+        VecBinaryImplTemplate<func, isSetMask, isMaskBitMode>(
+            dst, src0, src1, maskArray, maskCount, repeatTime, repeatParams);
     } else if constexpr (
 #if !defined(__ASC_FTZ__)
         config.algo == DivAlgo::DIFF_COMPENSATION || config.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE
@@ -101,7 +104,8 @@ __aicore__ inline void DivImpl(
         static constexpr AscendC::Reg::DivSpecificMode mode = {
             Reg::MaskMergeMode::ZEROING, false, DivAlgo::PRECISION_0ULP_FTZ_FALSE};
         constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, true>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
+        VecBinaryImplTemplate<func, isSetMask, isMaskBitMode>(
+            dst, src0, src1, maskArray, maskCount, repeatTime, repeatParams);
     } else if constexpr (
 #if !defined(__ASC_FTZ__)
         (config.algo == DivAlgo::INTRINSIC && SupportType<T, half, float>()) ||
@@ -113,8 +117,18 @@ __aicore__ inline void DivImpl(
         static constexpr AscendC::Reg::DivSpecificMode mode = {
             Reg::MaskMergeMode::ZEROING, false, DivAlgo::PRECISION_1ULP_FTZ_FALSE};
         constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, true>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
+        VecBinaryImplTemplate<func, isSetMask, isMaskBitMode>(
+            dst, src0, src1, maskArray, maskCount, repeatTime, repeatParams);
     }
+}
+} // namespace Internal
+
+template <typename T, bool isSetMask = true, const DivConfig& config = DEFAULT_DIV_CONFIG>
+__aicore__ inline void DivImpl(
+    __ubuf__ T* dst, __ubuf__ T* src0, __ubuf__ T* src1, const uint64_t mask[], const uint8_t repeatTime,
+    const BinaryRepeatParams& repeatParams)
+{
+    Internal::DivLevel0Impl<T, isSetMask, true, config>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
 }
 
 template <typename T, bool isSetMask = true>
@@ -206,60 +220,7 @@ __aicore__ inline void DivImpl(
     __ubuf__ T* dst, __ubuf__ T* src0, __ubuf__ T* src1, const uint64_t mask, const uint8_t repeatTime,
     const BinaryRepeatParams& repeatParams)
 {
-    static_assert(
-        (SupportType<T, uint16_t, int16_t, uint32_t, int32_t, half, float>()),
-        "current data type is not supported on current device!");
-    if constexpr (
-#if !defined(__ASC_FTZ__)
-        config.algo == DivAlgo::PRECISION_1ULP_FTZ_TRUE ||
-        (config.algo == DivAlgo::INTRINSIC && !SupportType<T, half, float>())
-#else
-        config.algo == DivAlgo::INTRINSIC || config.algo == DivAlgo::PRECISION_1ULP_FTZ_TRUE
-#endif
-    ) {
-        static constexpr Reg::DivSpecificMode mode = {
-            Reg::MaskMergeMode::ZEROING, false, DivAlgo::PRECISION_1ULP_FTZ_TRUE};
-        constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, false>(
-            dst, src0, src1, nullptr, mask, repeatTime, repeatParams);
-    } else if constexpr (
-#if !defined(__ASC_FTZ__)
-        config.algo == DivAlgo::PRECISION_0ULP_FTZ_TRUE
-#else
-        config.algo == DivAlgo::DIFF_COMPENSATION || config.algo == DivAlgo::PRECISION_0ULP_FTZ_TRUE
-#endif
-    ) {
-        static constexpr AscendC::Reg::DivSpecificMode mode = {
-            Reg::MaskMergeMode::ZEROING, true, DivAlgo::PRECISION_0ULP_FTZ_TRUE};
-        constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, false>(
-            dst, src0, src1, nullptr, mask, repeatTime, repeatParams);
-    } else if constexpr (
-#if !defined(__ASC_FTZ__)
-        config.algo == DivAlgo::DIFF_COMPENSATION || config.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE
-#else
-        config.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE
-#endif
-    ) {
-        static constexpr AscendC::Reg::DivSpecificMode mode = {
-            Reg::MaskMergeMode::ZEROING, false, DivAlgo::PRECISION_0ULP_FTZ_FALSE};
-        constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, false>(
-            dst, src0, src1, nullptr, mask, repeatTime, repeatParams);
-    } else if constexpr (
-#if !defined(__ASC_FTZ__)
-        (config.algo == DivAlgo::INTRINSIC && SupportType<T, half, float>()) ||
-        config.algo == DivAlgo::PRECISION_1ULP_FTZ_FALSE
-#else
-        config.algo == DivAlgo::PRECISION_1ULP_FTZ_FALSE
-#endif
-    ) {
-        static constexpr AscendC::Reg::DivSpecificMode mode = {
-            Reg::MaskMergeMode::ZEROING, false, DivAlgo::PRECISION_1ULP_FTZ_FALSE};
-        constexpr auto func = Reg::Div<T, &mode, Reg::RegTensor<T>>;
-        Internal::VecBinaryImplTemplate<func, isSetMask, false>(
-            dst, src0, src1, nullptr, mask, repeatTime, repeatParams);
-    }
+    Internal::DivLevel0Impl<T, isSetMask, false, config>(dst, src0, src1, nullptr, mask, repeatTime, repeatParams);
 }
 
 template <typename T, bool isSetMask = true>

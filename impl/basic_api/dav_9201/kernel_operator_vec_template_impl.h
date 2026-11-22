@@ -112,6 +112,30 @@ __aicore__ inline bool IsCounterMode()
     return ((get_ctrl() >> CTRL_COUNTER) & 0x1) == 0x1;
 }
 
+template <typename T, bool isSetMask, bool isMaskBitMode>
+__aicore__ inline __ubuf__ uint64_t* PrepareVecNormalMask(const uint64_t maskArray[])
+{
+    __ubuf__ uint64_t* maskBuf = nullptr;
+    if constexpr (isMaskBitMode) {
+        if constexpr (SupportBytes<T, 1>()) {
+            auto eventIDV2S = GetTPipePtr()->FetchEventID(HardEvent::V_S);
+            SetFlag<HardEvent::V_S>(eventIDV2S);
+            WaitFlag<HardEvent::V_S>(eventIDV2S);
+            constexpr uint32_t maskWordCount = MASK_ARRAY_SIZE;
+            maskBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), maskWordCount);
+            for (uint32_t i = 0; i < maskWordCount; ++i) {
+                maskBuf[i] = maskArray[i];
+            }
+            auto eventIDS2V = GetTPipePtr()->FetchEventID(HardEvent::S_V);
+            SetFlag<HardEvent::S_V>(eventIDS2V);
+            WaitFlag<HardEvent::S_V>(eventIDS2V);
+        } else if constexpr (isSetMask) {
+            SetVectorMask<T>(maskArray[1], maskArray[0]); // set mask to SPR.MASK, movp in VF
+        }
+    }
+    return maskBuf;
+}
+
 template <bool isSetMask, bool isNormalMode, bool isMaskBitMode>
 __simd_callee__ inline uint32_t VecMicroGetCount(
     const uint64_t maskArray[], const uint64_t maskCount, __ubuf__ uint64_t* maskBuf)
@@ -247,24 +271,10 @@ __aicore__ inline void VecBinaryImplTemplate(
             AscendCUtils::FreeTemporaryBuffer<uint64_t>(maskBuf);
         }
     } else {
-        if constexpr (isMaskBitMode) {
-            if constexpr (SupportBytes<TT, 1>()) {
-                ASCENDC_ASSERT(isSetMask, { KERNEL_LOG(KERNEL_ERROR, "mask must be set when sizeof(T) is 1."); });
-                auto eventIDV2S = GetTPipePtr()->FetchEventID(HardEvent::V_S);
-                SetFlag<HardEvent::V_S>(eventIDV2S);
-                WaitFlag<HardEvent::V_S>(eventIDV2S);
-                maskBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 4);
-                maskBuf[0] = maskArray[0];
-                maskBuf[1] = maskArray[1];
-                maskBuf[2] = maskArray[2];
-                maskBuf[3] = maskArray[3];
-                auto eventIDS2V = GetTPipePtr()->FetchEventID(HardEvent::S_V);
-                SetFlag<HardEvent::S_V>(eventIDS2V);
-                WaitFlag<HardEvent::S_V>(eventIDS2V);
-            } else if constexpr (isSetMask) {
-                SetVectorMask<TT>(maskArray[1], maskArray[0]); // set mask to SPR.MASK, movp in VF
-            }
+        if constexpr (isMaskBitMode && SupportBytes<TT, 1>()) {
+            ASCENDC_ASSERT(isSetMask, { KERNEL_LOG(KERNEL_ERROR, "mask must be set when sizeof(T) is 1."); });
         }
+        maskBuf = PrepareVecNormalMask<TT, isSetMask, isMaskBitMode>(maskArray);
         // when isSetMask is false, normal mode, maskBuf = nullptr, not support B8
         VecBinaryVFImpl<func, isSetMask, isMaskBitMode, true, funcMode, T, U>(
             dst, src0, src1, maskArrayStruct, maskCount, repeatTime, repeatParams, maskBuf);

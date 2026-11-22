@@ -74,26 +74,48 @@ __aicore__ constexpr bool IsLoadData2DType()
 }
 
 template <typename T>
-__aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const LoadData2DParams& loadDataParam)
+__aicore__ inline void CheckLoadData2DType()
 {
     static_assert(
         IsLoadData2DType<T>(),
         "LoadData 2dv2 only support uint8_t, int8_t, uint16_t, int16_t, half, bfloat16_t, float, int32_t, uint32_t on "
         "current device!");
+}
+
+struct LoadData2DInstructionParams {
+    uint16_t mStartPosition;
+    uint16_t kStartPosition;
+    uint8_t kStep;
+    int16_t srcStride;
+    uint16_t dstStride;
+};
+
+template <typename T>
+__aicore__ inline LoadData2DInstructionParams PrepareLoadData2D(const LoadData2DParams& loadDataParam)
+{
+    if (IsCompatibleTo3510()) {
+        DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
+    }
+    return {
+        0, loadDataParam.startIndex, loadDataParam.repeatTimes, static_cast<int16_t>(loadDataParam.srcStride),
+        static_cast<uint16_t>(loadDataParam.dstGap + 1)};
+}
+
+template <typename T>
+__aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const LoadData2DParams& loadDataParam)
+{
+    CheckLoadData2DType<T>();
     if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
-        uint16_t mStartPosition = 0;
-        uint16_t kStartPosition = loadDataParam.startIndex;
-        uint8_t kStep = loadDataParam.repeatTimes;
-        int16_t srcStride = static_cast<int16_t>(loadDataParam.srcStride);
-        uint16_t dstStride = loadDataParam.dstGap + 1;
+        const LoadData2DInstructionParams params = PrepareLoadData2D<T>(loadDataParam);
 
         if (loadDataParam.ifTranspose) {
-            load_cbuf_to_ca(dst, src, mStartPosition, kStartPosition, 1, kStep, srcStride, dstStride, 1);
+            load_cbuf_to_ca(
+                dst, src, params.mStartPosition, params.kStartPosition, 1, params.kStep, params.srcStride,
+                params.dstStride, 1);
         } else {
-            load_cbuf_to_ca(dst, src, mStartPosition, kStartPosition, 1, kStep, srcStride, dstStride, 0);
+            load_cbuf_to_ca(
+                dst, src, params.mStartPosition, params.kStartPosition, 1, params.kStep, params.srcStride,
+                params.dstStride, 0);
         }
     }
 }
@@ -101,32 +123,24 @@ __aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const
 template <typename T>
 __aicore__ inline void LoadData2DL12L0BCal(__cb__ T* dst, __cbuf__ T* src, const LoadData2DParams& loadDataParam)
 {
-    static_assert(
-        IsLoadData2DType<T>(),
-        "LoadData 2dv2 only support uint8_t, int8_t, uint16_t, int16_t, half, bfloat16_t, float, int32_t, uint32_t on "
-        "current device!");
+    CheckLoadData2DType<T>();
     if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
-        uint16_t mStartPosition = 0;
-        uint16_t kStartPosition = loadDataParam.startIndex;
-        uint8_t kStep = loadDataParam.repeatTimes;
-        int16_t srcStride = static_cast<int16_t>(loadDataParam.srcStride);
-        uint16_t dstStride = loadDataParam.dstGap + 1;
+        const LoadData2DInstructionParams params = PrepareLoadData2D<T>(loadDataParam);
 
         if (loadDataParam.ifTranspose) {
-            for (uint8_t i = 0; i < kStep; i++) {
+            for (uint8_t i = 0; i < params.kStep; i++) {
                 const uint64_t srcFractalIndex =
-                    static_cast<uint64_t>(kStartPosition) + static_cast<uint64_t>(i) * loadDataParam.srcStride;
+                    static_cast<uint64_t>(params.kStartPosition) + static_cast<uint64_t>(i) * loadDataParam.srcStride;
                 const uint64_t dstFractalIndex =
                     static_cast<uint64_t>(i) * (static_cast<uint64_t>(loadDataParam.dstGap) + 1);
                 load_cbuf_to_cb(
                     dst + dstFractalIndex * VALUE_512 / sizeof(T), src + srcFractalIndex * VALUE_512 / sizeof(T),
-                    mStartPosition, 0, 1, 1, srcStride, dstStride, 1);
+                    params.mStartPosition, 0, 1, 1, params.srcStride, params.dstStride, 1);
             }
         } else {
-            load_cbuf_to_cb(dst, src, mStartPosition, kStartPosition, 1, kStep, srcStride, dstStride, 0);
+            load_cbuf_to_cb(
+                dst, src, params.mStartPosition, params.kStartPosition, 1, params.kStep, params.srcStride,
+                params.dstStride, 0);
         }
     }
 }
@@ -142,12 +156,18 @@ __aicore__ constexpr bool IsLoadData2DV2Type()
 }
 
 template <typename T>
-__aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const Load2DBitModeParam& loadDataParam)
+__aicore__ inline void CheckLoadData2DV2Type()
 {
     static_assert(
         IsLoadData2DV2Type<T>(),
         "LoadData 2dv2 only support int4b_t, fp4x2_e2m1_t, fp4x2_e1m2_t, hifloat4x2_t, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, \
          fp8_e4m3fn_t, half, bfloat16_t, float, int32_t, uint32_t on current device!");
+}
+
+template <typename T>
+__aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const Load2DBitModeParam& loadDataParam)
+{
+    CheckLoadData2DV2Type<T>();
     if ASCEND_IS_AIC {
         if (IsCompatibleTo3510()) {
             DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
@@ -187,10 +207,7 @@ __aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const
 template <typename T>
 __aicore__ inline void LoadData2DL12L0BCal(__cb__ T* dst, __cbuf__ T* src, const Load2DBitModeParam& loadDataParam)
 {
-    static_assert(
-        IsLoadData2DV2Type<T>(),
-        "LoadData 2dv2 only support int4b_t, fp4x2_e2m1_t, fp4x2_e1m2_t, hifloat4x2_t, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, \
-         fp8_e4m3fn_t, half, bfloat16_t, float, int32_t, uint32_t on current device!");
+    CheckLoadData2DV2Type<T>();
     if ASCEND_IS_AIC {
         if (IsCompatibleTo3510()) {
             DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
@@ -349,13 +366,19 @@ __aicore__ constexpr bool IsLoadData2DMxType()
            SupportType<Tuple<U, T>, Tuple<fp8_e4m3fn_t, fp8_e4m3fn_t>, Tuple<fp8_e5m2_t, fp8_e5m2_t>>();
 }
 
+template <typename T, typename U>
+__aicore__ inline void CheckLoadData2DMxType()
+{
+    static_assert(
+        IsLoadData2DMxType<T, U>(), "LoadData 2dv2 with scale matrix only support fp4/fp8 dtype on current device!");
+}
+
 template <typename T, typename U = T, typename V = fp8_e8m0_t>
 __aicore__ inline void LoadData2DL12L0ACal(
     __ca__ U* dst, __cbuf__ T* src0, __cbuf__ V* src1, const LoadData2DParamsV2& loadDataParam,
     const LoadData2DMxParams& loadMxDataParams)
 {
-    static_assert(
-        IsLoadData2DMxType<T, U>(), "LoadData 2dv2 with scale matrix only support fp4/fp8 dtype on current device!");
+    CheckLoadData2DMxType<T, U>();
     if ASCEND_IS_AIC {
         if (IsCompatibleTo3510()) {
             DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
@@ -406,8 +429,7 @@ __aicore__ inline void LoadData2DL12L0BCal(
     __cb__ U* dst, __cbuf__ T* src0, __cbuf__ V* src1, const LoadData2DParamsV2& loadDataParam,
     const LoadData2DMxParams& loadMxDataParams)
 {
-    static_assert(
-        IsLoadData2DMxType<T, U>(), "LoadData 2dv2 with scale matrix only support fp4/fp8 dtype on current device!");
+    CheckLoadData2DMxType<T, U>();
     if ASCEND_IS_AIC {
         if (IsCompatibleTo3510()) {
             DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
@@ -1024,8 +1046,7 @@ __aicore__ inline void SetLoadDataBoundaryCal(uint32_t boundaryValue)
  * LoadData 3dv2                                             *
  * ************************************************************************************************* */
 template <typename T>
-__aicore__ inline void LoadData3DV2L12L0ACal(
-    __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<T>& loadDataParams)
+__aicore__ inline void CheckLoadData3DV2Type()
 {
     static_assert(
         SupportType<
@@ -1033,12 +1054,47 @@ __aicore__ inline void LoadData3DV2L12L0ACal(
             int32_t, uint32_t>(),
         "LoadData 3dv2 only support uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
          half, bfloat16_t, uint16_t, int16_t, float, int32_t, uint32_t on current device!");
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
+}
+
+template <typename T, bool setRepeatStride, typename U>
+__aicore__ inline void PrepareLoadData3DV2(const LoadData3DParamsV2<U>& loadDataParams)
+{
+    if (IsCompatibleTo3510()) {
+        DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
+    }
+    if constexpr (setRepeatStride) {
         SetLoadDataRepeatStride(loadDataParams);
+    }
+}
+
+template <bool setRepeatStride, typename T, typename U>
+__aicore__ inline void LoadData3DV2ToL0A(__ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<U>& loadDataParams)
+{
+    if ASCEND_IS_AIC {
+        PrepareLoadData3DV2<T, setRepeatStride>(loadDataParams);
         img2colv2_cbuf_to_ca(
+            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
+            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
+            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
+            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
+            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
+    }
+}
+
+template <typename T>
+__aicore__ inline void LoadData3DV2L12L0ACal(
+    __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<T>& loadDataParams)
+{
+    CheckLoadData3DV2Type<T>();
+    LoadData3DV2ToL0A<true>(dst, src, loadDataParams);
+}
+
+template <bool setRepeatStride, typename T, typename U>
+__aicore__ inline void LoadData3DV2ToL0B(__cb__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<U>& loadDataParams)
+{
+    if ASCEND_IS_AIC {
+        PrepareLoadData3DV2<T, setRepeatStride>(loadDataParams);
+        img2colv2_cbuf_to_cb(
             dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
             loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
             loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
@@ -1051,58 +1107,20 @@ template <typename T>
 __aicore__ inline void LoadData3DV2L12L0BCal(
     __cb__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<T>& loadDataParams)
 {
-    static_assert(
-        SupportType<
-            T, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, half, bfloat16_t, uint16_t, int16_t, float,
-            int32_t, uint32_t>(),
-        "LoadData 3dv2 only support uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
-         half, bfloat16_t, uint16_t, int16_t, float, int32_t, uint32_t on current device!");
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
-        SetLoadDataRepeatStride(loadDataParams);
-        img2colv2_cbuf_to_cb(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    CheckLoadData3DV2Type<T>();
+    LoadData3DV2ToL0B<true>(dst, src, loadDataParams);
 }
 
 __aicore__ inline void LoadData3DV2L12L0ACal(
     __ca__ half* dst, __cbuf__ half* src, const LoadData3DParamsV2<bfloat16_t>& loadDataParams)
 {
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<half, PIPE_MTE1>();
-        }
-        SetLoadDataRepeatStride(loadDataParams);
-        img2colv2_cbuf_to_ca(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    LoadData3DV2ToL0A<true>(dst, src, loadDataParams);
 }
 
 __aicore__ inline void LoadData3DV2L12L0BCal(
     __cb__ half* dst, __cbuf__ half* src, const LoadData3DParamsV2<bfloat16_t>& loadDataParams)
 {
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<half, PIPE_MTE1>();
-        }
-        SetLoadDataRepeatStride(loadDataParams);
-        img2colv2_cbuf_to_cb(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    LoadData3DV2ToL0B<true>(dst, src, loadDataParams);
 }
 
 template <typename T>
@@ -1116,78 +1134,28 @@ template <typename T>
 __aicore__ inline void LoadData3DV2L12L0AWithStrideCal(
     __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<T>& loadDataParams)
 {
-    static_assert(
-        SupportType<
-            T, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, half, bfloat16_t, uint16_t, int16_t, float,
-            int32_t, uint32_t>(),
-        "LoadData 3dv2 only support uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
-         half, bfloat16_t, uint16_t, int16_t, float, int32_t, uint32_t on current device!");
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
-        img2colv2_cbuf_to_ca(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    CheckLoadData3DV2Type<T>();
+    LoadData3DV2ToL0A<false>(dst, src, loadDataParams);
 }
 
 template <typename T>
 __aicore__ inline void LoadData3DV2L12L0BWithStrideCal(
     __cb__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2<T>& loadDataParams)
 {
-    static_assert(
-        SupportType<
-            T, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, half, bfloat16_t, uint16_t, int16_t, float,
-            int32_t, uint32_t>(),
-        "LoadData 3dv2 only support uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
-         half, bfloat16_t, uint16_t, int16_t, float, int32_t, uint32_t on current device!");
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
-        img2colv2_cbuf_to_cb(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    CheckLoadData3DV2Type<T>();
+    LoadData3DV2ToL0B<false>(dst, src, loadDataParams);
 }
 
 __aicore__ inline void LoadData3DV2L12L0AWithStrideCal(
     __ca__ half* dst, __cbuf__ half* src, const LoadData3DParamsV2<bfloat16_t>& loadDataParams)
 {
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<half, PIPE_MTE1>();
-        }
-        img2colv2_cbuf_to_ca(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    LoadData3DV2ToL0A<false>(dst, src, loadDataParams);
 }
 
 __aicore__ inline void LoadData3DV2L12L0BWithStrideCal(
     __cb__ half* dst, __cbuf__ half* src, const LoadData3DParamsV2<bfloat16_t>& loadDataParams)
 {
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<half, PIPE_MTE1>();
-        }
-        img2colv2_cbuf_to_cb(
-            dst, src, loadDataParams.kExtension, loadDataParams.mExtension, loadDataParams.kStartPt,
-            loadDataParams.mStartPt, loadDataParams.strideW, loadDataParams.strideH, loadDataParams.filterW,
-            loadDataParams.filterH, loadDataParams.dilationFilterW, loadDataParams.dilationFilterH,
-            loadDataParams.filterSizeW, loadDataParams.filterSizeH, loadDataParams.enTranspose,
-            loadDataParams.fMatrixCtrl, loadDataParams.channelSize);
-    }
+    LoadData3DV2ToL0B<false>(dst, src, loadDataParams);
 }
 
 template <typename T>
@@ -1256,14 +1224,18 @@ __aicore__ inline void LoadData3DV2L12UBCal(__ubuf__ T* dst, __cbuf__ T* src, co
  * LoadData 3dv2Pro                                             *
  * ************************************************************************************************* */
 template <typename T>
-__aicore__ inline void LoadData3DV2L12L0ACal(
-    __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2Pro& loadDataParams)
+__aicore__ inline void CheckLoadData3DV2ProType()
 {
     static_assert(
         SupportType<
             T, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, half, bfloat16_t, float, int32_t, uint32_t>(),
         "LoadData 3dv2Pro only support uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
          half, bfloat16_t, float, int32_t, uint32_t on current device!");
+}
+
+template <typename T, typename U>
+__aicore__ inline void LoadData3DV2ProToL0A(__ca__ U* dst, __cbuf__ U* src, const LoadData3DParamsV2Pro& loadDataParams)
+{
     if ASCEND_IS_AIC {
         if (IsCompatibleTo3510()) {
             DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
@@ -1280,20 +1252,34 @@ __aicore__ inline void LoadData3DV2L12L0ACal(
     }
 }
 
+template <typename T>
+__aicore__ inline void LoadData3DV2L12L0ACal(
+    __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2Pro& loadDataParams)
+{
+    CheckLoadData3DV2ProType<T>();
+    LoadData3DV2ProToL0A<T>(dst, src, loadDataParams);
+}
+
 template <>
 __aicore__ inline void LoadData3DV2L12L0ACal(
     __ca__ bfloat16_t* dst, __cbuf__ bfloat16_t* src, const LoadData3DParamsV2Pro& loadDataParams)
 {
+    LoadData3DV2ProToL0A<bfloat16_t>((__ca__ half*)dst, (__cbuf__ half*)src, loadDataParams);
+}
+
+template <typename T, typename U>
+__aicore__ inline void LoadData3DV2ProToL0B(__cb__ U* dst, __cbuf__ U* src, const LoadData3DParamsV2Pro& loadDataParams)
+{
     if ASCEND_IS_AIC {
         if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<bfloat16_t, PIPE_MTE1>();
+            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
         }
-        img2colv2_cbuf_to_ca(
-            (__ca__ half*)dst, (__cbuf__ half*)src, loadDataParams.extConfig,
-            loadDataParams.extConfig >> LOAD_M_EXTENSION, loadDataParams.extConfig >> LOAD_K_START_POSITION,
-            loadDataParams.extConfig >> LOAD_M_START_POSITION, loadDataParams.filterConfig,
-            loadDataParams.filterConfig >> LOAD_STRIDE_H, loadDataParams.filterConfig >> LOAD_FILTER_W,
-            loadDataParams.filterConfig >> LOAD_FILTER_H, loadDataParams.filterConfig >> LOAD_DILATION_FILTER_W,
+        img2colv2_cbuf_to_cb(
+            dst, src, loadDataParams.extConfig, loadDataParams.extConfig >> LOAD_M_EXTENSION,
+            loadDataParams.extConfig >> LOAD_K_START_POSITION, loadDataParams.extConfig >> LOAD_M_START_POSITION,
+            loadDataParams.filterConfig, loadDataParams.filterConfig >> LOAD_STRIDE_H,
+            loadDataParams.filterConfig >> LOAD_FILTER_W, loadDataParams.filterConfig >> LOAD_FILTER_H,
+            loadDataParams.filterConfig >> LOAD_DILATION_FILTER_W,
             loadDataParams.filterConfig >> LOAD_DILATION_FILTER_H, loadDataParams.filterSizeW,
             loadDataParams.filterSizeH, loadDataParams.enTranspose, loadDataParams.fMatrixCtrl,
             loadDataParams.channelSize);
@@ -1304,45 +1290,15 @@ template <typename T>
 __aicore__ inline void LoadData3DV2L12L0BCal(
     __cb__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2Pro& loadDataParams)
 {
-    static_assert(
-        SupportType<
-            T, uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, half, bfloat16_t, float, int32_t, uint32_t>(),
-        "LoadData 3dv2Pro only support uint8_t, int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
-         half, bfloat16_t, float, int32_t, uint32_t on current device!");
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
-        }
-        img2colv2_cbuf_to_cb(
-            dst, src, loadDataParams.extConfig, loadDataParams.extConfig >> LOAD_M_EXTENSION,
-            loadDataParams.extConfig >> LOAD_K_START_POSITION, loadDataParams.extConfig >> LOAD_M_START_POSITION,
-            loadDataParams.filterConfig, loadDataParams.filterConfig >> LOAD_STRIDE_H,
-            loadDataParams.filterConfig >> LOAD_FILTER_W, loadDataParams.filterConfig >> LOAD_FILTER_H,
-            loadDataParams.filterConfig >> LOAD_DILATION_FILTER_W,
-            loadDataParams.filterConfig >> LOAD_DILATION_FILTER_H, loadDataParams.filterSizeW,
-            loadDataParams.filterSizeH, loadDataParams.enTranspose, loadDataParams.fMatrixCtrl,
-            loadDataParams.channelSize);
-    }
+    CheckLoadData3DV2ProType<T>();
+    LoadData3DV2ProToL0B<T>(dst, src, loadDataParams);
 }
 
 template <>
 __aicore__ inline void LoadData3DV2L12L0BCal(
     __cb__ bfloat16_t* dst, __cbuf__ bfloat16_t* src, const LoadData3DParamsV2Pro& loadDataParams)
 {
-    if ASCEND_IS_AIC {
-        if (IsCompatibleTo3510()) {
-            DrainCopyMessageQueueImpl<bfloat16_t, PIPE_MTE1>();
-        }
-        img2colv2_cbuf_to_cb(
-            (__cb__ half*)dst, (__cbuf__ half*)src, loadDataParams.extConfig,
-            loadDataParams.extConfig >> LOAD_M_EXTENSION, loadDataParams.extConfig >> LOAD_K_START_POSITION,
-            loadDataParams.extConfig >> LOAD_M_START_POSITION, loadDataParams.filterConfig,
-            loadDataParams.filterConfig >> LOAD_STRIDE_H, loadDataParams.filterConfig >> LOAD_FILTER_W,
-            loadDataParams.filterConfig >> LOAD_FILTER_H, loadDataParams.filterConfig >> LOAD_DILATION_FILTER_W,
-            loadDataParams.filterConfig >> LOAD_DILATION_FILTER_H, loadDataParams.filterSizeW,
-            loadDataParams.filterSizeH, loadDataParams.enTranspose, loadDataParams.fMatrixCtrl,
-            loadDataParams.channelSize);
-    }
+    LoadData3DV2ProToL0B<bfloat16_t>((__cb__ half*)dst, (__cbuf__ half*)src, loadDataParams);
 }
 
 template <typename T>

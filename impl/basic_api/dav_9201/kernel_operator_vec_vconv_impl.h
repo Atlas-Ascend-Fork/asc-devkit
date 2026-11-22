@@ -1366,6 +1366,22 @@ __aicore__ inline void CastDouble(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src
     }
 }
 
+template <typename DST_TYPE, typename SRC_TYPE>
+constexpr __aicore__ inline bool IsCastNoneSupported()
+{
+    return SupportType<
+        Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, int32_t>, Tuple<float, half>, Tuple<float, bfloat16_t>,
+        Tuple<half, int4x2_t>, Tuple<half, uint8_t>, Tuple<uint16_t, uint8_t>, Tuple<uint32_t, uint8_t>,
+        Tuple<half, int8_t>, Tuple<int16_t, int8_t>, Tuple<int32_t, int8_t>, Tuple<uint8_t, uint16_t>,
+        Tuple<uint32_t, uint16_t>, Tuple<float, int16_t>, Tuple<uint8_t, int16_t>, Tuple<uint32_t, int16_t>,
+        Tuple<int32_t, int16_t>, Tuple<uint8_t, uint32_t>, Tuple<uint16_t, uint32_t>, Tuple<int16_t, uint32_t>,
+        Tuple<int64_t, int32_t>, Tuple<int16_t, int32_t>, Tuple<uint8_t, int32_t>, Tuple<uint16_t, int32_t>,
+        Tuple<int32_t, int64_t>, Tuple<half, hifloat8_t>, Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>,
+        Tuple<float, fp8_e5m2_t>, Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>,
+        Tuple<bfloat16_t, fp8_e6m2_t>, Tuple<bfloat16_t, fp8_e8m0_t>, Tuple<int4x2_t, int16_t>,
+        Tuple<int16_t, int4x2_t>, Tuple<bfloat16_t, int4x2_t>>();
+}
+
 // Cast::Level 2
 template <typename ORI_DST_TYPE, typename ORI_SRC_TYPE>
 __aicore__ inline void CastImpl(
@@ -1385,17 +1401,8 @@ __aicore__ inline void CastImpl(
         Tuple<float, int32_t>, Tuple<float, int64_t>, Tuple<int32_t, bfloat16_t>, Tuple<half, bfloat16_t>,
         Tuple<fp4x2_e1m2_t, bfloat16_t>, Tuple<fp4x2_e2m1_t, bfloat16_t>, Tuple<half, int32_t>, Tuple<float, float>,
         Tuple<complex64, complex64>, Tuple<complex32, complex64>>();
-    constexpr bool cast_none = SupportType<
-        Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, int32_t>, Tuple<float, half>, Tuple<float, bfloat16_t>,
-        Tuple<half, int4x2_t>, Tuple<half, uint8_t>, Tuple<uint16_t, uint8_t>, Tuple<uint32_t, uint8_t>,
-        Tuple<half, int8_t>, Tuple<int16_t, int8_t>, Tuple<int32_t, int8_t>, Tuple<uint8_t, uint16_t>,
-        Tuple<uint32_t, uint16_t>, Tuple<float, int16_t>, Tuple<uint8_t, int16_t>, Tuple<uint32_t, int16_t>,
-        Tuple<int32_t, int16_t>, Tuple<uint8_t, uint32_t>, Tuple<uint16_t, uint32_t>, Tuple<int16_t, uint32_t>,
-        Tuple<int64_t, int32_t>, Tuple<int16_t, int32_t>, Tuple<uint8_t, int32_t>, Tuple<uint16_t, int32_t>,
-        Tuple<int32_t, int64_t>, Tuple<half, hifloat8_t>, Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>,
-        Tuple<float, fp8_e5m2_t>, Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>,
-        Tuple<bfloat16_t, fp8_e6m2_t>, Tuple<bfloat16_t, fp8_e8m0_t>, Tuple<int4x2_t, int16_t>,
-        Tuple<int16_t, int4x2_t>, Tuple<bfloat16_t, int4x2_t>, Tuple<complex64, complex32>>();
+    constexpr bool cast_none = IsCastNoneSupported<DST_TYPE, SRC_TYPE>() ||
+                               SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<complex64, complex32>>();
     constexpr bool using_cast_rint = SupportType<
         Tuple<DST_TYPE, SRC_TYPE>, Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<half, float>,
         Tuple<half, int16_t>, Tuple<float, int32_t>, Tuple<complex32, complex64>>();
@@ -1489,10 +1496,10 @@ __aicore__ inline void CastImpl(
     }
 }
 
-template <typename DST_TYPE, typename SRC_TYPE, RoundMode roundMode>
-__simd_callee__ inline void CastB32B64(
-    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, uint8_t repeatTime, const UnaryRepeatParams& repeatParams,
-    Reg::MaskReg& b32Preg, Reg::MaskReg& b64Preg)
+template <typename DST_TYPE, typename SRC_TYPE, RoundMode roundMode, bool isCounterMode>
+__simd_callee__ inline void CastB32B64Repeats(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, uint16_t repeatTime, const UnaryRepeatParams& repeatParams,
+    Reg::MaskReg& b32Preg, Reg::MaskReg& b64Preg, uint32_t countSreg)
 {
     static constexpr Reg::CastTrait castTrait = {
         Reg::RegLayout::ZERO, Reg::SatMode::SAT, Reg::MaskMergeMode::ZEROING, roundMode};
@@ -1503,6 +1510,11 @@ __simd_callee__ inline void CastB32B64(
     Reg::MaskReg fullPreg = Reg::CreateMask<uint32_t, Reg::MaskPattern::ALL>();
     Reg::Duplicate(zeroVreg, 0, fullPreg);
     for (uint16_t i = 0; i < repeatTime; ++i) {
+        if constexpr (isCounterMode) {
+            Reg::MaskReg tmpPreg;
+            b32Preg = Reg::UpdateMask<uint32_t>(countSreg);
+            Reg::MaskInterleave<uint32_t>(b64Preg, tmpPreg, b32Preg, b32Preg);
+        }
         if constexpr (sizeof(DST_TYPE) == sizeof(int64_t)) {
             // b32->b64
             Reg::LoadAlign<uint32_t, Reg::DataCopyMode::DATA_BLOCK_COPY>(
@@ -1534,6 +1546,14 @@ __simd_callee__ inline void CastB32B64(
                 (Reg::RegTensor<uint32_t>&)dstVreg, repeatParams.dstBlkStride, b32Preg);
         }
     }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, RoundMode roundMode>
+__simd_callee__ inline void CastB32B64(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, uint8_t repeatTime, const UnaryRepeatParams& repeatParams,
+    Reg::MaskReg& b32Preg, Reg::MaskReg& b64Preg)
+{
+    CastB32B64Repeats<DST_TYPE, SRC_TYPE, roundMode, false>(dst, src, repeatTime, repeatParams, b32Preg, b64Preg, 0);
 }
 
 template <typename DST_TYPE, typename SRC_TYPE, RoundMode roundMode>
@@ -1661,9 +1681,6 @@ __simd_vf__ inline void CastIntrinsicsB64ImplCounterVF(
     __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint64_t mask, __ubuf__ uint64_t* maskBuf, uint8_t repeatTime,
     const UnaryRepeatParams repeatParams)
 {
-    static constexpr Reg::CastTrait castTrait = {
-        Reg::RegLayout::ZERO, Reg::SatMode::SAT, Reg::MaskMergeMode::ZEROING, roundMode};
-    constexpr uint8_t elePerBlk = GetDataBlockSizeInBytes() / sizeof(uint32_t);
     uint32_t countSreg = static_cast<uint32_t>(mask);
     if constexpr (!isSetMask) {
         // get SPR.MASK in VF
@@ -1675,46 +1692,9 @@ __simd_vf__ inline void CastIntrinsicsB64ImplCounterVF(
     }
     constexpr uint16_t oneRepSize = GetVecLen() / sizeof(uint64_t);
     uint16_t newRepeatTimes = CeilDivision(countSreg, oneRepSize);
-    Reg::RegTensor<SRC_TYPE> srcVreg;
-    Reg::RegTensor<DST_TYPE> dstVreg;
-    Reg::RegTensor<uint32_t> zeroVreg, tmpVreg;
-    Reg::MaskReg b32Preg, b64Preg, tmpPreg;
-    Reg::MaskReg fullPreg = Reg::CreateMask<uint32_t, Reg::MaskPattern::ALL>();
-    Reg::Duplicate(zeroVreg, 0, fullPreg);
-    for (uint16_t i = 0; i < newRepeatTimes; ++i) {
-        b32Preg = Reg::UpdateMask<uint32_t>(countSreg);
-        Reg::MaskInterleave<uint32_t>(b64Preg, tmpPreg, b32Preg, b32Preg);
-        if constexpr (sizeof(DST_TYPE) == sizeof(int64_t)) {
-            // b32->b64
-            Reg::LoadAlign<uint32_t, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                (Reg::RegTensor<uint32_t>&)srcVreg,
-                (__ubuf__ uint32_t*&)src + i * repeatParams.srcRepStride * elePerBlk, repeatParams.srcBlkStride,
-                b32Preg);
-            Reg::Interleave((Reg::RegTensor<uint32_t>&)srcVreg, tmpVreg, (Reg::RegTensor<uint32_t>&)srcVreg, zeroVreg);
-        } else {
-            // b64->b32
-            Reg::LoadAlign<uint32_t, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                (Reg::RegTensor<uint32_t>&)srcVreg,
-                (__ubuf__ uint32_t*&)src + i * repeatParams.srcRepStride * elePerBlk, repeatParams.srcBlkStride,
-                b64Preg);
-        }
-        Reg::Cast<DST_TYPE, SRC_TYPE, castTrait>(dstVreg, srcVreg, b64Preg);
-        if constexpr (sizeof(DST_TYPE) == sizeof(int64_t)) {
-            // b32->b64
-            Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_STORE>();
-            Reg::StoreAlign<uint32_t, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                (__ubuf__ uint32_t*&)dst + i * repeatParams.dstRepStride * elePerBlk,
-                (Reg::RegTensor<uint32_t>&)dstVreg, repeatParams.dstBlkStride, b64Preg);
-        } else {
-            // b64->b32
-            Reg::DeInterleave(
-                (Reg::RegTensor<uint32_t>&)dstVreg, tmpVreg, (Reg::RegTensor<uint32_t>&)dstVreg, zeroVreg);
-            Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_STORE>();
-            Reg::StoreAlign<uint32_t, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                (__ubuf__ uint32_t*&)dst + i * repeatParams.dstRepStride * elePerBlk,
-                (Reg::RegTensor<uint32_t>&)dstVreg, repeatParams.dstBlkStride, b32Preg);
-        }
-    }
+    Reg::MaskReg b32Preg, b64Preg;
+    CastB32B64Repeats<DST_TYPE, SRC_TYPE, roundMode, true>(
+        dst, src, newRepeatTimes, repeatParams, b32Preg, b64Preg, countSreg);
 }
 
 template <typename DST_TYPE, typename SRC_TYPE, RoundMode roundMode, bool isSetMask>
@@ -1840,17 +1820,7 @@ __aicore__ inline void CastImplCommon(
         Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<bfloat16_t, half>, Tuple<half, int16_t>,
         Tuple<float, int32_t>, Tuple<float, int64_t>, Tuple<int32_t, bfloat16_t>, Tuple<half, bfloat16_t>,
         Tuple<fp4x2_e1m2_t, bfloat16_t>, Tuple<fp4x2_e2m1_t, bfloat16_t>, Tuple<half, int32_t>, Tuple<float, float>>();
-    constexpr bool cast_none = SupportType<
-        Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, int32_t>, Tuple<float, half>, Tuple<float, bfloat16_t>,
-        Tuple<half, int4x2_t>, Tuple<half, uint8_t>, Tuple<uint16_t, uint8_t>, Tuple<uint32_t, uint8_t>,
-        Tuple<half, int8_t>, Tuple<int16_t, int8_t>, Tuple<int32_t, int8_t>, Tuple<uint8_t, uint16_t>,
-        Tuple<uint32_t, uint16_t>, Tuple<float, int16_t>, Tuple<uint8_t, int16_t>, Tuple<uint32_t, int16_t>,
-        Tuple<int32_t, int16_t>, Tuple<uint8_t, uint32_t>, Tuple<uint16_t, uint32_t>, Tuple<int16_t, uint32_t>,
-        Tuple<int64_t, int32_t>, Tuple<int16_t, int32_t>, Tuple<uint8_t, int32_t>, Tuple<uint16_t, int32_t>,
-        Tuple<int32_t, int64_t>, Tuple<half, hifloat8_t>, Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>,
-        Tuple<float, fp8_e5m2_t>, Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>,
-        Tuple<bfloat16_t, fp8_e6m2_t>, Tuple<bfloat16_t, fp8_e8m0_t>, Tuple<int4x2_t, int16_t>,
-        Tuple<int16_t, int4x2_t>, Tuple<bfloat16_t, int4x2_t>>();
+    constexpr bool cast_none = IsCastNoneSupported<DST_TYPE, SRC_TYPE>();
     constexpr bool using_cast_rint = SupportType<
         Tuple<DST_TYPE, SRC_TYPE>, Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<half, float>,
         Tuple<half, int16_t>, Tuple<float, int32_t>>();

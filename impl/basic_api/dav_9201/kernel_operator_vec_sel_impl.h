@@ -440,12 +440,81 @@ __simd_callee__ inline void SelectScalarMode1Level0Loop(
     }
 }
 
+template <typename T, typename U, bool isCounterMode, bool isSrc0Scalar>
+__simd_callee__ inline void SelectScalarMode1Level0UnrolledLoop(
+    __ubuf__ T* dst, __ubuf__ U* sel, __ubuf__ T* tensorSrc, Reg::RegTensor<T>& scalarReg, Reg::MaskReg& maskReg,
+    Reg::MaskReg& tmpMask1, uint32_t& sreg, uint16_t newRepeatTimes, uint16_t tail, uint32_t tailSrcRepStride,
+    const BinaryRepeatParams& repeatParams)
+{
+    constexpr uint32_t blockElm = GetDataBlockSizeInBytes() / sizeof(T);
+    constexpr uint16_t oneRepSize = GetVecLen() / sizeof(T);
+    constexpr uint32_t unRollConstant = 2;
+    constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
+    const uint32_t tensorRepStride = isSrc0Scalar ? repeatParams.src1RepStride : repeatParams.src0RepStride;
+    const uint32_t tensorBlkStride = isSrc0Scalar ? repeatParams.src1BlkStride : repeatParams.src0BlkStride;
+    Reg::RegTensor<T> src0Reg, src1Reg, dst0Reg, dst1Reg;
+    Reg::MaskReg selMask0, selMask1, tmpMask0;
+    for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
+        if constexpr (isCounterMode) {
+            maskReg = Reg::UpdateMask<T>(sreg);
+        }
+        Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
+        Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
+        Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
+            src0Reg, tensorSrc + i * unRollConstant * blockElm * tensorRepStride,
+            static_cast<uint32_t>(tensorBlkStride), maskReg);
+        if constexpr (isSrc0Scalar) {
+            Reg::Select(dst0Reg, scalarReg, src0Reg, selMask0);
+        } else {
+            Reg::Select(dst0Reg, src0Reg, scalarReg, selMask0);
+        }
+        Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
+            dst + i * unRollConstant * blockElm * repeatParams.dstRepStride, dst0Reg,
+            static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
+        if constexpr (isCounterMode) {
+            maskReg = Reg::UpdateMask<T>(sreg);
+        }
+        Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
+            src1Reg, tensorSrc + (i * unRollConstant + 1) * blockElm * tensorRepStride,
+            static_cast<uint32_t>(tensorBlkStride), maskReg);
+        if constexpr (isSrc0Scalar) {
+            Reg::Select(dst1Reg, scalarReg, src1Reg, selMask1);
+        } else {
+            Reg::Select(dst1Reg, src1Reg, scalarReg, selMask1);
+        }
+        Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
+            dst + (i * unRollConstant + 1) * blockElm * repeatParams.dstRepStride, dst1Reg,
+            static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
+    }
+    Reg::RegTensor<T> src2Reg, dst2Reg;
+    Reg::MaskReg selMask2;
+    uint32_t offset0 = newRepeatTimes * unRollConstant * tailSrcRepStride * blockElm;
+    uint32_t offset1 = newRepeatTimes * unRollConstant * repeatParams.dstRepStride * blockElm;
+    uint32_t newSelOffset = newRepeatTimes * selOffset;
+    uint32_t tailSreg = sreg - unRollConstant * newRepeatTimes * oneRepSize;
+    for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
+        if constexpr (isCounterMode) {
+            maskReg = Reg::UpdateMask<T>(tailSreg);
+        }
+        Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
+        Reg::MaskUnPack(selMask2, selMask2);
+        Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
+            src2Reg, tensorSrc + offset0, static_cast<uint32_t>(tensorBlkStride), maskReg);
+        if constexpr (isSrc0Scalar) {
+            Reg::Select(dst2Reg, scalarReg, src2Reg, selMask2);
+        } else {
+            Reg::Select(dst2Reg, src2Reg, scalarReg, selMask2);
+        }
+        Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
+            dst + offset1, dst2Reg, static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
+    }
+}
+
 template <typename T, typename U, bool isBitMap, bool isCounterMode>
 __simd_vf__ inline void SelectMode1Level0(
     __ubuf__ T* dst, __ubuf__ U* sel, __ubuf__ T* src0, T src1, const uint64_t mask, const uint8_t repeatTime,
     const BinaryRepeatParams repeatParams)
 {
-    constexpr uint32_t blockElm = GetDataBlockSizeInBytes() / sizeof(T);
     constexpr uint16_t oneRepSize = GetVecLen() / sizeof(T);
     uint16_t newRepeatTimes = repeatTime;
     uint32_t sreg;
@@ -458,58 +527,17 @@ __simd_vf__ inline void SelectMode1Level0(
         SelectScalarMode1Level0Loop<T, U, isCounterMode, false>(
             dst, sel, src0, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, newRepeatTimes, repeatParams);
     } else {
-        Reg::RegTensor<T> scalarReg, src0Reg, src1Reg, dst0Reg, dst1Reg;
+        Reg::RegTensor<T> scalarReg;
         Reg::MaskReg maskReg;
         constexpr uint32_t unRollConstant = 2;
-        constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
         InitMask<T, isCounterMode, isBitMap>(mask, maskReg, sreg, newRepeatTimes, oneRepSize);
-        Reg::MaskReg selMask0, selMask1, tmpMask0;
         Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
         uint16_t tail = newRepeatTimes % unRollConstant;
         newRepeatTimes = newRepeatTimes / unRollConstant;
         Reg::Duplicate(scalarReg, (const T&)src1);
-        for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-            if constexpr (isCounterMode) {
-                maskReg = Reg::UpdateMask<T>(sreg);
-            }
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-            Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-            Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                src0Reg, src0 + i * unRollConstant * blockElm * repeatParams.src0RepStride,
-                static_cast<uint32_t>(repeatParams.src0BlkStride), maskReg);
-            Reg::Select(dst0Reg, src0Reg, scalarReg, selMask0);
-            Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                dst + i * unRollConstant * blockElm * repeatParams.dstRepStride, dst0Reg,
-                static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-            if constexpr (isCounterMode) {
-                maskReg = Reg::UpdateMask<T>(sreg);
-            }
-            Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                src1Reg, src0 + (i * unRollConstant + 1) * blockElm * repeatParams.src0RepStride,
-                static_cast<uint32_t>(repeatParams.src0BlkStride), maskReg);
-            Reg::Select(dst1Reg, src1Reg, scalarReg, selMask1);
-            Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                dst + (i * unRollConstant + 1) * blockElm * repeatParams.dstRepStride, dst1Reg,
-                static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-        }
-        Reg::RegTensor<T> src2Reg, dst2Reg;
-        Reg::MaskReg selMask2;
-        uint32_t offset0 = newRepeatTimes * unRollConstant * repeatParams.src0RepStride * blockElm;
-        uint32_t offset1 = newRepeatTimes * unRollConstant * repeatParams.dstRepStride * blockElm;
-        uint32_t newSelOffset = newRepeatTimes * selOffset;
-        uint32_t tailSreg = sreg - unRollConstant * newRepeatTimes * oneRepSize;
-        for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-            if constexpr (isCounterMode) {
-                maskReg = Reg::UpdateMask<T>(tailSreg);
-            }
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-            Reg::MaskUnPack(selMask2, selMask2);
-            Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                src2Reg, src0 + offset0, static_cast<uint32_t>(repeatParams.src0BlkStride), maskReg);
-            Reg::Select(dst2Reg, src2Reg, scalarReg, selMask2);
-            Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                dst + offset1, dst2Reg, static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-        }
+        SelectScalarMode1Level0UnrolledLoop<T, U, isCounterMode, false>(
+            dst, sel, src0, scalarReg, maskReg, tmpMask1, sreg, newRepeatTimes, tail, repeatParams.src0RepStride,
+            repeatParams);
     }
 }
 
@@ -555,7 +583,6 @@ __simd_vf__ inline void SelectSrc0ScalarMode1Level0(
     __ubuf__ T* dst, __ubuf__ U* sel, T src0, __ubuf__ T* src1, const uint64_t mask, const uint8_t repeatTime,
     const BinaryRepeatParams repeatParams)
 {
-    constexpr uint32_t blockElm = GetDataBlockSizeInBytes() / sizeof(T);
     uint32_t sreg;
     constexpr uint16_t oneRepSize = GetVecLen() / sizeof(T);
     uint16_t newRepeatTimes = repeatTime;
@@ -569,55 +596,14 @@ __simd_vf__ inline void SelectSrc0ScalarMode1Level0(
             dst, sel, src1, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, newRepeatTimes, repeatParams);
     } else {
         constexpr uint32_t unRollConstant = 2;
-        constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-        Reg::RegTensor<T> scalarReg, src0Reg, src1Reg, dst0Reg, dst1Reg;
-        Reg::MaskReg selMask0, selMask1, tmpMask0;
+        Reg::RegTensor<T> scalarReg;
         Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
         uint16_t tail = newRepeatTimes % unRollConstant;
         newRepeatTimes = newRepeatTimes / unRollConstant;
         Reg::Duplicate(scalarReg, (const T&)src0);
-        for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-            if constexpr (isCounterMode) {
-                maskReg = Reg::UpdateMask<T>(sreg);
-            }
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-            Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-            Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                src0Reg, src1 + i * unRollConstant * blockElm * repeatParams.src1RepStride,
-                static_cast<uint32_t>(repeatParams.src1BlkStride), maskReg);
-            Reg::Select(dst0Reg, scalarReg, src0Reg, selMask0);
-            Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                dst + i * unRollConstant * blockElm * repeatParams.dstRepStride, dst0Reg,
-                static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-            if constexpr (isCounterMode) {
-                maskReg = Reg::UpdateMask<T>(sreg);
-            }
-            Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                src1Reg, src1 + (i * unRollConstant + 1) * blockElm * repeatParams.src1RepStride,
-                static_cast<uint32_t>(repeatParams.src1BlkStride), maskReg);
-            Reg::Select(dst1Reg, scalarReg, src1Reg, selMask1);
-            Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                dst + (i * unRollConstant + 1) * blockElm * repeatParams.dstRepStride, dst1Reg,
-                static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-        }
-        Reg::RegTensor<T> src2Reg, dst2Reg;
-        Reg::MaskReg selMask2;
-        uint32_t offset0 = newRepeatTimes * unRollConstant * repeatParams.src1RepStride * blockElm;
-        uint32_t offset1 = newRepeatTimes * unRollConstant * repeatParams.dstRepStride * blockElm;
-        uint32_t newSelOffset = newRepeatTimes * selOffset;
-        uint32_t tailSreg = sreg - unRollConstant * newRepeatTimes * oneRepSize;
-        for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-            if constexpr (isCounterMode) {
-                maskReg = Reg::UpdateMask<T>(tailSreg);
-            }
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-            Reg::MaskUnPack(selMask2, selMask2);
-            Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                src2Reg, src1 + offset0, static_cast<uint32_t>(repeatParams.src1BlkStride), maskReg);
-            Reg::Select(dst2Reg, scalarReg, src2Reg, selMask2);
-            Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                dst + offset1, dst2Reg, static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-        }
+        SelectScalarMode1Level0UnrolledLoop<T, U, isCounterMode, true>(
+            dst, sel, src1, scalarReg, maskReg, tmpMask1, sreg, newRepeatTimes, tail, repeatParams.src1RepStride,
+            repeatParams);
     }
 }
 
@@ -664,7 +650,6 @@ __simd_vf__ inline void SelectBothTensorMode1Level0(
     __ubuf__ T* dst, __ubuf__ U* sel, __ubuf__ T* src0, __ubuf__ T* src1, const uint64_t mask, const uint8_t repeatTime,
     const BinaryRepeatParams repeatParams)
 {
-    constexpr uint32_t blockElm = GetDataBlockSizeInBytes() / sizeof(T);
     uint16_t newRepeatTimes = repeatTime;
     constexpr uint16_t oneRepSize = GetVecLen() / sizeof(T);
     uint32_t sreg;
@@ -678,55 +663,14 @@ __simd_vf__ inline void SelectBothTensorMode1Level0(
                 dst, sel, src1, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, newRepeatTimes, repeatParams);
         } else {
             constexpr uint32_t unRollConstant = 2;
-            constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-            Reg::RegTensor<T> scalarReg, src0Reg, src1Reg, dst0Reg, dst1Reg;
-            Reg::MaskReg selMask0, selMask1, tmpMask0;
+            Reg::RegTensor<T> scalarReg;
             Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
             uint16_t tail = newRepeatTimes % unRollConstant;
             newRepeatTimes = newRepeatTimes / unRollConstant;
             Reg::LoadAlign<T, pattern>(scalarReg, src0);
-            for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-                if constexpr (isCounterMode) {
-                    maskReg = Reg::UpdateMask<T>(sreg);
-                }
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-                Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-                Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    src0Reg, src1 + i * unRollConstant * blockElm * repeatParams.src1RepStride,
-                    static_cast<uint32_t>(repeatParams.src1BlkStride), maskReg);
-                Reg::Select(dst0Reg, scalarReg, src0Reg, selMask0);
-                Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    dst + i * unRollConstant * blockElm * repeatParams.dstRepStride, dst0Reg,
-                    static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-                if constexpr (isCounterMode) {
-                    maskReg = Reg::UpdateMask<T>(sreg);
-                }
-                Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    src1Reg, src1 + (i * unRollConstant + 1) * blockElm * repeatParams.src1RepStride,
-                    static_cast<uint32_t>(repeatParams.src1BlkStride), maskReg);
-                Reg::Select(dst1Reg, scalarReg, src1Reg, selMask1);
-                Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    dst + (i * unRollConstant + 1) * blockElm * repeatParams.dstRepStride, dst1Reg,
-                    static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-            }
-            Reg::RegTensor<T> src2Reg, dst2Reg;
-            Reg::MaskReg selMask2;
-            uint32_t offset0 = newRepeatTimes * unRollConstant * repeatParams.src0RepStride * blockElm;
-            uint32_t offset1 = newRepeatTimes * unRollConstant * repeatParams.dstRepStride * blockElm;
-            uint32_t newSelOffset = newRepeatTimes * selOffset;
-            uint32_t tailSreg = sreg - unRollConstant * newRepeatTimes * oneRepSize;
-            for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-                if constexpr (isCounterMode) {
-                    maskReg = Reg::UpdateMask<T>(tailSreg);
-                }
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-                Reg::MaskUnPack(selMask2, selMask2);
-                Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    src2Reg, src1 + offset0, static_cast<uint32_t>(repeatParams.src1BlkStride), maskReg);
-                Reg::Select(dst2Reg, scalarReg, src2Reg, selMask2);
-                Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    dst + offset1, dst2Reg, static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-            }
+            SelectScalarMode1Level0UnrolledLoop<T, U, isCounterMode, true>(
+                dst, sel, src1, scalarReg, maskReg, tmpMask1, sreg, newRepeatTimes, tail, repeatParams.src0RepStride,
+                repeatParams);
         }
     } else if constexpr (scalarIdx == 1) {
         if constexpr (sizeof(T) == 2) {
@@ -736,55 +680,14 @@ __simd_vf__ inline void SelectBothTensorMode1Level0(
                 dst, sel, src0, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, newRepeatTimes, repeatParams);
         } else {
             constexpr uint32_t unRollConstant = 2;
-            constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-            Reg::RegTensor<T> scalarReg, src0Reg, src1Reg, dst0Reg, dst1Reg;
-            Reg::MaskReg selMask0, selMask1, tmpMask0;
+            Reg::RegTensor<T> scalarReg;
             Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
             uint16_t tail = newRepeatTimes % unRollConstant;
             newRepeatTimes = newRepeatTimes / unRollConstant;
             Reg::LoadAlign<T, pattern>(scalarReg, src1);
-            for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-                if constexpr (isCounterMode) {
-                    maskReg = Reg::UpdateMask<T>(sreg);
-                }
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-                Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-                Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    src0Reg, src0 + i * unRollConstant * blockElm * repeatParams.src0RepStride,
-                    static_cast<uint32_t>(repeatParams.src0BlkStride), maskReg);
-                Reg::Select(dst0Reg, src0Reg, scalarReg, selMask0);
-                Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    dst + i * unRollConstant * blockElm * repeatParams.dstRepStride, dst0Reg,
-                    static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-                if constexpr (isCounterMode) {
-                    maskReg = Reg::UpdateMask<T>(sreg);
-                }
-                Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    src1Reg, src0 + (i * unRollConstant + 1) * blockElm * repeatParams.src0RepStride,
-                    static_cast<uint32_t>(repeatParams.src0BlkStride), maskReg);
-                Reg::Select(dst1Reg, src1Reg, scalarReg, selMask1);
-                Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    dst + (i * unRollConstant + 1) * blockElm * repeatParams.dstRepStride, dst1Reg,
-                    static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-            }
-            Reg::RegTensor<T> src2Reg, dst2Reg;
-            Reg::MaskReg selMask2;
-            uint32_t offset0 = newRepeatTimes * unRollConstant * repeatParams.src0RepStride * blockElm;
-            uint32_t offset1 = newRepeatTimes * unRollConstant * repeatParams.dstRepStride * blockElm;
-            uint32_t newSelOffset = newRepeatTimes * selOffset;
-            uint32_t tailSreg = sreg - unRollConstant * newRepeatTimes * oneRepSize;
-            for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-                if constexpr (isCounterMode) {
-                    maskReg = Reg::UpdateMask<T>(tailSreg);
-                }
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-                Reg::MaskUnPack(selMask2, selMask2);
-                Reg::LoadAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    src2Reg, src0 + offset0, static_cast<uint32_t>(repeatParams.src0BlkStride), maskReg);
-                Reg::Select(dst2Reg, src2Reg, scalarReg, selMask2);
-                Reg::StoreAlign<T, Reg::DataCopyMode::DATA_BLOCK_COPY>(
-                    dst + offset1, dst2Reg, static_cast<uint32_t>(repeatParams.dstBlkStride), maskReg);
-            }
+            SelectScalarMode1Level0UnrolledLoop<T, U, isCounterMode, false>(
+                dst, sel, src0, scalarReg, maskReg, tmpMask1, sreg, newRepeatTimes, tail, repeatParams.src0RepStride,
+                repeatParams);
         }
     }
 }
@@ -1038,6 +941,54 @@ __simd_callee__ inline void SelectScalarMode1Level2Loop(
     }
 }
 
+template <typename T, typename U, typename RegT, bool isSrc0Scalar>
+__simd_callee__ inline void SelectScalarMode1Level2UnrolledLoop(
+    __ubuf__ T* dst, __ubuf__ U* sel, __ubuf__ T* tensorSrc, RegT& scalarReg, Reg::MaskReg& tmpMask1, uint32_t& sreg,
+    uint16_t newRepeatTimes, uint16_t tail)
+{
+    constexpr uint32_t repeatElm = GetVecLen() / sizeof(T) * RegT::trait.REG_NUM;
+    constexpr uint32_t unRollConstant = 2;
+    constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
+    RegT src0Reg, src1Reg, dst0Reg, dst1Reg;
+    Reg::MaskReg maskReg, selMask0, selMask1, tmpMask0;
+    for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
+        Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
+        Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
+        maskReg = Reg::UpdateMask<T>(sreg);
+        Reg::LoadAlign<T>(src0Reg, tensorSrc + i * unRollConstant * repeatElm);
+        if constexpr (isSrc0Scalar) {
+            Reg::Select(dst0Reg, scalarReg, src0Reg, selMask0);
+        } else {
+            Reg::Select(dst0Reg, src0Reg, scalarReg, selMask0);
+        }
+        Reg::StoreAlign<T>(dst + i * unRollConstant * repeatElm, dst0Reg, maskReg);
+        maskReg = Reg::UpdateMask<T>(sreg);
+        Reg::LoadAlign<T>(src1Reg, tensorSrc + (i * unRollConstant + 1) * repeatElm);
+        if constexpr (isSrc0Scalar) {
+            Reg::Select(dst1Reg, scalarReg, src1Reg, selMask1);
+        } else {
+            Reg::Select(dst1Reg, src1Reg, scalarReg, selMask1);
+        }
+        Reg::StoreAlign<T>(dst + (i * unRollConstant + 1) * repeatElm, dst1Reg, maskReg);
+    }
+    RegT src2Reg, dst2Reg;
+    Reg::MaskReg selMask2;
+    uint32_t offset = newRepeatTimes * unRollConstant * repeatElm;
+    uint32_t newSelOffset = newRepeatTimes * selOffset;
+    for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
+        Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
+        Reg::MaskUnPack(selMask2, selMask2);
+        maskReg = Reg::UpdateMask<T>(sreg);
+        Reg::LoadAlign<T>(src2Reg, tensorSrc + offset);
+        if constexpr (isSrc0Scalar) {
+            Reg::Select(dst2Reg, scalarReg, src2Reg, selMask2);
+        } else {
+            Reg::Select(dst2Reg, src2Reg, scalarReg, selMask2);
+        }
+        Reg::StoreAlign<T>(dst + offset, dst2Reg, maskReg);
+    }
+}
+
 template <typename T, typename U, typename RegT>
 __simd_vf__ inline void SelectMode1Level2(__ubuf__ T* dst, __ubuf__ U* sel, __ubuf__ T* src0, T src1, uint32_t calCount)
 {
@@ -1054,38 +1005,13 @@ __simd_vf__ inline void SelectMode1Level2(__ubuf__ T* dst, __ubuf__ U* sel, __ub
             dst, sel, src0, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, repeatTime, selReg, ureg);
     } else if constexpr (sizeof(T) == 4) {
         constexpr uint32_t unRollConstant = 2;
-        constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-        RegT src0Reg, src1Reg, scalarReg, dst0Reg, dst1Reg;
-        Reg::MaskReg maskReg;
-        Reg::MaskReg selMask0, selMask1, tmpMask0;
+        RegT scalarReg;
         Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
         uint16_t tail = repeatTime % unRollConstant;
         uint16_t newRepeatTimes = repeatTime / unRollConstant;
         Reg::Duplicate(scalarReg, (const T&)src1);
-        for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-            Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-            maskReg = Reg::UpdateMask<T>(sreg);
-            Reg::LoadAlign<T>(src0Reg, src0 + i * unRollConstant * repeatElm);
-            Reg::Select(dst0Reg, src0Reg, scalarReg, selMask0);
-            Reg::StoreAlign<T>(dst + i * unRollConstant * repeatElm, dst0Reg, maskReg);
-            maskReg = Reg::UpdateMask<T>(sreg);
-            Reg::LoadAlign<T>(src1Reg, src0 + (i * unRollConstant + 1) * repeatElm);
-            Reg::Select(dst1Reg, src1Reg, scalarReg, selMask1);
-            Reg::StoreAlign<T>(dst + (i * unRollConstant + 1) * repeatElm, dst1Reg, maskReg);
-        }
-        RegT src2Reg, dst2Reg;
-        Reg::MaskReg selMask2;
-        uint32_t offset = newRepeatTimes * unRollConstant * repeatElm;
-        uint32_t newSelOffset = newRepeatTimes * selOffset;
-        for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-            Reg::MaskUnPack(selMask2, selMask2);
-            maskReg = Reg::UpdateMask<T>(sreg);
-            Reg::LoadAlign<T>(src2Reg, src0 + offset);
-            Reg::Select(dst2Reg, src2Reg, scalarReg, selMask2);
-            Reg::StoreAlign<T>(dst + offset, dst2Reg, maskReg);
-        }
+        SelectScalarMode1Level2UnrolledLoop<T, U, RegT, false>(
+            dst, sel, src0, scalarReg, tmpMask1, sreg, newRepeatTimes, tail);
     } else {
         RegT src0Reg, src1Reg, dstReg;
         uint32_t sreg = static_cast<uint32_t>(calCount);
@@ -1130,38 +1056,13 @@ __simd_vf__ inline void SelectSrc0ScalarMode1Level2(
             dst, sel, src1, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, repeatTime, selReg, ureg);
     } else if constexpr (sizeof(T) == 4) {
         constexpr uint32_t unRollConstant = 2;
-        constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-        RegT src0Reg, src1Reg, scalarReg, dst0Reg, dst1Reg;
-        Reg::MaskReg maskReg;
-        Reg::MaskReg selMask0, selMask1, tmpMask0;
+        RegT scalarReg;
         Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
         uint16_t tail = repeatTime % unRollConstant;
         uint16_t newRepeatTimes = repeatTime / unRollConstant;
         Reg::Duplicate(scalarReg, (const T&)src0);
-        for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-            Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-            maskReg = Reg::UpdateMask<T>(sreg);
-            Reg::LoadAlign<T>(src0Reg, src1 + i * unRollConstant * repeatElm);
-            Reg::Select(dst0Reg, scalarReg, src0Reg, selMask0);
-            Reg::StoreAlign<T>(dst + i * unRollConstant * repeatElm, dst0Reg, maskReg);
-            maskReg = Reg::UpdateMask<T>(sreg);
-            Reg::LoadAlign<T>(src1Reg, src1 + (i * unRollConstant + 1) * repeatElm);
-            Reg::Select(dst1Reg, scalarReg, src1Reg, selMask1);
-            Reg::StoreAlign<T>(dst + (i * unRollConstant + 1) * repeatElm, dst1Reg, maskReg);
-        }
-        RegT src2Reg, dst2Reg;
-        Reg::MaskReg selMask2;
-        uint32_t offset = newRepeatTimes * unRollConstant * repeatElm;
-        uint32_t newSelOffset = newRepeatTimes * selOffset;
-        for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-            Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-            Reg::MaskUnPack(selMask2, selMask2);
-            maskReg = Reg::UpdateMask<T>(sreg);
-            Reg::LoadAlign<T>(src2Reg, src1 + offset);
-            Reg::Select(dst2Reg, scalarReg, src2Reg, selMask2);
-            Reg::StoreAlign<T>(dst + offset, dst2Reg, maskReg);
-        }
+        SelectScalarMode1Level2UnrolledLoop<T, U, RegT, true>(
+            dst, sel, src1, scalarReg, tmpMask1, sreg, newRepeatTimes, tail);
     } else {
         RegT src0Reg, src1Reg, dstReg;
         Reg::MaskReg maskReg, selMask;
@@ -1214,38 +1115,13 @@ __simd_vf__ inline void SelectBothTensorMode1Level2(
                 dst, sel, src1, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, repeatTime, selReg, ureg);
         } else if constexpr (sizeof(T) == 4) {
             constexpr uint32_t unRollConstant = 2;
-            constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-            RegT src0Reg, src1Reg, scalarReg, dst0Reg, dst1Reg;
-            Reg::MaskReg maskReg;
-            Reg::MaskReg selMask0, selMask1, tmpMask0;
+            RegT scalarReg;
             Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
             uint16_t tail = repeatTime % unRollConstant;
             uint16_t newRepeatTimes = repeatTime / unRollConstant;
             Reg::LoadAlign<T, pattern>(scalarReg, src0);
-            for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-                Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-                maskReg = Reg::UpdateMask<T>(sreg);
-                Reg::LoadAlign<T>(src0Reg, src1 + i * unRollConstant * repeatElm);
-                Reg::Select(dst0Reg, scalarReg, src0Reg, selMask0);
-                Reg::StoreAlign<T>(dst + i * unRollConstant * repeatElm, dst0Reg, maskReg);
-                maskReg = Reg::UpdateMask<T>(sreg);
-                Reg::LoadAlign<T>(src1Reg, src1 + (i * unRollConstant + 1) * repeatElm);
-                Reg::Select(dst1Reg, scalarReg, src1Reg, selMask1);
-                Reg::StoreAlign<T>(dst + (i * unRollConstant + 1) * repeatElm, dst1Reg, maskReg);
-            }
-            RegT src2Reg, dst2Reg;
-            Reg::MaskReg selMask2;
-            uint32_t offset = newRepeatTimes * unRollConstant * repeatElm;
-            uint32_t newSelOffset = newRepeatTimes * selOffset;
-            for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-                Reg::MaskUnPack(selMask2, selMask2);
-                maskReg = Reg::UpdateMask<T>(sreg);
-                Reg::LoadAlign<T>(src2Reg, src1 + offset);
-                Reg::Select(dst2Reg, scalarReg, src2Reg, selMask2);
-                Reg::StoreAlign<T>(dst + offset, dst2Reg, maskReg);
-            }
+            SelectScalarMode1Level2UnrolledLoop<T, U, RegT, true>(
+                dst, sel, src1, scalarReg, tmpMask1, sreg, newRepeatTimes, tail);
         } else {
             RegT src0Reg, src1Reg, dstReg;
             Reg::MaskReg maskReg, selMask;
@@ -1272,38 +1148,13 @@ __simd_vf__ inline void SelectBothTensorMode1Level2(
                 dst, sel, src0, src0Reg, src1Reg, dstReg, maskReg, selMask, sreg, repeatTime, selReg, ureg);
         } else if constexpr (sizeof(T) == 4) {
             constexpr uint32_t unRollConstant = 2;
-            constexpr uint32_t selOffset = GetVecLen() / SelInternal::maskBitToByte / sizeof(T) * unRollConstant;
-            RegT src0Reg, src1Reg, scalarReg, dst0Reg, dst1Reg;
-            Reg::MaskReg maskReg;
-            Reg::MaskReg selMask0, selMask1, tmpMask0;
+            RegT scalarReg;
             Reg::MaskReg tmpMask1 = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
             uint16_t tail = repeatTime % unRollConstant;
             uint16_t newRepeatTimes = repeatTime / unRollConstant;
             Reg::LoadAlign<T, pattern>(scalarReg, src1);
-            for (uint16_t i = 0; i < static_cast<uint16_t>(newRepeatTimes); ++i) {
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(tmpMask0, (__ubuf__ uint8_t*)sel + i * selOffset);
-                Reg::MaskInterleave<uint16_t>(selMask0, selMask1, tmpMask0, tmpMask1);
-                maskReg = Reg::UpdateMask<T>(sreg);
-                Reg::LoadAlign<T>(src0Reg, src0 + i * unRollConstant * repeatElm);
-                Reg::Select(dst0Reg, src0Reg, scalarReg, selMask0);
-                Reg::StoreAlign<T>(dst + i * unRollConstant * repeatElm, dst0Reg, maskReg);
-                maskReg = Reg::UpdateMask<T>(sreg);
-                Reg::LoadAlign<T>(src1Reg, src0 + (i * unRollConstant + 1) * repeatElm);
-                Reg::Select(dst1Reg, src1Reg, scalarReg, selMask1);
-                Reg::StoreAlign<T>(dst + (i * unRollConstant + 1) * repeatElm, dst1Reg, maskReg);
-            }
-            RegT src2Reg, dst2Reg;
-            Reg::MaskReg selMask2;
-            uint32_t offset = newRepeatTimes * unRollConstant * repeatElm;
-            uint32_t newSelOffset = newRepeatTimes * selOffset;
-            for (uint16_t i = 0; i < static_cast<uint16_t>(tail); ++i) {
-                Reg::LoadAlign<uint8_t, Reg::MaskDist::DIST_US>(selMask2, (__ubuf__ uint8_t*)sel + newSelOffset);
-                Reg::MaskUnPack(selMask2, selMask2);
-                maskReg = Reg::UpdateMask<T>(sreg);
-                Reg::LoadAlign<T>(src2Reg, src0 + offset);
-                Reg::Select(dst2Reg, src2Reg, scalarReg, selMask2);
-                Reg::StoreAlign<T>(dst + offset, dst2Reg, maskReg);
-            }
+            SelectScalarMode1Level2UnrolledLoop<T, U, RegT, false>(
+                dst, sel, src0, scalarReg, tmpMask1, sreg, newRepeatTimes, tail);
         } else {
             RegT src0Reg, src1Reg, dstReg;
             Reg::MaskReg maskReg, selMask;

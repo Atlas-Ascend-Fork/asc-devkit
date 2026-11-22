@@ -195,33 +195,30 @@ __aicore__ inline void SetNextTaskStartImpl()
 #endif
 }
 
+__aicore__ inline void WaitPreTaskEndTightMixImpl();
+
+__aicore__ inline void WaitPreTaskEndLooseMixImpl()
+{
+    constexpr uint16_t crossCoreMode = 0x02;
+    if ASCEND_IS_AIC {
+        wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_FLAG);
+        ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(crossCoreMode, AscendC::SYNC_AIC_AIV_FLAG));
+        wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_FLAG);
+    }
+    if ASCEND_IS_AIV {
+        wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_ONLY_ALL);
+        ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(crossCoreMode, AscendC::SYNC_AIV_FLAG));
+        wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_AIV_FLAG);
+    }
+}
+
 template <int8_t enableTightSync = -1>
 __aicore__ inline void WaitPreTaskEndV1Impl()
 {
     if constexpr (enableTightSync) {
-        if ASCEND_IS_AIC {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_FLAG);
-            set_intra_block(PIPE_MTE3, AscendC::SYNC_AIC_AIV_FLAG);
-            set_intra_block(PIPE_MTE3, AscendC::SYNC_AIC_AIV_FLAG + AscendC::SYNC_FLAG_ID_MAX);
-            wait_intra_block(PIPE_S, AscendC::SYNC_AIV_FLAG);
-            wait_intra_block(PIPE_S, AscendC::SYNC_AIV_FLAG + AscendC::SYNC_FLAG_ID_MAX);
-        }
-        if ASCEND_IS_AIV {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_ONLY_ALL);
-            set_intra_block(PIPE_MTE3, AscendC::SYNC_AIV_FLAG);
-            wait_intra_block(PIPE_S, AscendC::SYNC_AIC_AIV_FLAG);
-        }
+        WaitPreTaskEndTightMixImpl();
     } else {
-        if ASCEND_IS_AIC {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_FLAG);
-            ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIC_AIV_FLAG));
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_FLAG);
-        }
-        if ASCEND_IS_AIV {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_ONLY_ALL);
-            ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIV_FLAG));
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_AIV_FLAG);
-        }
+        WaitPreTaskEndLooseMixImpl();
     }
     return;
 }
@@ -466,16 +463,7 @@ __aicore__ inline void WaitPreTaskEndLooseV2DefaultImpl()
             ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIV_FLAG));
         }
     } else if (g_super_kernel_early_start_config == ASCENDC_SUPER_KERNEL_EARLY_START_MIX_TO_MIX) {
-        if ASCEND_IS_AIC {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_FLAG);
-            ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIC_AIV_FLAG));
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_FLAG);
-        }
-        if ASCEND_IS_AIV {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_ONLY_ALL);
-            ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIV_FLAG));
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_AIV_FLAG);
-        }
+        WaitPreTaskEndLooseMixImpl();
     }
     return;
 #endif
@@ -546,16 +534,7 @@ __aicore__ inline void WaitPreTaskEndLooseV2Impl()
             ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIV_FLAG));
         }
     } else if constexpr (earlyStartConfig == ASCENDC_SUPER_KERNEL_EARLY_START_MIX_TO_MIX) {
-        if ASCEND_IS_AIC {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_FLAG);
-            ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIC_AIV_FLAG));
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_FLAG);
-        }
-        if ASCEND_IS_AIV {
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIV_ONLY_ALL);
-            ffts_cross_core_sync(PIPE_MTE3, AscendC::GetffstMsg(0x02, AscendC::SYNC_AIV_FLAG));
-            wait_flag_dev(PIPE_S, AscendC::SYNC_AIC_AIV_FLAG);
-        }
+        WaitPreTaskEndLooseMixImpl();
     }
     return;
 #endif
@@ -865,6 +844,30 @@ __aicore__ inline void NotifyEventCompatibleMode1Impl(uint16_t flagId)
 }
 
 template <uint8_t modeId, pipe_t pipe>
+__aicore__ inline void NotifyEventHardwareImpl(uint16_t flagId)
+{
+    constexpr uint8_t intraBlockMode = 4;
+    if constexpr (IsSplitVectorPipe<pipe>()) {
+        if ASCEND_IS_AIV {
+            if constexpr (modeId == intraBlockMode) {
+                set_intra_block(pipe, flagId);
+            } else {
+                ffts_cross_core_sync(pipe, GetffstMsg(modeId, flagId));
+            }
+        }
+    }
+    if constexpr (IsSplitCubePipe<pipe>()) {
+        if ASCEND_IS_AIC {
+            if constexpr (modeId == intraBlockMode) {
+                set_intra_block(pipe, flagId);
+            } else {
+                ffts_cross_core_sync(pipe, GetffstMsg(modeId, flagId));
+            }
+        }
+    }
+}
+
+template <uint8_t modeId, pipe_t pipe>
 __aicore__ inline void NotifyEventCompatibleImpl(uint16_t flagId)
 {
     ASCENDC_ASSERT((g_sysCV11CompatCV12WorkSpace != nullptr), {
@@ -879,16 +882,7 @@ __aicore__ inline void NotifyEventCompatibleImpl(uint16_t flagId)
     } else if constexpr (modeId == 1) {
         NotifyEventCompatibleMode1Impl<modeId, pipe>(flagId);
     } else if constexpr (modeId == 0) {
-        if constexpr (IsSplitVectorPipe<pipe>()) {
-            if ASCEND_IS_AIV {
-                ffts_cross_core_sync(pipe, GetffstMsg(modeId, flagId));
-            }
-        }
-        if constexpr (IsSplitCubePipe<pipe>()) {
-            if ASCEND_IS_AIC {
-                ffts_cross_core_sync(pipe, GetffstMsg(modeId, flagId));
-            }
-        }
+        NotifyEventHardwareImpl<modeId, pipe>(flagId);
     }
 }
 
@@ -898,29 +892,23 @@ __aicore__ inline void NotifyEventImpl(uint16_t flagId)
     if (IsCompatibleTo3510()) {
         NotifyEventCompatibleImpl<modeId, pipe>(flagId);
     } else {
-        if constexpr (modeId == 4) {
-            if constexpr (IsSplitVectorPipe<pipe>()) {
-                if ASCEND_IS_AIV {
-                    set_intra_block(pipe, flagId);
-                }
-            }
-            if constexpr (IsSplitCubePipe<pipe>()) {
-                if ASCEND_IS_AIC {
-                    set_intra_block(pipe, flagId);
-                }
-            }
-        } else {
-            if constexpr (IsSplitVectorPipe<pipe>()) {
-                if ASCEND_IS_AIV {
-                    ffts_cross_core_sync(pipe, GetffstMsg(modeId, flagId));
-                }
-            }
-            if constexpr (IsSplitCubePipe<pipe>()) {
-                if ASCEND_IS_AIC {
-                    ffts_cross_core_sync(pipe, GetffstMsg(modeId, flagId));
-                }
-            }
-        }
+        NotifyEventHardwareImpl<modeId, pipe>(flagId);
+    }
+}
+
+template <pipe_t pipe>
+__aicore__ inline void WaitCompatibleSyncCounterImpl(__gm__ uint8_t* syncCounterAddr)
+{
+    uint32_t counterValue = ld_dev(reinterpret_cast<__gm__ uint32_t*>(syncCounterAddr), 0);
+    while (counterValue == 0) {
+        counterValue = ld_dev(reinterpret_cast<__gm__ uint32_t*>(syncCounterAddr), 0);
+    }
+    constexpr int32_t consumedNotifyCount = -1;
+    atomicAdd(reinterpret_cast<__gm__ int32_t*>(syncCounterAddr), consumedNotifyCount);
+
+    if constexpr (pipe != PIPE_S) {
+        set_flag(PIPE_S, pipe, EVENT_ID5);
+        wait_flag(PIPE_S, pipe, EVENT_ID5);
     }
 }
 
@@ -944,17 +932,7 @@ __aicore__ inline void WaitEventCompatibleMode4Impl(uint16_t flagId)
                 __gm__ uint8_t* syncCounterAddr =
                     g_sysCV11CompatCV12WorkSpace + COMPATIBLE_SYNC_MODE4_COUNTER_REGION_OFFSET +
                     get_only_coreid() * COMPATIBLE_SYNC_SLOT_SIZE + (flagId % 16) * sizeof(uint64_t);
-                uint32_t counterValue = ld_dev((__gm__ uint32_t*)syncCounterAddr, 0);
-                while (counterValue == 0) {
-                    counterValue = ld_dev((__gm__ uint32_t*)syncCounterAddr, 0);
-                }
-                atomicAdd((__gm__ int32_t*)syncCounterAddr, (int32_t)(-1));
-
-                // stall pipe
-                if constexpr (pipe != PIPE_S) {
-                    set_flag(PIPE_S, pipe, EVENT_ID5);
-                    wait_flag(PIPE_S, pipe, EVENT_ID5);
-                }
+                WaitCompatibleSyncCounterImpl<pipe>(syncCounterAddr);
             }
         }
     }
@@ -971,17 +949,7 @@ __aicore__ inline void WaitEventCompatibleMode2Impl(uint16_t flagId)
             __gm__ uint8_t* syncCounterAddr = g_sysCV11CompatCV12WorkSpace + COMPATIBLE_SYNC_COUNTER_REGION_OFFSET +
                                               get_only_coreid() * COMPATIBLE_SYNC_SLOT_SIZE +
                                               flagId * sizeof(uint64_t) + sizeof(uint32_t);
-            uint32_t counterValue = ld_dev((__gm__ uint32_t*)syncCounterAddr, 0);
-            while (counterValue == 0) {
-                counterValue = ld_dev((__gm__ uint32_t*)syncCounterAddr, 0);
-            }
-            atomicAdd((__gm__ int32_t*)syncCounterAddr, (int32_t)(-1));
-
-            // stall pipe
-            if constexpr (pipe != PIPE_S) {
-                set_flag(PIPE_S, pipe, EVENT_ID5);
-                wait_flag(PIPE_S, pipe, EVENT_ID5);
-            }
+            WaitCompatibleSyncCounterImpl<pipe>(syncCounterAddr);
         }
     }
     if constexpr (IsSplitCubePipe<pipe>()) {
@@ -1015,16 +983,30 @@ __aicore__ inline void WaitEventCompatibleMode1Impl(uint16_t flagId)
             __gm__ uint8_t* syncCounterAddr = g_sysCV11CompatCV12WorkSpace + COMPATIBLE_SYNC_COUNTER_REGION_OFFSET +
                                               get_only_coreid() * COMPATIBLE_SYNC_SLOT_SIZE +
                                               flagId * sizeof(uint64_t) + sizeof(uint32_t);
-            uint32_t counterValue = ld_dev((__gm__ uint32_t*)syncCounterAddr, 0);
-            while (counterValue == 0) {
-                counterValue = ld_dev((__gm__ uint32_t*)syncCounterAddr, 0);
-            }
-            atomicAdd((__gm__ int32_t*)syncCounterAddr, (int32_t)(-1));
+            WaitCompatibleSyncCounterImpl<pipe>(syncCounterAddr);
+        }
+    }
+}
 
-            // stall pipe
-            if constexpr (pipe != PIPE_S) {
-                set_flag(PIPE_S, pipe, EVENT_ID5);
-                wait_flag(PIPE_S, pipe, EVENT_ID5);
+template <uint8_t modeId, pipe_t pipe>
+__aicore__ inline void WaitEventHardwareImpl(uint16_t flagId)
+{
+    constexpr uint8_t intraBlockMode = 4;
+    if constexpr (IsSplitVectorPipe<pipe>()) {
+        if ASCEND_IS_AIV {
+            if constexpr (modeId == intraBlockMode) {
+                wait_intra_block(pipe, flagId);
+            } else {
+                wait_flag_dev(pipe, flagId);
+            }
+        }
+    }
+    if constexpr (IsSplitCubePipe<pipe>()) {
+        if ASCEND_IS_AIC {
+            if constexpr (modeId == intraBlockMode) {
+                wait_intra_block(pipe, flagId);
+            } else {
+                wait_flag_dev(pipe, flagId);
             }
         }
     }
@@ -1045,16 +1027,7 @@ __aicore__ inline void WaitEventCompatibleImpl(uint16_t flagId)
     } else if constexpr (modeId == 1) {
         WaitEventCompatibleMode1Impl<modeId, pipe>(flagId);
     } else if constexpr (modeId == 0) {
-        if constexpr (IsSplitVectorPipe<pipe>()) {
-            if ASCEND_IS_AIV {
-                wait_flag_dev(pipe, flagId);
-            }
-        }
-        if constexpr (IsSplitCubePipe<pipe>()) {
-            if ASCEND_IS_AIC {
-                wait_flag_dev(pipe, flagId);
-            }
-        }
+        WaitEventHardwareImpl<modeId, pipe>(flagId);
     }
 }
 
@@ -1064,29 +1037,7 @@ __aicore__ inline void WaitEventImpl(uint16_t flagId)
     if (IsCompatibleTo3510()) {
         WaitEventCompatibleImpl<modeId, pipe>(flagId);
     } else {
-        if constexpr (modeId == 4) {
-            if constexpr (IsSplitVectorPipe<pipe>()) {
-                if ASCEND_IS_AIV {
-                    wait_intra_block(pipe, flagId);
-                }
-            }
-            if constexpr (IsSplitCubePipe<pipe>()) {
-                if ASCEND_IS_AIC {
-                    wait_intra_block(pipe, flagId);
-                }
-            }
-        } else {
-            if constexpr (IsSplitVectorPipe<pipe>()) {
-                if ASCEND_IS_AIV {
-                    wait_flag_dev(pipe, flagId);
-                }
-            }
-            if constexpr (IsSplitCubePipe<pipe>()) {
-                if ASCEND_IS_AIC {
-                    wait_flag_dev(pipe, flagId);
-                }
-            }
-        }
+        WaitEventHardwareImpl<modeId, pipe>(flagId);
     }
 }
 

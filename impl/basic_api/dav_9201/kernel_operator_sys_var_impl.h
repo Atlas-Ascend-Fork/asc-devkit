@@ -52,27 +52,6 @@ __aicore__ inline int64_t GetSubBlockIdxImpl()
 #endif
 }
 
-__aicore__ inline int64_t GetTaskRationImpl()
-{
-    if ASCEND_IS_AIC {
-        return 1;
-    } else {
-#if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
-        if (IsCompatibleTo3510()) {
-            return COMPATIBLE_MODE_TASK_RATIO;
-        } else {
-            return g_taskRation;
-        }
-#else
-        if (IsCompatibleTo3510()) {
-            return COMPATIBLE_MODE_TASK_RATIO;
-        } else {
-            return get_subblockdim();
-        }
-#endif
-    }
-}
-
 __aicore__ inline int64_t TscmGetTaskRation()
 {
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
@@ -88,6 +67,15 @@ __aicore__ inline int64_t TscmGetTaskRation()
         return get_subblockdim();
     }
 #endif
+}
+
+__aicore__ inline int64_t GetTaskRationImpl()
+{
+    if ASCEND_IS_AIC {
+        return 1;
+    } else {
+        return TscmGetTaskRation();
+    }
 }
 
 __aicore__ inline int64_t GetBlockIdxImpl()
