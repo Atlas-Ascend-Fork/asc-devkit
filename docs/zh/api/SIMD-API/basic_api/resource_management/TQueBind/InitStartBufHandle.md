@@ -99,7 +99,7 @@ __aicore__ inline bool MyBufPool::InitBuffer(T& que, uint8_t num, uint32_t len)
    // 对TQue的内存块进行初始化
    uint32_t curPoolAddr  = 0;  // 内存块起始地址
    auto bufhandle = xxx; // 具体的内存块，该变量可由自定义tbufpool内获得
-   srcQue0.InitStartBufHandle(bufhandle, num, len);
+   que.InitStartBufHandle(bufhandle, num, len);
    for (uint8_t i = 0; i < num; i++) {
       que.InitBufHandle(this, i, bufhandle , curPoolAddr + i * len, len);
    }
@@ -107,17 +107,20 @@ __aicore__ inline bool MyBufPool::InitBuffer(T& que, uint8_t num, uint32_t len)
 }
 
 // 自定义tbufpool类内部对TBuf初始化的InitBuffer函数：
-template<class T> 
+template<AscendC::TPosition bufPos> 
 __aicore__ inline bool MyBufPool::InitBuffer(AscendC::TBuf<bufPos>& buf, uint32_t len)
 {
    ...
    // 对TBuf的内存块进行初始化
    uint32_t curPoolAddr  = 0;  // 内存块起始地址
    auto bufhandle = xxx; // 具体的内存块，该变量可由自定义tbufpool内获得
-   srcBuf1.InitStartBufHandle(bufhandle, 1, len);
-   srcBuf1.InitBufHandle(this, 0, bufhandle , curPoolAddr, len);
+   buf.InitStartBufHandle(bufhandle, 1, len);
+   buf.InitBufHandle(this, 0, bufhandle , curPoolAddr, len);
    ...
 }
+```
+
+```cpp
 AscendC::TPipe pipe;
 AscendC::TQue<AscendC::TPosition::VECIN, 1> srcQue0;
 AscendC::TBuf<AscendC::TPosition::VECIN> srcBuf1;

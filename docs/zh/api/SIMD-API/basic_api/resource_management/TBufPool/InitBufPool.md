@@ -152,7 +152,7 @@
 
 ## 返回值说明<a name="section640mcpsimp"></a>
 
-无
+返回资源池初始化是否成功，true表示初始化成功。参数非法或资源不足时通过断言报错，不返回false。
 
 ## 调用示例<a name="section642mcpsimp"></a>
 

@@ -158,7 +158,7 @@ que.FreeTensor(a2);</pre>
     pipe.InitBuffer(que0, 1, len);
     AscendC::LocalTensor<half> tensor1 = que0.AllocTensor<half>();
     que0.EnQue(tensor1);
-    tensor1 = que0.DeQue<half>(); // 将tensor从VECOUT的Queue中搬出
+    tensor1 = que0.DeQue<half>(); // 将tensor从VECIN的Queue中搬出
     que0.FreeTensor<half>(tensor1);
     que0.FreeAllEvent(); // 释放que0的所有同步事件，之后可继续申请TQue
     AscendC::TQue<AscendC::TPosition::VECIN, 1> que1;

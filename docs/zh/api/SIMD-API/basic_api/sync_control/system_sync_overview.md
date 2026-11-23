@@ -29,7 +29,7 @@ AI Core的同步分为3类：核内同步、核间同步和任务间同步。
 | --- | --- | --- |
 | [SetFlag/WaitFlag\(ISASI\)](intra_core_sync/SetFlag_WaitFlag_ISASI.md) | 多流水同步：同一核内不同流水之间的同步指令。SetFlag负责发送通知，WaitFlag负责阻塞直到SetFlag发送通知。 | 硬件同步 |
 | [PipeBarrier](intra_core_sync/PipeBarrier_ISASI.md) | 单流水同步：同一核内相同流水之间的同步指令（不支持PIPE_S单流水同步）。 | 硬件同步 |
-| [DataSyncBarrier](intra_core_sync/DataSyncBarrier_ISASI.md) | 阻塞后续的指令执行，直到所有之前的内存访问指令（需要等待的内存位置可通过参数控制）执行结束。 | 硬件同步 |
+| [DataSyncBarrier](intra_core_sync/DataSyncBarrier_ISASI.md) | 阻塞后续的指令执行，直到由模板参数指定的内存位置上此前已发出但尚未完成的内存访问指令执行结束。 | 硬件同步 |
 | [Lock/Unlock](intra_core_sync/Mutex_ISASI.md) | 用于核内异步流水指令之间的同步处理，其功能类似于传统CPU中的锁机制。通过锁定指定流水再释放流水来完成流水间的同步依赖。 | 硬件同步 |
 
 **表2**  核间同步接口

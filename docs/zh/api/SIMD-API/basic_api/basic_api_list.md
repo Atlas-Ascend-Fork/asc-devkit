@@ -492,7 +492,7 @@
 | [WriteSpmBuffer](resource_management/TPipe/WriteSpmBuffer.md) | 将需要溢出暂存的数据拷贝到SPM Buffer中。 |
 | [ReadSpmBuffer](resource_management/TPipe/ReadSpmBuffer.md) | 从SPM Buffer读回到local数据中。 |
 | [GetUserWorkspace](resource_management/workspace/GetUserWorkspace.md) | 获取用户使用的workspace指针。 |
-| [SetSysWorkSpace](resource_management/workspace/SetSysWorkSpace.md) | 在进行融合算子编程时，由于框架通信机制需要使用到workspace，也就是系统workspace，所以在该场景下，开发者要调用该接口，设置系统workspace的指针。 |
+| [SetSysWorkspace](resource_management/workspace/SetSysWorkspace.md) | 在进行融合算子编程时，由于框架通信机制需要使用到workspace，也就是系统workspace，所以在该场景下，开发者要调用该接口，设置系统workspace的指针。 |
 | [GetSysWorkSpacePtr](resource_management/workspace/GetSysWorkSpacePtr.md) | 获取系统workspace指针。 |
 | [PopStackBuffer](resource_management/PopStackBuffer.md) | 在指定position（逻辑位置）申请临时空间，空间大小为指定position的全部剩余空间。 |
 
@@ -504,7 +504,7 @@
 | --- | --- |
 | [TQueSync](sync_control/intra_core_sync/TQueSync.md) | TQueSync类提供同步控制接口，开发者可以使用这类API来自行完成同步控制。 |
 | [AllocMutexID (ISASI)](sync_control/intra_core_sync/AllocMutexID_ISASI.md) | 从框架获取并占用一个MutexID，与ReleaseMutexID配合使用，管理MutexID的获取和释放。获取的MutexID可以传入Mutex接口使用，此时Mutex可以与TQue等其他接口配合使用。 |
-| [DataSyncBarrier(ISASI)](sync_control/intra_core_sync/DataSyncBarrier_ISASI.md) | 阻塞后续的指令执行，直到所有之前的内存访问指令（需要等待的内存位置可通过参数控制）执行结束，用于解决Scalar的内存依赖。 |
+| [DataSyncBarrier(ISASI)](sync_control/intra_core_sync/DataSyncBarrier_ISASI.md) | 阻塞后续的指令执行，直到由模板参数指定的内存位置上此前已发出但尚未完成的内存访问指令执行结束，用于解决Scalar的内存依赖。 |
 | [PipeBarrier(ISASI)](sync_control/intra_core_sync/PipeBarrier_ISASI.md) | 完成同一流水线内的同步控制，用于在同一流水线内部约束执行顺序。其作用是，保证前序指令中所有数据的读写工作全部完成，后序指令才能执行。 |
 | [ReleaseMutexID (ISASI)](sync_control/intra_core_sync/ReleaseMutexID_ISASI.md) | 从框架释放一个MutexID，与AllocMutexID配合使用。 |
 | [SetFlag/WaitFlag(ISASI)](sync_control/intra_core_sync/SetFlag_WaitFlag_ISASI.md) | SetFlag/WaitFlag接口用于核内多流水间的同步。 |

@@ -52,12 +52,12 @@
 -   原型3：使用[TensorTrait](../../aux_data_structures/TensorTrait/TensorTrait.md)时使用此接口
 
     ```cpp
-    template <class DataType> LocalTensor<DataType> __aicore__ inline Alloc()
+    template <class TensorTraitType> LocalTensor<TensorTraitType> __aicore__ inline Alloc()
     ```
 
 ## 参数说明<a name="section622mcpsimp"></a>
 
-**表1**  原型1和原型2模板参数说明
+**表1**  原型1模板参数说明
 
 <a name="table4835205712588"></a>
 <table><thead align="left"><tr id="row118356578583"><th class="cellrowborder" valign="top" width="17.43%" id="mcps1.2.3.1.1"><p id="p48354572582"><a name="p48354572582"></a><a name="p48354572582"></a>参数名</p>
@@ -147,15 +147,15 @@ using UIntImm = Std::integral_constant<uint32_t, v>;
 AscendC::LocalMemAllocator allocator;
 // 原型1：float类型，Tensor中有1024个元素，用户可以指定逻辑位置(或者不指定，由Alloc函数根据物理位置给出默认值，不影响功能)
 auto tensor1 = allocator.Alloc<AscendC::TPosition::VECIN, float, 1024>();
-auto tensor1 = allocator.Alloc<float, 1024>();
+auto tensor2 = allocator.Alloc<float, 1024>();
 
 // 原型2：float类型，Tensor中有tileLength个元素，用户可以指定逻辑位置(或者不指定，由Alloc函数根据物理位置给出默认值，不影响功能)
-auto tensor1 = allocator.Alloc<AscendC::TPosition::VECIN, float>(tileLength);
+auto tensor3 = allocator.Alloc<AscendC::TPosition::VECIN, float>(tileLength);
 
 // 原型3：用户指定逻辑位置VECIN，数据类型为float，Tensor中元素个数为16*16*16
 auto shape = AscendC::MakeShape(UIntImm<16>{}, UIntImm<16>{}, UIntImm<16>{});
 auto stride = AscendC::MakeStride(UIntImm<0>{}, UIntImm<0>{}, UIntImm<0>{});
 auto layoutMake = AscendC::MakeLayout(shape, stride);
 auto tensorTraitMake = AscendC::MakeTensorTrait<float, AscendC::TPosition::VECIN>(layoutMake);
-auto tensor3 = allocator.Alloc<decltype(tensorTraitMake)>();
+auto tensor4 = allocator.Alloc<decltype(tensorTraitMake)>();
 ```

@@ -124,7 +124,7 @@
     - Kirin9030处理器系列产品不超过8个。
     <!-- end id18 -->    
 -   non-inplace接口分配的Tensor内容可能包含随机值。
--   non-inplace接口，需要将TQueBind的depth模板参数设置为非零值；inplace接口，需要将TQueBind的depth模板参数设置为0。
+-   non-inplace接口，需要将TQue的depth模板参数设置为非零值；inplace接口，需要将TQue的depth模板参数设置为0。
 
 ## 返回值说明<a name="section640mcpsimp"></a>
 

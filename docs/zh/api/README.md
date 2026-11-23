@@ -1711,7 +1711,7 @@
 
             -   [workspace](SIMD-API/basic_api/resource_management/workspace/workspace.md)
                 -   [GetSysWorkSpacePtr](SIMD-API/basic_api/resource_management/workspace/GetSysWorkSpacePtr.md)
-                -   [SetSysWorkSpace](SIMD-API/basic_api/resource_management/workspace/SetSysWorkSpace.md)
+                -   [SetSysWorkspace](SIMD-API/basic_api/resource_management/workspace/SetSysWorkspace.md)
                 -   [GetUserWorkspace](SIMD-API/basic_api/resource_management/workspace/GetUserWorkspace.md)
 
             -   [PopStackBuffer](SIMD-API/basic_api/resource_management/PopStackBuffer.md)

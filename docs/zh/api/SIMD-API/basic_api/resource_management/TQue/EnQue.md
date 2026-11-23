@@ -48,7 +48,7 @@
 
 -   需要指定源和目的位置
 
-    通过[TQueBind](../TQueBind/TQueBind.md)绑定VECIN和VECOUT可实现VECIN和VECOUT内存复用，如下接口用于存在Vector计算的场景下实现复用，在入队时需要指定源和目的位置；不存在Vector计算的场景下可直接调用bool EnQue\(LocalTensor<T\>& tensor\)入队接口。
+    通过[TQueBind](../TQueBind/TQueBind.md)绑定VECIN和VECOUT可实现VECIN和VECOUT内存复用，如下接口用于存在Vector计算的场景下实现复用，在入队时需要指定源和目的位置；不存在Vector计算的场景下可直接调用bool EnQue\(const LocalTensor<T\>& tensor\)入队接口。
 
     ```cpp
     template <TPosition srcUserPos, TPosition dstUserPos, typename T>

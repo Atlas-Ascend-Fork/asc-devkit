@@ -2,7 +2,7 @@
 
 -   **[GetSysWorkSpacePtr](GetSysWorkSpacePtr.md)**  
 
--   **[SetSysWorkSpace](SetSysWorkSpace.md)**  
+-   **[SetSysWorkspace](SetSysWorkspace.md)**  
 
 -   **[GetUserWorkspace](GetUserWorkspace.md)**  
 
