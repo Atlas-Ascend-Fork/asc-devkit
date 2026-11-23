@@ -155,4 +155,15 @@ enum asc_mutex_execute_mode {
 
 using ascMutexExecuteMode = asc_mutex_execute_mode;
 
+enum class asc_rsw_buffset_size : uint8_t {
+    SIZE_16K_BYTES,
+    SIZE_32K_BYTES,
+    SIZE_64K_BYTES,
+    SIZE_128K_BYTES,
+    SIZE_256K_BYTES,
+    SIZE_512K_BYTES,
+    SIZE_1024K_BYTES,
+    SIZE_2048K_BYTES
+};
+
 #endif

@@ -1133,169 +1133,183 @@ __aicore__ inline void asc_ndim_copy_gm2ub(
 // hifloat8_t, bfloat16_t, fp8_e5m2_t, fp8_e4m3fn_t, fp8_e8m0_t, fp8_e6m2_t
 __aicore__ inline void asc_remote_copy_ub2gm_align(
     __gm__ uint8_t* dst, __ubuf__ uint8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ int8_t* dst, __ubuf__ int8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ uint16_t* dst, __ubuf__ uint16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ int16_t* dst, __ubuf__ int16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ uint32_t* dst, __ubuf__ uint32_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ int32_t* dst, __ubuf__ int32_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ half* dst, __ubuf__ half* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ float* dst, __ubuf__ float* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ hifloat8_t* dst, __ubuf__ hifloat8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ bfloat16_t* dst, __ubuf__ bfloat16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ fp8_e5m2_t* dst, __ubuf__ fp8_e5m2_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
-{
-    if ASC_IS_AIV {
-        copy_ubuf_to_gm_align_v2(
-            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
-    }
-}
-
-__aicore__ inline void asc_remote_copy_ub2gm_align(
-    __gm__ fp8_e4m3fn_t* dst, __ubuf__ fp8_e4m3fn_t* src, uint32_t burst_count, uint32_t burst_len,
-    bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
     uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ int8_t* dst, __ubuf__ int8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ uint16_t* dst, __ubuf__ uint16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ int16_t* dst, __ubuf__ int16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ uint32_t* dst, __ubuf__ uint32_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ int32_t* dst, __ubuf__ int32_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ half* dst, __ubuf__ half* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ float* dst, __ubuf__ float* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ hifloat8_t* dst, __ubuf__ hifloat8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ bfloat16_t* dst, __ubuf__ bfloat16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ fp8_e5m2_t* dst, __ubuf__ fp8_e5m2_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
+    }
+}
+
+__aicore__ inline void asc_remote_copy_ub2gm_align(
+    __gm__ fp8_e4m3fn_t* dst, __ubuf__ fp8_e4m3fn_t* src, uint32_t burst_count, uint32_t burst_len,
+    bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size,
+    asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+{
+    if ASC_IS_AIV {
+        copy_ubuf_to_gm_align_v2(
+            (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm_align(
     __gm__ fp8_e8m0_t* dst, __ubuf__ fp8_e8m0_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm_align(
     __gm__ fp8_e6m2_t* dst, __ubuf__ fp8_e6m2_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode, uint64_t dst_stride,
-    uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, asc_store_l2_cache_mode l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), static_cast<uint8_t>(l2_cache_mode), dst_stride, src_stride,
+            enable_retry);
     }
 }
 
@@ -1303,18 +1317,19 @@ __aicore__ inline void asc_remote_copy_ub2gm_align(
 // hifloat8_t, bfloat16_t, fp8_e5m2_t, fp8_e4m3fn_t, fp8_e8m0_t, fp8_e6m2_t
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ uint8_t* dst, __ubuf__ uint8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ uint8_t* dst, __ubuf__ uint8_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1322,18 +1337,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ int8_t* dst, __ubuf__ int8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ int8_t* dst, __ubuf__ int8_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1341,18 +1357,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ uint16_t* dst, __ubuf__ uint16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ uint16_t* dst, __ubuf__ uint16_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1360,18 +1377,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ int16_t* dst, __ubuf__ int16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ int16_t* dst, __ubuf__ int16_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1379,18 +1397,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ uint32_t* dst, __ubuf__ uint32_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ uint32_t* dst, __ubuf__ uint32_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1398,18 +1417,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ int32_t* dst, __ubuf__ int32_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ int32_t* dst, __ubuf__ int32_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1417,18 +1437,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ half* dst, __ubuf__ half* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ half* dst, __ubuf__ half* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1436,18 +1457,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ float* dst, __ubuf__ float* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ float* dst, __ubuf__ float* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1455,18 +1477,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ hifloat8_t* dst, __ubuf__ hifloat8_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ hifloat8_t* dst, __ubuf__ hifloat8_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1474,18 +1497,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ bfloat16_t* dst, __ubuf__ bfloat16_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ bfloat16_t* dst, __ubuf__ bfloat16_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1493,18 +1517,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e5m2_t* dst, __ubuf__ fp8_e5m2_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e5m2_t* dst, __ubuf__ fp8_e5m2_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1512,19 +1537,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e4m3fn_t* dst, __ubuf__ fp8_e4m3fn_t* src, uint32_t burst_count, uint32_t burst_len,
-    bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride,
+    bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride,
     uint32_t src_stride, bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e4m3fn_t* dst, __ubuf__ fp8_e4m3fn_t* src, uint32_t size, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1532,18 +1557,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e8m0_t* dst, __ubuf__ fp8_e8m0_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e8m0_t* dst, __ubuf__ fp8_e8m0_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
@@ -1551,18 +1577,19 @@ __aicore__ inline void asc_remote_copy_ub2gm(
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e6m2_t* dst, __ubuf__ fp8_e6m2_t* src, uint32_t burst_count, uint32_t burst_len, bool enable_rsw_ctrl,
-    bool enable_rsw_packet_ctrl, uint8_t rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride, bool enable_retry)
+    bool enable_rsw_packet_ctrl, asc_rsw_buffset_size rsw_buffset_size, uint64_t dst_stride, uint32_t src_stride,
+    bool enable_retry)
 {
     if ASC_IS_AIV {
         copy_ubuf_to_gm_align_v2(
             (__gm__ void*)dst, (__ubuf__ void*)src, 0, burst_count, burst_len, enable_rsw_ctrl, enable_rsw_packet_ctrl,
-            rsw_buffset_size, 0, dst_stride, src_stride, enable_retry);
+            static_cast<uint8_t>(rsw_buffset_size), 0, dst_stride, src_stride, enable_retry);
     }
 }
 
 __aicore__ inline void asc_remote_copy_ub2gm(
     __gm__ fp8_e6m2_t* dst, __ubuf__ fp8_e6m2_t* src, uint32_t size, bool enable_rsw_ctrl, bool enable_rsw_packet_ctrl,
-    uint8_t rsw_buffset_size, bool enable_retry)
+    asc_rsw_buffset_size rsw_buffset_size, bool enable_retry)
 {
     asc_remote_copy_ub2gm(
         dst, src, 1, size, enable_rsw_ctrl, enable_rsw_packet_ctrl, rsw_buffset_size, 0, 0, enable_retry);
