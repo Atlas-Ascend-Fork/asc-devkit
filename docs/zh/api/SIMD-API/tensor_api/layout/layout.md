@@ -286,11 +286,11 @@ private:
 
 ---
 
-### rank
+### rank_size
 
 - 功能说明
 
-    编译期常量，表示完整layout的秩。
+    编译期常量，表示完整layout的秩，即ShapeTuple的维度数。
 
 ## layout及成员函数示例
 
