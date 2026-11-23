@@ -153,8 +153,8 @@ __aicore__ inline void IsQuantParamValid(
     });
     ASCENDC_ASSERT((scaleCount == offsetCount && scaleCount > 0), {
         KERNEL_LOG(
-            KERNEL_ERROR, "scaleCount is %u, which should be equal to offsetCount %u and not zero.", calCount,
-            srcTensor.GetSize());
+            KERNEL_ERROR, "scaleCount is %u, which should be equal to offsetCount %u and not zero.", scaleCount,
+            offsetCount);
     });
     ASCENDC_ASSERT((calCount % scaleCount == 0 && calCount > 0), {
         KERNEL_LOG(
@@ -177,9 +177,8 @@ __aicore__ inline void IsQuantParamValid(
             KERNEL_ERROR, "scaleCount is %u, which should not larger than scaleTensor size %u.", scaleCount,
             scaleTensor.GetSize());
     });
-    ASCENDC_ASSERT((scaleCount > 0), {
-        KERNEL_LOG(KERNEL_ERROR, "scaleCount is %u, which should be not zero.", calCount, srcTensor.GetSize());
-    });
+    ASCENDC_ASSERT(
+        (scaleCount > 0), { KERNEL_LOG(KERNEL_ERROR, "scaleCount is %u, which should be not zero.", scaleCount); });
     ASCENDC_ASSERT((calCount % scaleCount == 0 && calCount > 0), {
         KERNEL_LOG(
             KERNEL_ERROR, "calCount is %u, which should be integral multiple of scaleCount %u and not zero.", calCount,

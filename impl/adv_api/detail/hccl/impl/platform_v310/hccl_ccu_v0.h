@@ -677,7 +677,8 @@ __aicore__ inline void HcclImpl<HcclServerType::HCCL_SERVER_TYPE_CCU, config>::C
     handleNeedCommitCnt_[handleId]++;
     if (msgQueueIsAvailable_[globalCurResId_] == false) {
         KERNEL_LOG(
-            KERNEL_ERROR, "Call Commit failed, the th msg is not avaliable! handleId = %d", globalCurResId_, handleId);
+            KERNEL_ERROR, "Call Commit failed, the %u th msg is not avaliable! handleId = %d", globalCurResId_,
+            handleId);
         return;
     }
 
