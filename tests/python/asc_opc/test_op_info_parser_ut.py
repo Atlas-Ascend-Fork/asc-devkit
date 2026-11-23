@@ -123,7 +123,7 @@ class TestOpcOpInfoPaserUt(unittest.TestCase):
         check = op_info_dict.get("inputs")[1].get("range") == [[1, None], [1, None], [1, None], [1, None]]
         self.assertEqual(check, True)
         # check point：third inputs is none
-        check = op_info_dict.get("inputs")[2] == None
+        check = op_info_dict.get("inputs")[2] is None
         self.assertEqual(check, True)
 
         kernel_name = op_info_parser.generate_kernel_name()
