@@ -56,7 +56,7 @@ large_tensor_dump
   | UB | `__ubuf__ float *` | `asc_dump<float>(ubPtr, 100, 16384);` |
   | GM | `__gm__ float *` | `asc_dump<float>(gmPtr, 200, 65536);` |
 
-  When a large tensor contains more than 32 KiB of data, only the contents corresponding to the first 32 KiB are printed. The remaining data is replaced with `...`, and a warning is issued. For parsing the complete data, see the [tool guide (Chinese)](../../../../../docs/zh/guide/programming_guide/appendix/show_kernel_debug_data_tool.md) and [tool example](https://gitcode.com/cann/asc-tools/tree/master/examples/01_show_kernel_debug_data).
+  When a large tensor contains more than 32 KiB of data, only the contents corresponding to the first 32 KiB are printed. The remaining data is replaced with `...`, and a warning is issued. For parsing the complete data, see the [tool guide](../../../../../docs/en/guide/programming_guide/appendix/show_kernel_debug_data_tool.md) and [tool example](https://gitcode.com/cann/asc-tools/blob/master/examples/01_show_kernel_debug_data/README_en.md).
 
 - Invocation implementation:
 
