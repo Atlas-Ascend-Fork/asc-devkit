@@ -28,11 +28,102 @@
 #include "ccu_kernel_kfc_server.h"
 #include "mc2_type.h"
 #include "hccl_alloc_ctx_res.h"
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <cstring>
+#include <mutex>
+#include <utility>
+#include <vector>
 
 namespace mc2_ops_hccl {
 
 using namespace hcomm;
 using namespace std;
+
+static bool CcuKfcProbesEnabled()
+{
+    static const bool probeEnabled = [] {
+        const char* mode = std::getenv("PROFILING_MODE");
+        const char* options = std::getenv("PROFILING_OPTIONS");
+        return mode != nullptr && (std::strcmp(mode, "true") == 0 || std::strcmp(mode, "dynamic") == 0) &&
+               options != nullptr && options[0] != '\0';
+    }();
+    return probeEnabled;
+}
+
+using CcuProbePattern = std::vector<uint32_t>;
+static constexpr uint32_t kProbeGapCount = 7;
+static std::array<CcuProbePattern, 7> probePatterns = {{
+    {4, 3, 1, 1, 2, 3, 3}, // algorithm start
+    {4, 3, 1, 1, 3, 3, 2}, // algorithm end
+    {4, 3, 1, 2, 1, 3, 3}, // queue head start
+    {4, 3, 1, 2, 3, 3, 1}, // queue head end
+    {4, 3, 1, 3, 3, 1, 2}, // parameter load start
+    {4, 3, 1, 3, 3, 2, 1}, // turn-end signal complete
+    {4, 3, 2, 1, 1, 3, 3}, // queue end
+}};
+static std::mutex probePatternMutex;
+static bool probePatternsFrozen = false;
+
+// Configure all seven instruction ID gaps between consecutive Record/Wait instructions before
+// the first probe-enabled KFC kernel is generated in the process.
+extern "C" __attribute__((visibility("default"))) HcclResult
+Mc2CcuSetProbePattern(uint32_t kind, uint32_t n, const uint32_t* arr)
+{
+    constexpr uint32_t maxGap = 255;
+    if (kind >= probePatterns.size() || n != kProbeGapCount || arr == nullptr) {
+        return HCCL_E_PARA;
+    }
+    CcuProbePattern pattern(arr, arr + n);
+    if (std::any_of(pattern.begin(), pattern.end(), [](uint32_t gap) { return gap == 0 || gap > maxGap; })) {
+        return HCCL_E_PARA;
+    }
+    std::lock_guard<std::mutex> lock(probePatternMutex);
+    if (probePatternsFrozen) {
+        return HCCL_E_UNAVAIL;
+    }
+    const auto existing = std::find(probePatterns.begin(), probePatterns.end(), pattern);
+    if (existing != probePatterns.end() && existing != probePatterns.begin() + kind) {
+        return HCCL_E_PARA;
+    }
+    probePatterns[kind] = std::move(pattern);
+    return HCCL_SUCCESS;
+}
+
+static CcuResult CcuKfcAlgorithmBoundaryProbe(uint32_t kind)
+{
+    if (kind >= probePatterns.size()) {
+        return CCU_E_PARA;
+    }
+    if (!CcuKfcProbesEnabled()) {
+        return CCU_SUCCESS;
+    }
+    static const auto& patterns = []() -> const auto& {
+        std::lock_guard<std::mutex> lock(probePatternMutex);
+        probePatternsFrozen = true;
+        return probePatterns;
+    }();
+    ccu::event event;
+    ccu::variable padding;
+    // Emit four alternating Record/Wait pairs, counted as eight instructions.
+    // Padding assignments are additional instructions and are not counted in eight.
+    // The profiler represents both Record and Wait as Wait events. Their instruction
+    // ID deltas identify the marker without relying on a fixed starting ID.
+    // Each gap of D between consecutive instructions needs D-1 padding assignments. Each assignment
+    // emits an instruction even though it writes the same value. Nothing is
+    // appended after the final Wait. The private event uses mask 0x02 and does
+    // not wait for another mission or participate in communication completion.
+    for (uint32_t inst = 0; inst <= kProbeGapCount; ++inst) {
+        CCU_CHK_RET(inst % 2 == 0 ? ccu::event_record(event, 0x02) : ccu::event_wait(event, 0x02));
+        if (inst < kProbeGapCount) {
+            for (uint32_t i = 0; i < patterns[kind][inst] - 1; ++i) {
+                padding = 0;
+            }
+        }
+    }
+    return CCU_SUCCESS;
+}
 
 static_assert(
     KFC_CONCURRENT_AG_PARAM_NUM <= CCU_PARAM_NUM_PER_DIE,
@@ -511,6 +602,7 @@ static void DispatchKfcSubKernel(
 CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
 {
     HCCL_INFO("[KfcServerGenCircularQueue] KfcServerGenCircularQueue start");
+    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(2));
 
     ccu::variable repeatCond; // 存放《控制repeat循环执行的条件》的寄存器
     repeatCond = 0;
@@ -541,10 +633,16 @@ CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
 
     // 存放<每轮算子参数>的寄存器
     ccu::array<ccu::variable> param(CCU_PARAM_NUM_PER_DIE);
+    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(3));
 
     CCU_WHILE(repeatCond == 0)
     {
-        CCU_CHK_RET(WaitTurnStartSig(waitAddr, turnStartSig, ctx));  // 等待本轮开始信号
+        CCU_CHK_RET(WaitTurnStartSig(waitAddr, turnStartSig, ctx)); // 等待本轮开始信号
+        // msprof can collapse repeated visits to a marker into its last visit.
+        // Sample the load at queue slot zero separately from the Finalize turn.
+        if (CcuKfcProbesEnabled()) {
+            CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(4)); }
+        }
         CCU_CHK_RET(LoadFuncParamFromMemory(paramAddr, param, ctx)); // 读取本轮参数
         CCU_IF(param[HBM_PARAM_IDX_0] == INVALID_U64) { repeatCond = 1; }
         CCU_IF(param[HBM_PARAM_IDX_0] != INVALID_U64)
@@ -554,9 +652,11 @@ CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
                 CCU_IF(param[HBM_PARAM_IDX_0] == arg->opId)
                 {
                     ctx.arg = arg.get();
+                    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(0));
                     CCU_CHK_RET(MissionPreSync(param[HBM_PARAM_IDX_0], ctx));
                     DispatchKfcSubKernel(param, ctx, recordAddr);
                     CCU_CHK_RET(MissionPostSync(ctx));
+                    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(1));
                     // SoleNHR AG may emit turn-end inside its subkernel.
                     if (!KernelEmitsEarlyTurnEnd(ctx)) {
                         CCU_CHK_RET(SetTurnEndSig(recordAddr, turnEndSig, ctx));
@@ -564,6 +664,7 @@ CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
                     ctx.arg = serverArg;
                 }
             }
+            CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(5));
         }
         waitAddr += ckeSize;
         recordAddr += ckeSize;
@@ -577,11 +678,13 @@ CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
             queueIdx = 0;
         }
     }
+    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(6));
     return CCU_SUCCESS;
 }
 
 CcuResult SlaveKfcServerGenCircularQueue(KfcServerContext& ctx)
 {
+    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(2));
     ccu::variable signature;  // 算子签名
     ccu::variable repeatCond; // 存放《控制repeat循环执行的条件》的寄存器
     repeatCond = 0;
@@ -599,18 +702,26 @@ CcuResult SlaveKfcServerGenCircularQueue(KfcServerContext& ctx)
     one = 1;
 
     ccu::array<ccu::variable> param(CCU_PARAM_NUM_PER_DIE); // 存放<每轮算子参数>的寄存器
+    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(3));
 
     CCU_WHILE(repeatCond == 0)
     {
         // 哨兵轮次不进 barrier，保持 slave 与 master 的 barrier 对称
+        if (CcuKfcProbesEnabled()) {
+            CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(4)); }
+        }
         CCU_CHK_RET(LoadFuncParamFromMemory(paramAddr, param, ctx));
         CCU_IF(param[HBM_PARAM_IDX_0] == INVALID_U64) { repeatCond = 1; }
         CCU_IF(param[HBM_PARAM_IDX_0] != INVALID_U64)
         {
+            // Only valid communication turns emit start/end markers; Finalize is excluded.
+            CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(0));
             CCU_CHK_RET(MissionPreSync(param[HBM_PARAM_IDX_0], ctx));
             // turnEndAddr 仅 SoleNHR AG 消费；slave 不会以该角色 dispatch（死代码路径，保持编译）。
             DispatchKfcSubKernel(param, ctx, ctx.recordAddr);
             CCU_CHK_RET(MissionPostSync(ctx));
+            // End includes mission synchronization, before the common turn-end signal.
+            CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(1));
         }
         // 推进参数地址游标，wraparound at CCU_TASK_NUM_MAX
         paramAddr += paramSize;
@@ -621,6 +732,7 @@ CcuResult SlaveKfcServerGenCircularQueue(KfcServerContext& ctx)
             queueIdx = 0;
         }
     }
+    CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(6));
     return CCU_SUCCESS;
 }
 
