@@ -521,25 +521,7 @@
 | [WaitPreBlock](sync_control/inter_core_sync/WaitPreBlock.md) | WaitPreBlock和NotifyNextBlock是核间同步控制接口。NotifyNextBlock通过写全局内存来通知其他核当前核已执行完成，其他核可以继续往下执行；WaitPreBlock通过读取全局内存，判断当前核是否可以继续往下执行。 |
 | [CrossCoreSetFlag(ISASI)](sync_control/inter_core_sync/CrossCoreSetFlag_ISASI.md) | 在核间同步场景中，CrossCoreSetFlag接口和CrossCoreWaitFlag接口配对工作，使用时需传入核间同步的标记ID（flagId），每个ID对应一个用于控制同步的计数器。CrossCoreSetFlag接口用于通知调度模块“本核的pipe流水任务已经完成”，CrossCoreWaitFlag接口用于阻塞后续指令下发，直到所有相关核均完成同步后方可解除阻塞。 |
 | [CrossCoreWaitFlag(ISASI)](sync_control/inter_core_sync/CrossCoreWaitFlag_ISASI.md) | 在核间同步场景中，CrossCoreSetFlag接口和CrossCoreWaitFlag接口配对工作，具体功能请参考[CrossCoreSetFlag](sync_control/inter_core_sync/CrossCoreSetFlag_ISASI.md)。 |
-| [Arrive](sync_control/inter_core_sync/GroupBarrier/Arrive.md) | 通知其他等待的AIV，本AIV已经完成其依赖的任务。 |
-| [Wait](sync_control/inter_core_sync/GroupBarrier/Wait.md) | 阻塞当前AIV，直到Arrive组的AIV均完成依赖任务。 |
-| [GetWorkspaceLen](sync_control/inter_core_sync/GroupBarrier/GetWorkspaceLen.md) | 返回当前GroupBarrier所占用的Global Memory消息空间大小。 |
-
-### 核间通信
-
-| 接口名 | 功能描述 |
-| --- | --- |
-| [CreateCubeResGroup](sync_control/inter_core_communication/CubeResGroupHandle/CreateCubeResGroup.md) | 快速创建CubeResGroupHandle对象，内部完成消息队列空间和同步事件分配。推荐使用该接口，避免使用CubeResGroupHandle的构造函数创建对象，出现不同对象的消息队列空间冲突、同步事件错误等情况。 |
-| [AssignQueue](sync_control/inter_core_communication/CubeResGroupHandle/AssignQueue.md) | 用于AIV绑定CubeResGroupHandle中某一个消息队列的序号。 |
-| [AllocMessage](sync_control/inter_core_communication/CubeResGroupHandle/AllocMessage.md) | AIV从消息队列里申请消息空间，用于存放消息结构体，返回当前申请的消息空间的地址。消息队列的深度固定为4，申请消息空间的顺序为自上而下，然后循环。当消息队列指针指向的消息空间为FREE状态时，AllocMessage返回空间的地址，否则循环等待，直到当前空间的状态为FREE。 |
-| [PostMessage](sync_control/inter_core_communication/CubeResGroupHandle/PostMessage.md) | 通过AllocMessage接口获取到消息空间地址msg后，构造消息结构体CubeMsgType，发送该消息。 |
-| [PostFakeMsg](sync_control/inter_core_communication/CubeResGroupHandle/PostFakeMsg.md) | 通过AllocMessage接口获取到消息空间地址后，AIV发送假消息，刷新消息状态msgState为FAKE。 |
-| [SetQuit](sync_control/inter_core_communication/CubeResGroupHandle/SetQuit.md) | 通过AllocMessage接口获取到消息空间地址后，发送退出消息，告知该消息队列对应的AIC无需处理该队列的消息。Queue5对应的AIV发了退出消息后，Block1将不再处理Queue5的任何消息。 |
-| [Wait](sync_control/inter_core_communication/CubeResGroupHandle/Wait.md) | 在调用PostMessage或PostFakeMessage后，查询该消息是否已被AIC处理完。 |
-| [FreeMessage](sync_control/inter_core_communication/CubeResGroupHandle/FreeMessage.md) | 在自定义的回调函数逻辑中，完成消息处理后，调用该接口，刷新消息状态为FREE；或者待消息状态为指定状态waitState时，刷新消息状态为FREE。 |
-| [SetSkipMsg](sync_control/inter_core_communication/CubeResGroupHandle/SetSkipMsg.md) | AIC跳过指定个数假消息的处理，仅在回调函数中调用。下图中Block0通过调用SetSkipMsg跳过三个假消息。 |
-| [UpdateKfcWorkspace](sync_control/inter_core_communication/KfcWorkspace/UpdateKfcWorkspace.md) | 更新用于CubeResGroupHandle消息通信区的内存地址。用户使用CubeResGroupHandle接口时，需要用此接口自主管理空间地址。 |
-| [GetKfcWorkspace](sync_control/inter_core_communication/KfcWorkspace/GetKfcWorkspace.md) | 获取用于CubeResGroupHandle消息通信区的内存地址。用户使用CubeResGroupHandle接口时，需要用此接口自主管理空间地址。 |
+| [GroupBarrier](sync_control/inter_core_sync/GroupBarrier.md) | 用于同一个CubeResGroupHandle中的AIV任务之间的组同步，通过Arrive和Wait控制任务依赖关系。 |
 
 ### 任务间同步
 
@@ -547,6 +529,13 @@
 | --- | --- |
 | [SetNextTaskStart](sync_control/inter_task_sync/SetNextTaskStart.md) | 在SuperKernel的子核函数（Kernel）中调用，调用后的指令可以和后续其他的子核函数（Kernel）实现并行，提升整体性能。SuperKernel按序调用子核函数（Kernel），为保证子核函数（Kernel）之间数据互不干扰，会在子核函数（Kernel）间插入算子间同步进行保序，子KernelN-1调用该接口后，之后的指令会和后续子KernelN实现并行。 |
 | [WaitPreTaskEnd](sync_control/inter_task_sync/WaitPreTaskEnd.md) | 在SuperKernel的子核函数（Kernel）中调用，调用前的指令可以和前序其他的子核函数（Kernel）实现并行，提升整体性能。SuperKernel按序调用子核函数（Kernel），为保证子核函数（Kernel）之间数据互不干扰，会在子核函数（Kernel）间插入算子间同步进行保序，子KernelN+1调用该接口之前的指令会和前序子KernelN实现并行。 |
+
+## 核间通信
+
+| 接口名 | 功能描述 |
+| --- | --- |
+| [CubeResGroupHandle](inter_core_communication/CubeResGroupHandle/CubeResGroupHandle.md) | 用于管理AIC和AIV之间的消息队列及消息传递，包含对象创建、队列绑定、消息发送与处理等接口。 |
+| [KfcWorkspace](inter_core_communication/KfcWorkspace/KfcWorkspace.md) | 用于管理CubeResGroupHandle消息通信区的工作空间地址。 |
 
 ## 缓存控制
 

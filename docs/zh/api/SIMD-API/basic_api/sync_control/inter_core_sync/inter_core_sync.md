@@ -22,4 +22,4 @@
 
 - **[WaitPreBlock](WaitPreBlock.md)**  
 
-- **[GroupBarrier](GroupBarrier/GroupBarrier.md)**
+- **[GroupBarrier](GroupBarrier.md)**

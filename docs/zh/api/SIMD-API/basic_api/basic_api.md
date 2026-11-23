@@ -18,6 +18,8 @@
 
 - **[同步控制](sync_control/sync_control.md)**  
 
+- **[核间通信](inter_core_communication/inter_core_communication.md)**
+
 - **[缓存控制](cache_control/cache_control.md)**  
 
 - **[原子操作](atomic_operations/atomic_operations.md)**  

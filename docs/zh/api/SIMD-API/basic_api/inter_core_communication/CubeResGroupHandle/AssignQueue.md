@@ -1,4 +1,4 @@
-# UpdateKfcWorkspace<a name="ZH-CN_TOPIC_0000001968485300"></a>
+# AssignQueue<a name="ZH-CN_TOPIC_0000001996865753"></a>
 
 ## 产品支持情况<a name="section1550532418810"></a>
 
@@ -23,17 +23,17 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/sync_control/inter_core_communication/KfcWorkspace/UpdateKfcWorkspace_res.md#id1 -->
+<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/inter_core_communication/CubeResGroupHandle/AssignQueue_res.md#id1 -->
 
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>
 
-更新用于CubeResGroupHandle消息通信区的内存地址。用户使用[CubeResGroupHandle](../../inter_core_communication/CubeResGroupHandle/CubeResGroupHandle_constructor.md)接口时，需要用此接口自主管理空间地址。
+用于AIV绑定CubeResGroupHandle中某一个消息队列的序号。
 
 ## 函数原型<a name="section765814724715"></a>
 
 ```
-__aicore__ inline void UpdateKfcWorkspace(uint32_t offset)
+__aicore__ inline void AssignQueue(uint8_t queueIdIn)
 ```
 
 ## 参数说明<a name="zh-cn_topic_0000001526206862_section129451113125413"></a>
@@ -49,27 +49,34 @@ __aicore__ inline void UpdateKfcWorkspace(uint32_t offset)
 </th>
 </tr>
 </thead>
-<tbody><tr id="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_row152234713443"><td class="cellrowborder" valign="top" width="17.22%" headers="mcps1.2.4.1.1 "><p id="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_p2340183613156"><a name="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_p2340183613156"></a><a name="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_p2340183613156"></a>offset</p>
+<tbody><tr id="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_row152234713443"><td class="cellrowborder" valign="top" width="17.22%" headers="mcps1.2.4.1.1 "><p id="p6388357167"><a name="p6388357167"></a><a name="p6388357167"></a>queueIdIn</p>
 </td>
-<td class="cellrowborder" valign="top" width="15.340000000000002%" headers="mcps1.2.4.1.2 "><p id="p19741912147"><a name="p19741912147"></a><a name="p19741912147"></a>输入</p>
+<td class="cellrowborder" valign="top" width="15.340000000000002%" headers="mcps1.2.4.1.2 "><p id="p203810357163"><a name="p203810357163"></a><a name="p203810357163"></a>输入</p>
 </td>
-<td class="cellrowborder" valign="top" width="67.44%" headers="mcps1.2.4.1.3 "><p id="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_p2684123934216"><a name="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_p2684123934216"></a><a name="zh-cn_topic_0000001526206862_zh-cn_topic_0000001389783361_p2684123934216"></a>更新workspace地址为原地址偏移offset后的地址。</p>
+<td class="cellrowborder" valign="top" width="67.44%" headers="mcps1.2.4.1.3 "><p id="p8381035101610"><a name="p8381035101610"></a><a name="p8381035101610"></a>在CubeResGroupHandle中消息队列的序号。</p>
 </td>
 </tr>
 </tbody>
 </table>
 
-## 返回值说明<a name="section358232015810"></a>
+## 返回值说明<a name="section640mcpsimp"></a>
 
-无。
+无
 
 ## 约束说明<a name="zh-cn_topic_0000001526206862_section65498832"></a>
 
-本接口不能和[CreateCubeResGroup](../../inter_core_communication/CubeResGroupHandle/CreateCubeResGroup.md)接口同时使用。
+-   queueIdIn小于CubeResGroupHandle的消息队列总数msgQueueSize，即取值范围\[0，msgQueueSize-1\]。
+-   CubeResGroupHandle中的每一个消息队列都需要进行绑定，且不可重复绑定。
 
 ## 调用示例<a name="zh-cn_topic_0000001526206862_section97001499599"></a>
 
 ```
-AscendC::KfcWorkspace desc(workspaceGM);
-desc.UpdateKfcWorkspace(1024);
+AscendC::KfcWorkspace desc(workspaceGM); // 用户自行管理的workspace指针。
+uint8_t blockStart = 0;
+uint8_t blockSize = 12;
+uint8_t msgQueueSize = 48;
+auto handle = AscendC::CreateCubeResGroup<GROUPID, MatmulApiType, MyCallbackFunc, CubeMsgBody> (desc, blockStart, blockSize, msgQueueSize, tilingGM);
+// 当前总计有48个Block，每个Block的视角下，都与handle里的msgQueue进行了绑定，msgQueue每个Queue都被绑定，且没有重复绑定的情况。
+auto queIdx = AscendC::GetBlockIdx();
+handle.AssignQueue(queIdx);
 ```

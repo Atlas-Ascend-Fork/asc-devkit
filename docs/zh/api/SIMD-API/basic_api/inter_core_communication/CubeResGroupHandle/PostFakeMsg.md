@@ -23,7 +23,7 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/sync_control/inter_core_communication/CubeResGroupHandle/PostFakeMsg_res.md#id1 -->
+<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/inter_core_communication/CubeResGroupHandle/PostFakeMsg_res.md#id1 -->
 
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>
@@ -35,7 +35,7 @@
 如下图所示，假设Queue1、2、3的第0条消息与Queue0的第0条消息相同，在消息合并场景中，从AIC视角来看，Queue0\(0\)，Queue4\(0\)的消息会被处理，并根据用户自定义的消息内容完成相应的AIC上的计算。Queue1\(0\), Queue2\(0\), Queue3\(0\)由于发了假消息，AIC将不会读取消息内容进行计算，直接释放消息。
 
 **图1**  PostFakeMessage示意图<a name="fig6289195515216"></a>  
-![](../../../../../figures/postfakemessage_diagram.png "PostFakeMessage示意图")
+![](../../../../figures/postfakemessage_diagram.png "PostFakeMessage示意图")
 
 ## 函数原型<a name="section765814724715"></a>
 

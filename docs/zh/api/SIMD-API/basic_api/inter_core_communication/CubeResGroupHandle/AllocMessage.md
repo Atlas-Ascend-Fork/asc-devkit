@@ -23,7 +23,7 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/sync_control/inter_core_communication/CubeResGroupHandle/AllocMessage_res.md#id1 -->
+<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/inter_core_communication/CubeResGroupHandle/AllocMessage_res.md#id1 -->
 
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>
@@ -31,7 +31,7 @@
 AIV从消息队列里申请消息空间，用于存放消息结构体，返回当前申请的消息空间的地址。消息队列的深度固定为4，申请消息空间的顺序为自上而下，然后循环。当消息队列指针指向的消息空间为FREE状态时，AllocMessage返回空间的地址，否则循环等待，直到当前空间的状态为FREE。
 
 **图1**  AllocMessage示意图<a name="fig153760010192"></a>  
-![](../../../../../figures/allocmessage_diagram.png "AllocMessage示意图")
+![](../../../../figures/allocmessage_diagram.png "AllocMessage示意图")
 
 ## 函数原型<a name="section765814724715"></a>
 

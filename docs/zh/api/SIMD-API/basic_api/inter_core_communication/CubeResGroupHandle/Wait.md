@@ -23,7 +23,7 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/sync_control/inter_core_communication/CubeResGroupHandle/Wait_res.md#id1 -->
+<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/inter_core_communication/CubeResGroupHandle/Wait_res.md#id1 -->
 
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>

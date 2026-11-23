@@ -5,7 +5,7 @@ CubeResGroupHandle用于在分离模式下对AI Core计算资源分组。分组�
 如下图所示，CubeResGroupHandle1中有2个AIC，10个AIV，AIC为Block0和Block1。其中Block0与Queue0、Queue1、Queue2、Queue3、Queue4进行通信，Block1与Queue 5、Queue 6、Queue 7、Queue 8、Queue9进行通信。每一个消息队列对应一个AIV，消息队列的深度固定为4，即一次性最多可以容纳4个消息。CubeResGroupHandle2的消息队列个数为12，表明有12个AIV。CubeResGroupHandle的消息处理顺序如CubeResGroupHandle2中黑色箭头所示。
 
 **图1**  基于CubeResGroupHandle的AI Core计算资源分组通信示意图<a name="fig1086562617536"></a>  
-![](../../../../../figures/cuberesgrouphandle_aicore_group.png "基于CubeResGroupHandle的AI-Core计算资源分组通信示意图")
+![](../../../../figures/cuberesgrouphandle_aicore_group.png "基于CubeResGroupHandle的AI-Core计算资源分组通信示意图")
 
 基于CubeResGroupHandle实现AI Core计算资源分组步骤如下：
 
@@ -20,7 +20,7 @@ CubeResGroupHandle用于在分离模式下对AI Core计算资源分组。分组�
 
 1.  <a name="li27691150733"></a>创建AIC上所需要的计算对象类型。
 
-    用户根据实际需求，自定义AIC所需要的计算对象类型，或者高阶API已提供的Matmul类型。例如，创建Matmul类型如下，其中A\_TYPE、B\_TYPE、 C\_TYPE、BIAS\_TYPE、CFG\_NORM等含义请参考[Matmul模板参数](../../../../adv_api/cube_compute/Matmul_Kernel/Matmul_template_params.md)。
+    用户根据实际需求，自定义AIC所需要的计算对象类型，或者高阶API已提供的Matmul类型。例如，创建Matmul类型如下，其中A\_TYPE、B\_TYPE、 C\_TYPE、BIAS\_TYPE、CFG\_NORM等含义请参考[Matmul模板参数](../../../adv_api/cube_compute/Matmul_Kernel/Matmul_template_params.md)。
 
     ```
     // A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, CFG_NORM根据实际需求场景构造

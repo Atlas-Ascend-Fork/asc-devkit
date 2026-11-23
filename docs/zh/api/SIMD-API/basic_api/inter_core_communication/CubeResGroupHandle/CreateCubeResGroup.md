@@ -23,7 +23,7 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/sync_control/inter_core_communication/CubeResGroupHandle/CreateCubeResGroup_res.md#id1 -->
+<!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/inter_core_communication/CubeResGroupHandle/CreateCubeResGroup_res.md#id1 -->
 
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>
@@ -131,7 +131,7 @@ CubeResGroupHandle对象实例。
 -   blockStart和blockSize必须为偶数。
 -   使用该接口，Unified Buffer（UB）空间末尾的1600B + sizeof\(CubeMsgType\)将被占用。
 -   1个AIC只能属于1个CubeGroupHandle，即多个CubeGroupHandle的\[blockStart / 2, blockStart / 2 + blockSize / 2\]区间不能重叠。
--   不能和[REGIST\_MATMUL\_OBJ](../../../../adv_api/cube_compute/Matmul_Kernel/REGIST_MATMUL_OBJ.md)接口同时使用。使用资源管理API时，用户自主管理AIC和AIV的核间通信，REGIST\_MATMUL\_OBJ内部是由框架管理AIC和AIV的核间通信，同时使用可能会导致通信消息错误等异常。
+-   不能和[REGIST\_MATMUL\_OBJ](../../../adv_api/cube_compute/Matmul_Kernel/REGIST_MATMUL_OBJ.md)接口同时使用。使用资源管理API时，用户自主管理AIC和AIV的核间通信，REGIST\_MATMUL\_OBJ内部是由框架管理AIC和AIV的核间通信，同时使用可能会导致通信消息错误等异常。
 
 ## 调用示例<a name="zh-cn_topic_0000001526206862_section97001499599"></a>
 
