@@ -1,18 +1,20 @@
-# 设置合理的L2 CacheMode<a name="ZH-CN_TOPIC_0000002356424662"></a>
+# 设置合理的L2 CacheMode
 
 【优先级】高
 
->[!NOTE]说明 
->该性能优化指导适用于如下产品型号：
-><!-- npu="950" id1 -->
->- Ascend 950PR&950DT系列产品
-><!-- end id1 -->
-><!-- npu="A3" id2 -->
->- Atlas A3系列产品
-><!-- end id2 -->
-><!-- npu="910b" id3 -->
->- Atlas A2系列产品
-><!-- end id3 -->
+> [!NOTE] 说明
+> 该性能优化指导适用于如下产品型号：
+> <!-- npu="950" id1 -->
+> - Ascend 950PR&950DT系列产品
+> <!-- end id1 -->
+> <!-- npu="A3" id2 -->
+> - Atlas A3系列产品
+> <!-- end id2 -->
+> <!-- npu="910b" id3 -->
+> - Atlas A2系列产品
+> <!-- end id3 -->
+
+## 优化原理
 
 【描述】L2 Cache常用于缓存频繁访问的数据，其物理位置如下图所示：
 
@@ -20,7 +22,7 @@
 
 L2 Cache的带宽相比GM的带宽有数倍的提升，因此当数据命中L2 Cache时，数据的搬运耗时会优化数倍。通常情况下，L2 Cache命中率越高，算子的性能越好，在实际访问中需要通过设置合理的L2 CacheMode来保证重复读取的数据尽量缓存在L2 Cache上。
 
-## L2 Cache访问的原理及CacheMode介绍<a name="section75591806575"></a>
+### L2 Cache访问的原理及CacheMode介绍
 
 数据通过MTE2搬运单元搬入时，L2 Cache访问的典型流程如下：
 
@@ -34,51 +36,88 @@ L2 Cache的带宽相比GM的带宽有数倍的提升，因此当数据命中L2 C
 
 开发者可以针对访问的数据设置其CacheMode，对于只访问一次的Global Memory数据设置其访问状态为不进入L2 Cache，这样可以更加高效的利用L2 Cache缓存需要重复读取的数据，避免一次性访问的数据替换有效数据。
 
-## 设置L2 CacheMode的方法<a name="section058817270210"></a>
+## 不同API下的实现
+
+<!-- npu="950" id20 -->
+
+> [!NOTE] 说明
+> C API实现部分仅适用于Ascend 950PR&950DT系列产品。
+
+
+### C API
+
+以下保留输入x、y和输出z的Shape均为(8192, 8192)、48核按行切6份和列切8份的场景；代码展示当前核的搬运块配置，计算及核间切分沿用原流程。输入只访问一次时禁用输入的L2 Cache，输出保持Normal。
+
+通过[asc_copy_gm2ub_align](../../../../api/SIMD-API/c_api/vector_datamove/asc_copy_gm2ub_align/asc_copy_gm2ub_align_arch_3510.md)的l2_cache_mode参数设置每条搬运指令的策略。
+
+```cpp
+#include "c_api/asc_simd.h"
+__aicore__ inline void CopyInputC(__ubuf__ half* local, __gm__ half* input, bool disable)
+{
+    auto mode = disable ? asc_load_l2_cache_mode::NOTALLOC_KEEP :
+        asc_load_l2_cache_mode::NORMAL_FIRST_VICTIM;
+    asc_copy_gm2ub_align(local, input, 1, 2048, 0, 0, false, mode, 2048, 2048);
+}
+```
+
+【反例】
+
+```cpp
+CopyInputC(xUb, xGm, false);
+CopyInputC(yUb, yGm, false);
+```
+
+【正例】
+
+```cpp
+CopyInputC(xUb, xGm, true);
+CopyInputC(yUb, yGm, true);
+```
+
+<!-- end id20 -->
+
+### Basic API
+
+#### 设置L2 CacheMode的方法
 
 Ascend C基于GlobalTensor提供了SetL2CacheHint接口，用户可以根据需要指定CacheMode。
 
-考虑如下场景，构造两个Tensor的相加计算，输入x、y和输出z的Shape均为\(8192, 8192\)。下文完整样例请参考[设置合理L2 CacheMode样例](../../../../../../examples/01_simd_cpp_api/05_best_practices/00_vector_compute/add_high_performance)。<a name="table12921549195512"></a>
+考虑如下场景，构造两个Tensor的相加计算，输入x、y和输出z的Shape均为\(8192, 8192\)。下文完整样例请参考[设置合理L2 CacheMode样例](../../../../../../examples/01_simd_cpp_api/05_best_practices/00_vector_compute/add_high_performance)。
 
-<table><thead align="left"><tr id="row1229364945511"><th class="cellrowborder" valign="top" width="6.813978389954251%" id="mcps1.1.4.1.1"><p id="p2081249145715"><a name="p2081249145715"></a><a name="p2081249145715"></a>实现方案</p>
-</th>
-<th class="cellrowborder" valign="top" width="42.67497323079919%" id="mcps1.1.4.1.2"><p id="p2029374985519"><a name="p2029374985519"></a><a name="p2029374985519"></a>原始实现</p>
-</th>
-<th class="cellrowborder" valign="top" width="50.51104837924658%" id="mcps1.1.4.1.3"><p id="p152931149115516"><a name="p152931149115516"></a><a name="p152931149115516"></a>优化实现</p>
-</th>
-</tr>
-</thead>
-<tbody><tr id="row1629374995517"><td class="cellrowborder" valign="top" width="6.813978389954251%" headers="mcps1.1.4.1.1 "><p id="p108124995710"><a name="p108124995710"></a><a name="p108124995710"></a>实现方法</p>
-</td>
-<td class="cellrowborder" valign="top" width="42.67497323079919%" headers="mcps1.1.4.1.2 "><p id="p1764591574211"><a name="p1764591574211"></a><a name="p1764591574211"></a>总数据量384MB，其中：x：128MB；y：128MB；z：128MB。</p>
-<p id="p13628115612406"><a name="p13628115612406"></a><a name="p13628115612406"></a>使用48个核参与计算，按行方向切分6份，列方向切分8份。</p>
-<p id="p5900191641514"><a name="p5900191641514"></a><a name="p5900191641514"></a>x、y、z对应GlobalTensor的CacheMode均设置为CACHE_MODE_NORMAL，需要经过L2 Cache，需要进入L2 Cache的总数据量为384MB。</p>
-</td>
-<td class="cellrowborder" valign="top" width="50.51104837924658%" headers="mcps1.1.4.1.3 "><p id="p2198131313619"><a name="p2198131313619"></a><a name="p2198131313619"></a>总数据量384MB，其中：x：128MB；y：128MB；z：128MB。</p>
-<p id="p3198111373618"><a name="p3198111373618"></a><a name="p3198111373618"></a>使用48个核参与计算，按行方向切分6份，列方向切分8份。</p>
-<p id="p1545392118509"><a name="p1545392118509"></a><a name="p1545392118509"></a>z对应的GlobalTensor的CacheMode设置为CACHE_MODE_NORMAL；x和y对应的GlobalTensor的CacheMode设置为CACHE_MODE_DISABLE。只将z设置为需要经过L2 Cache。需要进入L2 Cache的总数据量为128MB。</p>
-</td>
-</tr>
-<tr id="row3293124918559"><td class="cellrowborder" valign="top" width="6.813978389954251%" headers="mcps1.1.4.1.1 "><p id="p12812993573"><a name="p12812993573"></a><a name="p12812993573"></a>示例代码</p>
-</td>
-<td class="cellrowborder" valign="top" width="42.67497323079919%" headers="mcps1.1.4.1.2 "><a name="screen924835613570"></a><a name="screen924835613570"></a><pre class="screen" codetype="Cpp" id="screen924835613570">xGm.SetGlobalBuffer((__gm__ half *)x + startM * totalN + startN, bufferSize);
+【反例】
+
+总数据量384MB，其中：x：128MB；y：128MB；z：128MB。
+
+使用48个核参与计算，按行方向切分6份，列方向切分8份。
+
+x、y、z对应GlobalTensor的CacheMode均设置为CACHE_MODE_NORMAL，需要经过L2 Cache，需要进入L2 Cache的总数据量为384MB。
+
+```cpp
+xGm.SetGlobalBuffer((__gm__ half *)x + startM * totalN + startN, bufferSize);
 yGm.SetGlobalBuffer((__gm__ half *)y + startM * totalN + startN, bufferSize);
-zGm.SetGlobalBuffer((__gm__ half *)z + startM * totalN + startN, bufferSize);</pre>
-</td>
-<td class="cellrowborder" valign="top" width="50.51104837924658%" headers="mcps1.1.4.1.3 "><a name="screen271414925813"></a><a name="screen271414925813"></a><pre class="screen" codetype="Cpp" id="screen271414925813">xGm.SetGlobalBuffer((__gm__ half *)x + startM * totalN + startN, bufferSize);
+zGm.SetGlobalBuffer((__gm__ half *)z + startM * totalN + startN, bufferSize);
+```
+
+【正例】
+
+总数据量384MB，其中：x：128MB；y：128MB；z：128MB。
+
+使用48个核参与计算，按行方向切分6份，列方向切分8份。
+
+z对应的GlobalTensor的CacheMode设置为CACHE_MODE_NORMAL；x和y对应的GlobalTensor的CacheMode设置为CACHE_MODE_DISABLE。只将z设置为需要经过L2 Cache。需要进入L2 Cache的总数据量为128MB。
+
+```cpp
+xGm.SetGlobalBuffer((__gm__ half *)x + startM * totalN + startN, bufferSize);
 yGm.SetGlobalBuffer((__gm__ half *)y + startM * totalN + startN, bufferSize);
 zGm.SetGlobalBuffer((__gm__ half *)z + startM * totalN + startN, bufferSize);
 // disable the L2 Cache mode of x and y
 xGm.SetL2CacheHint(AscendC::CacheMode::CACHE_MODE_DISABLE);
-yGm.SetL2CacheHint(AscendC::CacheMode::CACHE_MODE_DISABLE);</pre>
-</td>
-</tr>
-</tbody>
-</table>
+yGm.SetL2CacheHint(AscendC::CacheMode::CACHE_MODE_DISABLE);
+```
 
->[!NOTE]说明 
->你可以通过执行如下命令行，通过msOpProf工具获取上述示例的性能数据并进行对比。
->```
->msopprof --launch-count=2 --output=./prof ./execute_add_op
->```
->重点关注Memory.csv中的aiv\_gm\_to\_ub\_bw\(GB/s\)和aiv\_main\_mem\_write\_bw\(GB/s\)写带宽的速率。
+> [!NOTE] 说明
+> 你可以通过执行如下命令行，通过msOpProf工具获取上述示例的性能数据并进行对比。
+> ```
+> msopprof --launch-count=2 --output=./prof ./execute_add_op
+> ```
+> 重点关注Memory.csv中的aiv\_gm\_to\_ub\_bw\(GB/s\)和aiv\_main\_mem\_write\_bw\(GB/s\)写带宽的速率。

@@ -2,13 +2,13 @@
 
 在实际算子开发中，受输入数据总量与切分单位的制约，并非所有场景都能将计算完全均匀地分配到每个核上。该场景中，主块均分后存在剩余数据`mainTileRemainder`，但剩余数据无法以DataBlock为最小单位均匀分配到每个核（`tailBlockNumEachCore`为0，`remainingTailLength`不为0），只能继续分配给部分核。获得额外DataBlock的核为整核，其余为尾核；此时核间负载不均衡，需要分别处理整核和尾核。由于`tailBlockNumEachCore`为0，各核未分配到基础尾块，因此尾核内只包含主块，整核比尾核多处理一个DataBlock的尾块。数据切分后，前`formerNum`个核为整核，各处理`formerLength`个元素（含主块和尾块）；其余核为尾核，各处理`tailLength`个元素（仅含主块）。
 
-本场景样例的完整代码请参考[场景2：尾核切分](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/README.md#scenario2-main-tile-tail-core)。样例中固定使用8个核，主块长度`mainTileLength`为3200个`half`元素，数据整体长度为256064个`half`元素。数据按DataBlock对齐后，前4个核各处理32016个元素，后4个核各处理32000个元素；整核包含10个主块和16个元素的尾块，尾核只包含10个主块。数据切分示意如下图所示。
+本场景原基础API样例的完整代码请参考[场景2：尾核切分](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/README.md#scenario2-main-tile-tail-core)。样例中固定使用8个核，主块长度`mainTileLength`为3200个`half`元素，数据整体长度为256064个`half`元素。数据按DataBlock对齐后，前4个核各处理32016个元素，后4个核各处理32000个元素；整核包含10个主块和16个元素的尾块，尾核只包含10个主块。数据切分示意如下图所示。
 
-**图 1**  数据切分示意图
+**图1**  数据切分示意图    
 
 ![数据切分示意图](../../../../figures/tailcore_tiling.png "数据切分示意图")
 
-本场景中整核和尾核处理的元素数量、主块数量及尾块情况不同，无法仅用一组`blockLength`、`tileNum`和`lastTileLength`描述所有核。因此Tiling参数新增`formerNum`记录整核数量，并分别使用`former*`和`tail*`参数记录整核和尾核相关Tiling信息的参数；由于尾核内只包含主块，无需定义`tailLastTileLength`。Tiling结构体包含以下成员：
+本场景中整核和尾核的主块数量相同，但处理的元素数量和尾块情况不同，无法仅用一组`blockLength`、`tileNum`和`lastTileLength`描述所有核。因此Tiling参数新增`formerNum`记录整核数量，并使用`former*`和`tail*`参数分别记录整核和尾核的Tiling信息。由于尾核内只包含主块，无需定义`tailLastTileLength`。Tiling结构体包含以下成员：
 
 - formerNum：分配到数据量较多的核数，即整核的核数。
 - formerLength：整核计算的元素数量。
@@ -41,7 +41,7 @@ Host侧Tiling沿用[尾块均分](tail_block_even_split.md)中的DataBlock对齐
         ...
         return;
     }
-
+    
     uint32_t formerNum = remainingTailLength / alignNum;
     uint32_t formerLength = baseLength + alignNum;
     uint32_t tailLength = baseLength;
@@ -80,7 +80,7 @@ MainTileWithTailCoreTiling tiling{
 
 ## 算子类实现
 
-核函数（Kernel）侧算子仍采用[静态Tensor编程](../../../../programming_guide/programming_model/ai_core_simd_programming/cpp_tensor_programming/static_tensor_programming.md)方式实现。与[尾块均分](tail_block_even_split.md)相比，本场景中整核和尾核处理的数据长度不同，因此`Init`函数需要根据`GetBlockIdx()`判断当前核是整核还是尾核，并分别设置Global Memory偏移和循环参数。`blockIdx`表示当前逻辑核的索引。
+核函数（Kernel）侧算子使用C API，通过GM指针和显式UB数组管理数据。与[尾块均分](tail_block_even_split.md)相比，本场景中整核和尾核处理的数据长度不同，因此`Init`函数需要根据`block_idx`判断当前核是整核还是尾核，并分别设置Global Memory偏移和循环参数。`blockIdx`表示当前逻辑核的索引。
 
 整核使用`formerLength`、`formerTileNum`和`formerLastTileLength`，计算如下：
 
@@ -102,7 +102,7 @@ InitGm(x, y, z, offset, tiling.tailLength);
 __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t* z,
                             MainTileWithTailCoreTiling tiling)
 {
-    uint32_t blockIdx = AscendC::GetBlockIdx();
+    uint32_t blockIdx = block_idx;
     if (blockIdx < tiling.formerNum) {
         uint32_t offset = tiling.formerLength * blockIdx;
         InitGm(x, y, z, offset, tiling.formerLength);

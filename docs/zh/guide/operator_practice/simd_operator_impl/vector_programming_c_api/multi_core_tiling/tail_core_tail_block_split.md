@@ -1,14 +1,14 @@
 # 尾核尾块切分
 
-该场景中，主块均分后存在剩余数据`mainTileRemainder`，剩余数据部分能以DataBlock为最小单位均匀分配到每个核，但仍有少量DataBlock无法均分（`remainingTailLength`不为0），只能继续分配给部分核。获得额外DataBlock的核为整核，其余为尾核；整核和尾核都包含尾块，且整核处理的数据量更多。由于`tailBlockNumEachCore`不为0，各核都分配到基础尾块，因此尾核内也存在尾块；整核在尾核基础上多处理一个DataBlock。数据切分后，前`formerNum`个核为整核，各处理`formerLength`个元素（含主块和较长的尾块）；其余核为尾核，各处理`tailLength`个元素（含主块和较短的尾块）。
+该场景中，主块均分后存在剩余数据`mainTileRemainder`，剩余数据部分能以DataBlock为最小单位均匀分配到每个核，但仍有少量DataBlock无法均分（`remainingTailLength`不为0），只能继续分配给部分核。获得额外DataBlock的核为整核，其余为尾核，整核处理的数据量更多。由于`tailBlockNumEachCore`不为0，各核都分配到基础尾块；整核在尾核基础上多处理一个DataBlock。未发生尾块合并时，整核和尾核都包含尾块；若整核的尾块长度达到主块长度，则将其合并为一个主块，此时整核只包含主块，尾核仍包含尾块。数据切分后，前`formerNum`个核为整核，各处理`formerLength`个元素；其余核为尾核，各处理`tailLength`个元素。
 
-本场景样例的完整代码请参考[场景3：尾核尾块切分](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/README.md#scenario3-tail-block-tail-core)。样例中固定使用8个核，主块长度`mainTileLength`为3200个`half`元素，数据整体长度为258112个`half`元素。数据按DataBlock对齐后，前4个核各处理32272个元素，后4个核各处理32256个元素；整核包含10个主块和272个元素的尾块，尾核包含10个主块和256个元素的尾块。数据切分示意如下图所示。
+本场景原基础API样例的完整代码请参考[场景3：尾核尾块切分](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/README.md#scenario3-tail-block-tail-core)。样例中固定使用8个核，主块长度`mainTileLength`为3200个`half`元素，数据整体长度为258112个`half`元素。数据按DataBlock对齐后，前4个核各处理32272个元素，后4个核各处理32256个元素；整核包含10个主块和272个元素的尾块，尾核包含10个主块和256个元素的尾块。数据切分示意如下图所示。
 
-**图 1**  数据切分示意图
+**图1**  数据切分示意图    
 
 ![数据切分示意图](../../../../figures/tailblock_tailcore.png "数据切分示意图")
 
-本场景中整核和尾核处理的元素数量、主块数量及尾块长度均不同，需要分别记录两类核的Tiling参数。与[尾核切分](tail_core_split.md)相比，由于尾核内也存在尾块，Tiling参数在`former*`和`tail*`基础上新增`tailLastTileLength`记录尾核的尾块元素数量。Tiling结构体包含以下成员：
+本场景中整核和尾核处理的元素数量及尾块长度不同，主块数量则取决于整核的尾块是否合并为主块，因此需要分别记录两类核的Tiling参数。与[尾核切分](tail_core_split.md)相比，由于尾核内也存在尾块，Tiling参数在`former*`和`tail*`基础上新增`tailLastTileLength`记录尾核的尾块元素数量。Tiling结构体包含以下成员：
 
 - formerNum：分配到数据量较多的核数，即整核的核数。
 - formerLength：整核计算的元素数量。
@@ -65,7 +65,7 @@ TailBlockAndTailCoreTiling tiling{
 
 ## 算子类实现
 
-核函数（Kernel）侧算子仍采用[静态Tensor编程](../../../../programming_guide/programming_model/ai_core_simd_programming/cpp_tensor_programming/static_tensor_programming.md)方式实现。与[尾核切分](tail_core_split.md)相比，本场景中整核和尾核都包含尾块，因此`Init`函数需要根据`GetBlockIdx()`判断当前核是整核还是尾核，并分别设置Global Memory偏移、`tileNum`和`lastTileLength`。
+核函数（Kernel）侧算子使用C API，通过GM指针和显式UB数组管理数据。与[尾核切分](tail_core_split.md)相比，本场景中尾核也包含尾块，整核的尾块则可能合并为主块。`Init`函数根据`block_idx`判断当前核是整核还是尾核，分别设置Global Memory偏移、`tileNum`和`lastTileLength`；整核发生尾块合并时，`formerTileNum`已加1，`formerLastTileLength`为0。
 
 整核使用`formerLength`、`formerTileNum`和`formerLastTileLength`，计算如下：
 
@@ -87,7 +87,7 @@ InitGm(x, y, z, offset, tiling.tailLength);
 __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t* z,
                             TailBlockAndTailCoreTiling tiling)
 {
-    uint32_t blockIdx = AscendC::GetBlockIdx();
+    uint32_t blockIdx = block_idx;
     if (blockIdx < tiling.formerNum) {
         uint32_t offset = tiling.formerLength * blockIdx;
         InitGm(x, y, z, offset, tiling.formerLength);
@@ -103,4 +103,4 @@ __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t
 }
 ```
 
-完成`Init`后，`Process`函数仍按照`tileNum`和`lastTileLength`进行循环处理。整核和尾核都需要处理主块和尾块，循环逻辑与[尾块均分](tail_block_even_split.md)中的`Process`函数一致，此处不再展开。
+完成`Init`后，`Process`函数按照`tileNum`处理主块，仅在`lastTileLength`大于0时追加一轮尾块处理。未发生尾块合并时，整核和尾核都处理主块和尾块；合并后，整核仅处理主块，尾核仍处理主块和尾块。循环逻辑与[尾块均分](tail_block_even_split.md)中的`Process`函数一致，此处不再展开。

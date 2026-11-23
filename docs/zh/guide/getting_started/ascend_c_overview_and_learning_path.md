@@ -111,7 +111,7 @@ CANN基于分层架构设计，实现了上层应用与底层硬件的无缝衔�
 </div>
 <div style=" margin: 5px 0; padding: 8px; background: #fff; border-left: 3px solid #3b82f6; border-radius: 4px;">
 <strong style="color: #1a1a1a;"><span style="color: #3b82f6;">💻</span> 实践巩固</strong><br/>
-<span style="color: #666; font-size: 14px;">• <a href="../operator_practice/simd_operator_impl/vector_programming/overview.md" style="color: #3b82f6; font-size: 14px;">典型SIMD矢量算子开发</a></span><br/>
+<span style="color: #666; font-size: 14px;">• <a href="../operator_practice/simd_operator_impl/vector_programming_basic_api/overview.md" style="color: #3b82f6; font-size: 14px;">典型SIMD矢量算子开发</a></span><br/>
 <span style="color: #666; font-size: 14px;">• <a href="../operator_practice/simd_operator_impl/matrix_basic_api/decoupled_mode.md" style="color: #3b82f6; font-size: 14px;">典型SIMD矩阵类算子开发</a></span><br/>
 <span style="color: #666; font-size: 14px;">• <a href="../operator_practice/simt_operator_impl/operator_impl.md" style="color: #3b82f6; font-size: 14px;">典型SIMT算子开发</a></span>
 </div>

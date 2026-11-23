@@ -1,13 +1,15 @@
-# 通过BT Buffer实现高效的bias计算<a name="ZH-CN_TOPIC_0000001918185182"></a>
+# 通过BT Buffer实现高效的bias计算
 
 【优先级】高
 
+## 优化原理
+
 【描述】算子中进行带bias的矩阵乘计算时，可将bias数据搬运至Bias Table Buffer（C2）上，调用一次Mmad接口实现矩阵乘加bias的计算，或者直接调用Matmul高阶API完成功能。相比于先将矩阵乘的结果从L0C Buffer（CO1）搬运到GM上，再搬运到Unified Buffer（UB）上进行加bias的过程，减少了数据搬运的次数，可提升内存使用效率。数据流图对比如下：
 
-**图1**  反例数据流图<a name="fig1598718171213"></a>  
+**图1**  反例数据流图    
 <img src="../../../figures/bad_flow.png" alt="反例数据流图" width="600px" height="200px">
 
-**图2**  正例数据流图<a name="fig12618184193220"></a>  
+**图2**  正例数据流图    
 <img src="../../../figures/good_dataflow.png" alt="正例数据流图" width="600px" height="147px">
 
 【反例】
@@ -21,7 +23,129 @@
 
 当循环n次该计算过程，则分别增加了n次L0C Buffer（CO1）-\>workspace、workspace-\>UB的搬运。
 
+【正例】
+
+该算子进行带bias的矩阵乘计算时，先将bias搬运到BT上，调用一次Mmad接口实现矩阵乘加bias的计算。
+
+## 不同API下的实现<a id="different_api_implementations"></a>
+
+<!-- npu="950" id20 -->
+
+> [!NOTE] 说明
+> C API实现部分仅适用于Ascend 950PR&950DT系列产品。
+
+
+### C API
+
+反例中的srcUb、biasUb、dstUb分别预留至少1056、64、1024个float，起始地址32字节对齐。整VL加载会读入有效矩阵、bias之外的补齐区，搬入后应将补齐区初始化为0；搬出仅覆盖1024个有效元素。Cube与Vector代码分别运行在对应类型的核中，Host必须等待Cube任务完成后才能启动读取workspace的Vector任务。
+
+使用[asc_copy_l12bt](../../../../api/SIMD-API/c_api/cube_datamove/cube_compute_load/asc_copy_l12bt_arch_3510.md)搬运完整32个float（128B），再调用带bias起始地址的asc_mmad。
+
+```cpp
+#include "c_api/asc_simd.h"
+__aicore__ inline void LoadCubeInputsC(__gm__ half* aGm, __gm__ half* bGm,
+    __cbuf__ half* aL1, __cbuf__ half* bL1, __ca__ half* aL0, __cb__ half* bL0)
+{
+    constexpr auto cache = asc_load_l2_cache_mode::NORMAL_FIRST_VICTIM;
+    asc_set_gm2l1_nz_para(1, 1, 32, 0);
+    asc_copy_gm2l1_nd2nz(aL1, aGm, 64, cache, 32, 32, 0, false);
+    asc_copy_gm2l1_nd2nz(bL1, bGm, 64, cache, 32, 32, 0, false);
+    asc_sync_notify(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    asc_sync_wait(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    asc_copy_l12l0a(aL0, aL1, 0, 0, 2, 2, 2, 2);
+    asc_copy_l12l0b_transpose(bL0, bL1, 0, 0, 2, 2, 2, 2);
+    asc_sync_notify(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    asc_sync_wait(PIPE_MTE1, PIPE_M, EVENT_ID0);
+}
+
+__aicore__ inline void LoadBiasC(__gm__ float* biasGm, __cbuf__ float* biasL1)
+{
+    constexpr auto cache = asc_load_l2_cache_mode::NORMAL_FIRST_VICTIM;
+    // bias在BT中按连续float向量存放，不执行ND到NZ转换。
+    asc_copy_gm2l1_align(biasL1, biasGm, 1, 128, 0, 0, false, cache, 128, 128);
+    asc_sync_notify(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    asc_sync_wait(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+}
+
+__aicore__ inline void StoreMatrixC(__gm__ float* dst, __cc__ float* src, uint16_t m, uint16_t n)
+{
+    asc_set_l0c_copy_nz_para(1, 0, 0);
+    asc_copy_l0c2gm(dst, src, n, m, n, m,
+        asc_store_l2_cache_mode::NORMAL_FIRST_VICTIM, asc_unit_flag_mode::DISABLE,
+        asc_quant_mode::NoQuant, asc_relu_pre_mode::NONE, false, true, false, false);
+}
+template <bool WithBias>
+__aicore__ inline void BiasC(__ca__ half* a, __cb__ half* b, __cc__ float* c,
+    __cbuf__ float* biasL1, __gm__ float* output)
+{
+    if constexpr (WithBias) {
+        asc_copy_l12bt(0, biasL1, 128);
+        asc_sync_notify(PIPE_MTE1, PIPE_M, EVENT_ID0);
+        asc_sync_wait(PIPE_MTE1, PIPE_M, EVENT_ID0);
+        asc_mmad(c, a, b, uint64_t(0), 32, 32, 32, asc_unit_flag_mode::DISABLE, true);
+    } else {
+        asc_mmad(c, a, b, 32, 32, 32, asc_unit_flag_mode::DISABLE, true, false, true);
+    }
+    asc_sync_notify(PIPE_M, PIPE_FIX, EVENT_ID0);
+    asc_sync_wait(PIPE_M, PIPE_FIX, EVENT_ID0);
+    StoreMatrixC(output, c, 32, 32);
+}
+
+__simd_vf__ inline void AddBiasC(__ubuf__ float* src, __ubuf__ float* bias, __ubuf__ float* dst)
+{
+    uint32_t remaining = 32;
+    auto mask = asc_update_mask_b32(remaining);
+    vector_float biasValue;
+    asc_loadalign(biasValue, bias);
+    for (uint16_t row = 0; row < 32; ++row) {
+        vector_float value;
+        asc_loadalign(value, src + row * 32);
+        asc_add(value, value, biasValue, mask);
+        asc_storealign(dst + row * 32, value, mask);
+    }
+}
+
+__aicore__ inline void FinishBiasC(__gm__ float* workspace, __gm__ float* biasGm,
+    __gm__ float* output, __ubuf__ float* srcUb, __ubuf__ float* biasUb, __ubuf__ float* dstUb)
+{
+    asc_copy_gm2ub_align(srcUb, workspace, 32 * 32 * sizeof(float));
+    asc_copy_gm2ub_align(biasUb, biasGm, 32 * sizeof(float));
+    asc_sync_notify(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    asc_sync_wait(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    asc_vf_call<AddBiasC>(srcUb, biasUb, dstUb);
+    asc_sync_notify(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    asc_sync_wait(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    asc_copy_ub2gm_align(output, dstUb, 32 * 32 * sizeof(float));
+    asc_sync();
+}
+
 ```
+
+【反例】
+
+```cpp
+LoadCubeInputsC(aGm, bGm, aL1, bL1, aL0, bL0);
+BiasC<false>(aL0, bL0, cL0, biasL1, workspace);
+FinishBiasC(workspace, biasGm, output, srcUb, biasUb, dstUb);
+```
+
+【正例】
+
+```cpp
+LoadCubeInputsC(aGm, bGm, aL1, bL1, aL0, bL0);
+LoadBiasC(biasGm, biasL1);
+BiasC<true>(aL0, bL0, cL0, biasL1, output);
+```
+
+反例依次执行A/B矩阵搬入、普通矩阵乘、L0C Buffer到workspace搬出、workspace和bias搬入UB、Vector Add以及UB到GM搬出。正例执行相同的A/B矩阵搬入，并将bias从GM搬入L1 Buffer后，由`BiasC<true>`完成L1 Buffer到BiasTable Buffer搬运、带bias矩阵乘及结果搬出。
+
+<!-- end id20 -->
+
+### Basic API
+
+【反例】
+
+```cpp
 // 该样例仅做示例说明，非完整代码，省略了部分同步控制代码
 public:
     __aicore__ inline KernelSample()
@@ -174,15 +298,14 @@ private:
     GlobalTensor<float> cGM;
     GlobalTensor<float> biasGM;
     uint16_t m = 32, k = 32, n = 32;
-    uint16_t aSize, bSize, cSize;  
+    uint16_t aSize, bSize, cSize;
 ...
+
 ```
 
 【正例】
 
-该算子进行带bias的矩阵乘计算时，先将bias搬运到BT上，调用一次Mmad接口实现矩阵乘加bias的计算。
-
-```
+```cpp
 ...
 // 该样例仅做示例说明，非完整代码，省略了部分同步控制代码
 public:
@@ -315,5 +438,5 @@ private:
     GlobalTensor<float> cGM;
     GlobalTensor<float> biasGM;
     uint16_t m = 32, k = 32, n = 32;
-    uint16_t aSize, bSize, cSize; 
+    uint16_t aSize, bSize, cSize;
 ```

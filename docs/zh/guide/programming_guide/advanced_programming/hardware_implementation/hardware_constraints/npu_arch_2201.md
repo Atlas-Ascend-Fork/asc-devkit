@@ -13,7 +13,7 @@
 
 | 分类 | 硬件约束描述 | 解决方案建议 |
 | --- | --- | --- |
-| 内存访问（L0 Buffer/L1 Buffer/Unified Buffer（UB）等） | 各存储单元的最小访问粒度/地址对齐要求：<br> UB：32Byte对齐。<br> L1 Buffer：32Byte对齐。<br> L0A Buffer/L0B Buffer：512Byte对齐。<br> L0C Buffer：64Byte对齐。<br> BiasTable Buffer：64Byte对齐。<br> Fixpipe Buffer：128Byte对齐。 | - 进行数据搬运时，需要感知对齐约束。<br>- 针对UB，遇到一些非对齐的场景，可以使用非对齐搬运的接口或者通过一些技巧（比如搬入时包含冗余数据，搬出时去除冗余数据）来解决。详情见[非对齐场景](../../../../operator_practice/simd_operator_impl/vector_programming/unaligned_scenario.md)。 |
+| 内存访问（L0 Buffer/L1 Buffer/Unified Buffer（UB）等） | 各存储单元的最小访问粒度/地址对齐要求：<br> UB：32Byte对齐。<br> L1 Buffer：32Byte对齐。<br> L0A Buffer/L0B Buffer：512Byte对齐。<br> L0C Buffer：64Byte对齐。<br> BiasTable Buffer：64Byte对齐。<br> Fixpipe Buffer：128Byte对齐。 | - 进行数据搬运时，需要感知对齐约束。<br>- 针对UB，遇到一些非对齐的场景，可以使用非对齐搬运的接口或者通过一些技巧（比如搬入时包含冗余数据，搬出时去除冗余数据）来解决。详情见[非对齐场景](../../../../operator_practice/simd_operator_impl/vector_programming_basic_api/unaligned_scenario.md)。 |
 | 内存访问（UB） | UB bank访问冲突（Vector计算访问/搬运访问）。<br> | 需要按照芯片要求，在软件实现时错开处理的地址，从而解决bank冲突。具体解决方案可参考[避免UB的bank冲突](../../../../operator_practice/simd_operator_optimization/memory_access/avoid_ub_bank_conflict/avoid_bank_conflict_npu_arch_2201.md)章节。 |
 | 内存访问（GM） | 多核并行同地址访问GM，会被硬件串行化。<br> | 对相同地址的访问，会被硬件串行化，性能为排队时间，大约下降10%-20%；<br> 多核访问通过错峰访问（调整数据访问顺序和修改切分策略等），使得第一次加载数据到L2 Cache，后续访问性能反而提升。具体解决方案可参考[避免同地址访问](../../../../operator_practice/simd_operator_optimization/memory_access/avoid_same_address_access.md)章节。 |
 | 内存访问（GM） | 单次搬运数据长度16KB以上时，可发挥带宽的最佳性能。 | 根据实测经验，单次搬运数据长度16KB以上时，通常能较好地发挥出带宽的最佳性能。因此对于单次搬运，应考虑尽可能的搬运较大的数据块（不同芯片不一样）。<br> 具体解决方案可参考[尽量一次搬运较大的数据块](../../../../operator_practice/simd_operator_optimization/memory_access/transfer_larger_data_blocks.md)章节。 |

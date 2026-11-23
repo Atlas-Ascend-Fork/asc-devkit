@@ -12,7 +12,7 @@
 
 一个典型的矢量算子包含数据搬入、矢量计算和数据搬出三个阶段，分别使用`PIPE_MTE2`、`PIPE_V`和`PIPE_MTE3`流水。数据量超过Unified Buffer（UB）容量时，算子通常将数据切分为多个切片，并循环处理这些切片。
 
-采用[双缓冲](../../../../operator_practice/simd_operator_impl/vector_programming/double_buffer_scenario.md)后，两组Buffer资源交替使用。当前切片使用一组资源进行计算时，其他流水可以使用另一组资源处理相邻切片。
+采用[双缓冲](../../../../operator_practice/simd_operator_impl/vector_programming_basic_api/double_buffer_scenario.md)后，两组Buffer资源交替使用。当前切片使用一组资源进行计算时，其他流水可以使用另一组资源处理相邻切片。
 
 同一切片中的流水存在正向数据依赖，需要通过流水同步保证处理顺序：
 

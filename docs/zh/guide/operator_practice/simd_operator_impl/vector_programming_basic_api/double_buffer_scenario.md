@@ -2,7 +2,7 @@
 
 因存在算子中多次搬入搬出数据的场景，为充分利用硬件资源，实现多流水并行，引入[DoubleBuffer](../../../technical_appendix/concepts_and_terms/performance_optimization/double_buffer.md)机制。[DoubleBuffer](../../../technical_appendix/concepts_and_terms/performance_optimization/double_buffer.md)是通过将输入数据分成大小相等的两块，充分利用AI Core的硬件资源，实现数据搬入、计算、数据搬出的并行执行方式。下面以“核间不均分，核内不均分”的样例为例，介绍算子中DoubleBuffer的实现。
 
-**图1**  DoubleBuffer数据切分示意图<a name="zh-cn_topic_0000002236197681_fig68713182104"></a>  
+**图1**  DoubleBuffer数据切分示意图<a name="zh-cn_topic_0000002236197681_fig68713182104"></a>    
 ![](../../../figures/dbuf_split.png "DoubleBuffer数据切分示意图")
 
 ## Tiling实现<a name="zh-cn_topic_0000002236197681_section1967484164119"></a>
@@ -11,7 +11,7 @@
 
 1.  判断数据总长度totalLength是否满足32字节对齐，如不满足，则计算totalLength向上32字节对齐后的长度totalLengthAligned。
 
-    ```
+    ```cpp
     constexpr uint32_t BLOCK_SIZE = 32;
     // 为方便计算，这里根据数据类型定义变量alignNum作为对齐数
     uint32_t alignNum = BLOCK_SIZE / dataTypeSize;
@@ -25,7 +25,7 @@
 
     对当前UB可用空间以32字节为粒度，进行切分，计算出数据块个数UB\_BLOCK\_NUM。根据是否开启DoubleBuffer计算出当前可用的最大数据块个数，记作MAX\_AVAILABLE\_UB\_BLOCK\_NUM。最后，以MAX\_AVAILABLE\_UB\_BLOCK\_NUM为粒度，对blockLength进行切分。为方便演示，如下代码直接给出UB\_BLOCK\_NUM，作为当前UB可用空间包含的block（32字节）数。
 
-    ```
+    ```cpp
     constexpr uint32_t BUFFER_NUM = 2;
     constexpr uint32_t UB_BLOCK_NUM = 21;  // UB最大可以使用的block数量
     constexpr uint32_t MAX_AVAILABLE_UB_BLOCK_NUM = UB_BLOCK_NUM / BUFFER_NUM * BUFFER_NUM;
@@ -52,7 +52,7 @@
 
 开启DoubleBuffer，参考[InitBuffer接口函数原型](../../../../api/SIMD-API/basic_api/resource_management/TPipe/InitBuffer.md)，将num参数配置成2，即BUFFER\_NUM。
 
-```
+```cpp
 this->initBufferLength = AscendC::Std::max(this->tileLength, this->lastTileLength);
 pipe.InitBuffer(inQueueX, BUFFER_NUM, this->initBufferLength * sizeof(dataType));
 pipe.InitBuffer(inQueueY, BUFFER_NUM, this->initBufferLength * sizeof(dataType));
@@ -61,19 +61,19 @@ pipe.InitBuffer(outQueueZ, BUFFER_NUM, this->initBufferLength * sizeof(dataType)
 
 同时在计算核内每个数据块的长度时，考虑DoubleBuffer场景，需要将Buffer数量，即BUFFER\_NUM=2代入计算。
 
-```
+```cpp
 this->tileLength = tiling.tileLength / BUFFER_NUM;
 ```
 
 由于无法保证尾块满足DoubleBuffer的条件，因此不对尾块进行切分。
 
-```
+```cpp
 this->lastTileLength = tiling.lastTileLength;
 ```
 
 Init函数实现代码如下：
 
-```
+```cpp
 __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t* z, AddCustomTilingData tiling)
 {
     if (tiling.isEvenCore) {
@@ -117,7 +117,7 @@ __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t
 
 由于开启DoubleBuffer后，切分后的主块数据块个数翻倍，在Process函数中，需要将BUFFER\_NUM代入计算循环次数；尾块独立计算，不开启DoubleBuffer。后续主尾块在CopyIn、Compute、CopyOut阶段中的处理，与[尾块均分](multi_core_tiling/tail_block_even_split.md)相同。
 
-```
+```cpp
 __aicore__ inline void Process()
 {
     // 主块进行DoubleBuffer计算，所以loopCount得乘以2

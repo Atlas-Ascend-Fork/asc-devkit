@@ -15,12 +15,12 @@
 -   axis：表示对输入的哪个维度进行Broadcast。
 -   coef：表示Broadcast的输入需要扩维的倍数。例如，x shape为\(m, 1\)，y shape为\(m, n\)，则coef = n。如下图所示，图中相同颜色部分为单次计算的数据块。
 
-**图1**  axis=1时coef示意图<a name="zh-cn_topic_0000002201157446_fig202632320133"></a>  
+**图1**  axis=1时coef示意图<a name="zh-cn_topic_0000002201157446_fig202632320133"></a>    
 ![](../../../figures/axis_coef.png "axis-1时coef示意图")
 
 Tiling结构体定义代码如下所示：
 
-```
+```cpp
 struct AddCustomTilingData {
     uint32_t xLen;
     uint32_t yLen;
@@ -32,7 +32,7 @@ struct AddCustomTilingData {
 
 设需要进行Broadcast的输入长度为shorterAxisLen；不需要进行Broadcast的输入长度为totalLength。
 
-```
+```cpp
 constexpr uint32_t BLOCK_SIZE = 32;
 ...  // 读入数据
 uint32_t totalLength = (xLen > yLen)? xLen : yLen;
@@ -41,7 +41,7 @@ uint32_t shorterAxisLen = (xLen < yLen)? xLen : yLen;
 
 使用shorterAxisLen进行分核计算，并使用分核后的长度与coef相乘作为totalLength的分核长度。
 
-```
+```cpp
 constexpr uint32_t BLOCK_SIZE = 32;
 uint32_t alignCoef = (tiling->axis == 0U) ? shorterAxisLen : totalLength / shorterAxisLen;
 uint32_t divDimCoef = (tiling->axis == 0U) ? totalLength / shorterAxisLen : shorterAxisLen;
@@ -60,7 +60,7 @@ if (divDimCoef % blockDim == 0U) {
 
 进行核内数据切分时，需要计算Unified Buffer（UB）数据块的数量向coef和BUFFER\_NUM对齐之后的数量ubBlockAligned。
 
-```
+```cpp
 uint32_t ubBlockAligned =
         (MAX_AVAILABLE_UB_BLOCK_NUM * alignNum / (alignCoef * BUFFER_NUM) * (alignCoef * BUFFER_NUM) == 0U) ?
             MAX_AVAILABLE_UB_BLOCK_NUM :
@@ -80,7 +80,7 @@ if (length % ubBlockAligned == 0U || tileNum == 0U) {
     }
 } else {
     tileNum++;
-    tileLength = ubBlockNum;
+    tileLength = ubBlockAligned;
     lastTileLength = (uint32_t)(length - (tileNum - 1) * tileLength);
 }
 ```
@@ -91,7 +91,7 @@ if (length % ubBlockAligned == 0U || tileNum == 0U) {
 
 初始化函数代码如下：
 
-```
+```cpp
 __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t* z, AddCustomTilingData tiling, AscendC::TPipe* pipeIn)
 {
     pipe = pipeIn;
@@ -145,7 +145,7 @@ __aicore__ inline void Init(__gm__ uint8_t* x, __gm__ uint8_t* y, __gm__ uint8_t
 
 CopyIn函数实现代码如下：
 
-```
+```cpp
 __aicore__ inline void CopyIn(int32_t progress)
 {
     AscendC::LocalTensor<T> xLocal = inQueueX.AllocTensor<T>();
@@ -153,8 +153,9 @@ __aicore__ inline void CopyIn(int32_t progress)
     AscendC::DataCopyExtParams copyParams = {1, (uint32_t)(this->tileLength * sizeof(T)), 0, 0, 0};
     AscendC::DataCopyPadExtParams<T> padParams = {false, 0, 0, 0};
     AscendC::DataCopyPad<T>(xLocal, xGm[progress * this->tileLength], copyParams, padParams);
-    AscendC::DataCopyPad<T>(yLocal, yGm[(progress % BUFFER_NUM) * this->tileLength], copyParams,
-                                        padParams);
+    copyParams.blockLen = this->tileLength / this->coef * sizeof(T);
+    AscendC::DataCopyPad<T>(yLocal, yGm[progress * this->tileLength / this->coef], copyParams,
+        padParams);
     inQueueX.EnQue(xLocal);
     inQueueY.EnQue(yLocal);
 }
@@ -162,7 +163,7 @@ __aicore__ inline void CopyIn(int32_t progress)
 
 CopyOut函数实现代码如下：
 
-```
+```cpp
 __aicore__ inline void CopyOut(int32_t progress)
 {
     AscendC::LocalTensor<T> zLocal = outQueueZ.DeQue<T>();
@@ -174,7 +175,7 @@ __aicore__ inline void CopyOut(int32_t progress)
 
 在Compute函数中，调用Add接口前需要先对输入进行Broadcast。这里需要计算Broadcast前后的shape。基于前文提到的数据关系，可以计算得出Broadcast前后的shape分别为\{tileLength / broadcastCoef, 1\}和\{tileLength / broadcastCoef, broadcastCoef\}。在此基础上对输入进行Broadcast，并将计算结果存入临时空间中，然后进行Add计算。实现代码示例如下所示：
 
-```
+```cpp
 __aicore__ inline void Compute(int32_t progress)
 {
     AscendC::LocalTensor<T> xLocal = inQueueX.DeQue<T>();

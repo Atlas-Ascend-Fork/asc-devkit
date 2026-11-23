@@ -4,7 +4,7 @@
 
 本场景样例的完整代码请参考[场景1：尾块均分](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/README.md#scenario1-main-tile-tail-block)。样例中固定使用8个核，主块长度`mainTileLength`为3200个`half`元素，数据整体长度为260096个`half`元素。数据平均分配到8个核上处理，每个核计算32512个元素；每个核内包含10个主块和512个元素的尾块。数据切分示意如下图所示。
 
-**图 1**  数据切分示意图
+**图 1**  数据切分示意图    
 
 ![数据切分示意图](../../../../figures/tailblock_tiling.png "数据切分示意图")
 

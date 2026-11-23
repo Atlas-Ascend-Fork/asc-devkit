@@ -8,7 +8,7 @@ Ascend C核函数（Kernel）是在Device侧执行的并行函数。为了提高
 
 开发者需要分析并设计Tiling参数、定义Tiling结构体，在Host侧通过上下文获取输入输出shape信息，根据shape信息计算Tiling参数并设置到对应的Tiling结构体中；随后通过核函数（Kernel）入口参数将Tiling信息传入核函数（Kernel）。核函数（Kernel）内部解析Host侧传入的Tiling结构体，根据Tiling信息控制数据搬入、搬出Local Memory的流程，并完成计算逻辑。
 
-**图 1**  算子实现组成
+**图 1**  算子实现组成    
 
 ![算子实现组成](../../../../figures/operator_implementation_components.png "算子实现组成")
 
@@ -24,7 +24,7 @@ Ascend C核函数（Kernel）是在Device侧执行的并行函数。为了提高
 
 本章基于[矢量计算多核Tiling切分策略样例](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/README.md)，以两个一维Tensor相加的Add矢量算子为例，对多核Tiling切分的典型场景进行说明。样例实现文件为[vector_tiling_strategy.asc](../../../../../../../examples/01_simd_cpp_api/02_features/02_tiling_selector/vector_tiling_strategy/vector_tiling_strategy.asc)。
 
-**图 2**  多核Tiling示意图<a name="fig-2"></a>
+**图 2**  多核Tiling示意图<a name="fig-2"></a>    
 
 ![多核Tiling示意图](../../../../figures/vector_tiling_intro.png "多核Tiling示意图")
 
