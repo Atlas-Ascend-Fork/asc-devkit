@@ -39,10 +39,10 @@
     constexpr __aicore__ static inline T NegativeInfinity()
     ```
 
-- 矢量接口，为dstLocal前count个元素赋负无穷大值：
+- 矢量接口，为dst前count个元素赋负无穷大值：
 
     ```cpp
-    __aicore__ static inline void NegativeInfinity(const LocalTensor<T>& dstLocal, uint32_t count)
+    __aicore__ static inline void NegativeInfinity(const LocalTensor<T>& dst, uint32_t count)
     ```
 
 ## 参数说明
@@ -51,7 +51,7 @@
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| dstLocal | 输出 | 目的操作数。<br><br>类型为[LocalTensor](../../data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>LocalTensor的起始地址需要32字节对齐。 |
+| dst | 输出 | 目的操作数。<br><br>类型为[LocalTensor](../../data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>LocalTensor的起始地址需要32字节对齐。 |
 | count | 输入 | 输入数据元素个数。 |
 
 ## 数据类型

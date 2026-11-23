@@ -42,7 +42,7 @@ Applies for temporary space at the specified position (logical position), with t
 
 ```
 template <typename T, TPosition pos>
-__aicore__ inline bool PopStackBuffer(LocalTensor<T>& popLocal)
+__aicore__ inline bool PopStackBuffer(LocalTensor<T>& pop)
 ```
 
 ## Parameters<a name="section622mcpsimp"></a>
@@ -58,7 +58,7 @@ __aicore__ inline bool PopStackBuffer(LocalTensor<T>& popLocal)
 </thead>
 <tbody><tr id="row42461942101815"><td class="cellrowborder" valign="top" width="20.61%" headers="mcps1.2.3.1.1 "><p id="p479605232211"><a name="p479605232211"></a><a name="p479605232211"></a>T</p>
 </td>
-<td class="cellrowborder" valign="top" width="79.39%" headers="mcps1.2.3.1.2 "><p id="p10931155464814"><a name="p10931155464814"></a><a name="p10931155464814"></a>Data type of popLocal. Supported data types: uint8_t, int8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, and half.</p>
+<td class="cellrowborder" valign="top" width="79.39%" headers="mcps1.2.3.1.2 "><p id="p10931155464814"><a name="p10931155464814"></a><a name="p10931155464814"></a>Data type of pop. Supported data types: uint8_t, int8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, and half.</p>
 </td>
 </tr>
 <tr id="row860118831216"><td class="cellrowborder" valign="top" width="20.61%" headers="mcps1.2.3.1.1 "><p id="p1860214819121"><a name="p1860214819121"></a><a name="p1860214819121"></a>pos</p>
@@ -80,7 +80,7 @@ __aicore__ inline bool PopStackBuffer(LocalTensor<T>& popLocal)
 </th>
 </tr>
 </thead>
-<tbody><tr id="row1283164418312"><td class="cellrowborder" valign="top" width="18.54%" headers="mcps1.2.4.1.1 "><p id="p20283154433118"><a name="p20283154433118"></a><a name="p20283154433118"></a>popLocal</p>
+<tbody><tr id="row1283164418312"><td class="cellrowborder" valign="top" width="18.54%" headers="mcps1.2.4.1.1 "><p id="p20283154433118"><a name="p20283154433118"></a><a name="p20283154433118"></a>pop</p>
 </td>
 <td class="cellrowborder" valign="top" width="10.05%" headers="mcps1.2.4.1.2 "><p id="p18283204413317"><a name="p18283204413317"></a><a name="p18283204413317"></a>Output</p>
 </td>

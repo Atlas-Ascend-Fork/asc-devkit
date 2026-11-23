@@ -21,15 +21,15 @@ struct NumericLimits {
     constexpr __aicore__ static inline T SignalingNaN();
     constexpr __aicore__ static inline T DeNormMin();
 
-    // Assign values to the first count elements of dstLocal.
-    __aicore__ static inline void Max(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void Lowest(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void Min(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void Infinity(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void NegativeInfinity(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void QuietNaN(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void SignalingNaN(const LocalTensor<T> &dstLocal, uint32_t count);
-    __aicore__ static inline void DeNormMin(const LocalTensor<T> &dstLocal, uint32_t count);
+    // Assign values to the first count elements of dst.
+    __aicore__ static inline void Max(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void Lowest(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void Min(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void Infinity(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void NegativeInfinity(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void QuietNaN(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void SignalingNaN(const LocalTensor<T> &dst, uint32_t count);
+    __aicore__ static inline void DeNormMin(const LocalTensor<T> &dst, uint32_t count);
 };
 ```
 

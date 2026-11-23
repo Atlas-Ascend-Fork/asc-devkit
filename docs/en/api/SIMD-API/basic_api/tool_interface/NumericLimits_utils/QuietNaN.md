@@ -41,10 +41,10 @@ Returns the [quiet NaN value](../../data_structures/builtin_data_types.md) of th
     constexpr __aicore__ static inline T QuietNaN()
     ```
 
-- Vector API, which assigns the quiet NaN value to the first count elements of dstLocal:
+- Vector API, which assigns the quiet NaN value to the first count elements of dst:
 
     ```cpp
-    __aicore__ static inline void QuietNaN(const LocalTensor<T>& dstLocal, uint32_t count)
+    __aicore__ static inline void QuietNaN(const LocalTensor<T>& dst, uint32_t count)
     ```
 
 ## Parameters
@@ -53,7 +53,7 @@ Returns the [quiet NaN value](../../data_structures/builtin_data_types.md) of th
 
 | Parameter | Input/Output | Description |
 | --- | --- | --- |
-| dstLocal | Output | Destination operand.<br><br>Type: [LocalTensor](../../data_structures/LocalTensor/LocalTensor.md). Supported TPosition: VECIN/VECCALC/VECOUT.<br><br>The start address of LocalTensor must be 32-byte aligned. |
+| dst | Output | Destination operand.<br><br>Type: [LocalTensor](../../data_structures/LocalTensor/LocalTensor.md). Supported TPosition: VECIN/VECCALC/VECOUT.<br><br>The start address of LocalTensor must be 32-byte aligned. |
 | count | Input | Number of input data elements. |
 
 ## Data Type

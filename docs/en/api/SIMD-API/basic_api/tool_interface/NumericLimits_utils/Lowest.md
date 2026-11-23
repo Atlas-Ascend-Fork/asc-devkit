@@ -41,10 +41,10 @@ Returns the lowest finite value of the specified data type, that is, the finite 
     constexpr __aicore__ static inline T Lowest()
     ```
 
-- Vector API, assigns the lowest finite value to the first count elements of dstLocal:
+- Vector API, assigns the lowest finite value to the first count elements of dst:
 
     ```cpp
-    __aicore__ static inline void Lowest(const LocalTensor<T>& dstLocal, uint32_t count)
+    __aicore__ static inline void Lowest(const LocalTensor<T>& dst, uint32_t count)
     ```
 
 ## Parameters
@@ -53,7 +53,7 @@ Returns the lowest finite value of the specified data type, that is, the finite 
 
 | Parameter | Input/Output | Description |
 | --- | --- | --- |
-| dstLocal | Output | Destination operand.<br><br>Type: [LocalTensor](../../data_structures/LocalTensor/LocalTensor.md). Supported TPosition: VECIN/VECCALC/VECOUT.<br><br>The start address of LocalTensor must be 32-byte aligned. |
+| dst | Output | Destination operand.<br><br>Type: [LocalTensor](../../data_structures/LocalTensor/LocalTensor.md). Supported TPosition: VECIN/VECCALC/VECOUT.<br><br>The start address of LocalTensor must be 32-byte aligned. |
 | count | Input | Number of input data elements. |
 
 ## Data Types
