@@ -75,7 +75,10 @@ HcclResult InsV2ReduceScatterSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchest
     dataTypeSize_ = DATATYPE_SIZE_TABLE[param.DataDes.dataType];
     CHK_PRT_RET(
         dataCount_ > UINT64_MAX / dataTypeSize_ || strideCount_ > UINT64_MAX / dataTypeSize_,
-        HCCL_ERROR("ReduceScatter count or stride overflows byte size"), HCCL_E_PARA);
+        HCCL_ERROR(
+            "ReduceScatter count[%llu] or stride[%llu] overflows byte size, valid range is [0, %llu]", dataCount_,
+            strideCount_, UINT64_MAX / dataTypeSize_),
+        HCCL_E_PARA);
     dataSize_ = dataCount_ * dataTypeSize_;
 
     HcclResult ret = OrchestrateLoop(param, resCtx);
@@ -165,13 +168,13 @@ HcclResult InsV2ReduceScatterSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchest
             (strideCount_ == 0) ? dataSize_ : strideCount_ * dataTypeSize_; // 如果是输入，偏移是算子的output datasize
         tempAlgParams.outputSliceStride = 0;
 
-        HCCL_INFO(
-            "[InsV2ReduceScatterSoleExecutor] loop [%u] tempAlgParams.inputSliceStride [%u],"
-            "tempAlgParams.outputSliceStride [%u] tempAlgParams.sliceSize [%u]",
+        HCCL_DEBUG(
+            "[InsV2ReduceScatterSoleExecutor] loop [%llu] tempAlgParams.inputSliceStride [%llu],"
+            "tempAlgParams.outputSliceStride [%llu] tempAlgParams.sliceSize [%llu]",
             loop, tempAlgParams.inputSliceStride, tempAlgParams.outputSliceStride, tempAlgParams.sliceSize);
-        HCCL_INFO(
-            "[InsV2ReduceScatterSoleExecutor] loop [%u] tempAlgParams.buffInfo.inBuffBaseOff [%u],"
-            "tempAlgParams.buffInfo.outBuffBaseOff [%u]",
+        HCCL_DEBUG(
+            "[InsV2ReduceScatterSoleExecutor] loop [%llu] tempAlgParams.buffInfo.inBuffBaseOff [%llu],"
+            "tempAlgParams.buffInfo.outBuffBaseOff [%llu]",
             loop, tempAlgParams.buffInfo.inBuffBaseOff, tempAlgParams.buffInfo.outBuffBaseOff);
         // 不需要重复
         tempAlgParams.repeatNum = 1;

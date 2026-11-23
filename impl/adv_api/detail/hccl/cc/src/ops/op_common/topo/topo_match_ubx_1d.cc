@@ -26,7 +26,10 @@ HcclResult TopoMatchUBX1d::MatchTopo(
     constexpr uint32_t EXPECTED_TOPO_LEVEL_NUM_2 = 2;
     CHK_PRT_RET(
         topoInfo->topoLevelNums == 0 || topoInfo->topoLevelNums > EXPECTED_TOPO_LEVEL_NUM_2,
-        HCCL_ERROR("[CalcTopoLevelNums] topoLevelNum[%u] is invalid.", topoInfo->topoLevelNums), HCCL_E_INTERNAL);
+        HCCL_ERROR(
+            "[CalcTopoLevelNums] topoLevelNum[%u] is invalid, valid range is [1, %u].", topoInfo->topoLevelNums,
+            EXPECTED_TOPO_LEVEL_NUM_2),
+        HCCL_E_INTERNAL);
     uint32_t myRank;
     CHK_RET(HcclGetRankId(comm, &myRank));
 #ifdef MACRO_DEV_TYPE_NEW
@@ -133,7 +136,9 @@ HcclResult TopoMatchUBX1d::TopoForLayer3(
     CHK_RET(HcclRankGraphGetTopoInstsByLayer(comm, NATLAYER_THREE, &topoInsts, &topoInstNum));
     CHK_PRT_RET(
         (topoInstNum != NET_INST_NUM_1),
-        HCCL_ERROR("[TopoMatchUBX1d::MeshTopoForLayer3] layer3 topoInstNum [%d], Invalid topo.", topoInstNum),
+        HCCL_ERROR(
+            "[TopoMatchUBX1d::MeshTopoForLayer3] layer3 topoInstNum[%u] is invalid, expect[%u].", topoInstNum,
+            NET_INST_NUM_1),
         HcclResult::HCCL_E_PARA);
     uint32_t* ranks;
     uint32_t rankNum;

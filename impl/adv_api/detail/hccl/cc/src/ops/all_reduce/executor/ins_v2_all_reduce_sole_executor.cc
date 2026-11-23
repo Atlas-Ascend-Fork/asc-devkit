@@ -182,13 +182,13 @@ HcclResult InsV2AllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
         tempAlgParams.tailSize = tempAlgParams.sliceSize;
         tempAlgParams.inputSliceStride = 0;
         tempAlgParams.outputSliceStride = 0;
-        HCCL_INFO(
-            "[InsV2AllReduceSoleExecutor] loop [%u] tempAlgParams.inputSliceStride [%u],"
-            "tempAlgParams.outputSliceStride [%u] tempAlgParams.sliceSize [%u]",
+        HCCL_DEBUG(
+            "[InsV2AllReduceSoleExecutor] loop [%llu] tempAlgParams.inputSliceStride [%llu],"
+            "tempAlgParams.outputSliceStride [%llu] tempAlgParams.sliceSize [%llu]",
             loop, tempAlgParams.inputSliceStride, tempAlgParams.outputSliceStride, tempAlgParams.sliceSize);
-        HCCL_INFO(
-            "[InsV2AllReduceSoleExecutor] loop [%u] tempAlgParams.buffInfo.inBuffBaseOff [%u],"
-            "tempAlgParams.outBuffBaseOff [%u]",
+        HCCL_DEBUG(
+            "[InsV2AllReduceSoleExecutor] loop [%llu] tempAlgParams.buffInfo.inBuffBaseOff [%llu],"
+            "tempAlgParams.outBuffBaseOff [%llu]",
             loop, tempAlgParams.buffInfo.inBuffBaseOff, tempAlgParams.buffInfo.outBuffBaseOff);
 
         CHK_RET(algTemplate->KernelRun(param, tempAlgParams, templateAlgRes));

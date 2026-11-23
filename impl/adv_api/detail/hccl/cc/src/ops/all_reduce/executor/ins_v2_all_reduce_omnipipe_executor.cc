@@ -611,7 +611,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
         u32 intraPodStepNum = omniPipeSliceInfoRS.dataSliceLevel0.size() / interPodStepNum;
         for (u32 stepZ = 0; stepZ < interPodStepNum; stepZ++) {
             if (rankSizeLevel2_ > 1) {
-                HCCL_INFO("rankSizeLevel2_ > 1-----RS-Z");
+                HCCL_DEBUG("rankSizeLevel2_ > 1-----RS-Z");
                 CHK_RET(GenTemplateAlgParamsByDimData(
                     tempAlgParamMap[OMNIPIPE_RS_LEVEL2], omniPipeSliceInfoRS.dataSliceLevel2[stepZ]));
                 CHK_RET(PreSyncInterThreads(controlThread_, tempMainThreadsLevel2RS_, ntfIdxCtrlToTempLevel2RS_));
@@ -621,7 +621,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
             for (u32 stepXY = 0; stepXY < intraPodStepNum; stepXY++) {
                 CHK_RET(PreSyncInterThreads(controlThread_, tempMainThreadsLevel01RS_, ntfIdxCtrlToTempLevel01RS_));
                 if (rankSizeLevel0_ > 1) {
-                    HCCL_INFO("rankSizeLevel0_ > 1-----RS-X");
+                    HCCL_DEBUG("rankSizeLevel0_ > 1-----RS-X");
                     CHK_RET(GenTemplateAlgParamsByDimData(
                         tempAlgParamMap[OMNIPIPE_RS_LEVEL0],
                         omniPipeSliceInfoRS.dataSliceLevel0[stepZ * intraPodStepNum + stepXY]));
@@ -629,7 +629,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
                         param, tempAlgParamMap[OMNIPIPE_RS_LEVEL0], tempResMap[OMNIPIPE_RS_LEVEL0]));
                 }
                 if (rankSizeLevel1_ > 1) {
-                    HCCL_INFO("rankSizeLevel1_ > 1-----RS-Y");
+                    HCCL_DEBUG("rankSizeLevel1_ > 1-----RS-Y");
                     CHK_RET(GenTemplateAlgParamsByDimData(
                         tempAlgParamMap[OMNIPIPE_RS_LEVEL1],
                         omniPipeSliceInfoRS.dataSliceLevel1[stepZ * intraPodStepNum + stepXY]));
@@ -640,7 +640,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
             }
             if (rankSizeLevel2_ > 1) {
                 CHK_RET(PostSyncInterThreads(controlThread_, tempMainThreadsLevel2RS_, ntfIdxTempToCtrlLevel2RS_));
-                HCCL_INFO("PostSyncInterThreads z success.");
+                HCCL_DEBUG("PostSyncInterThreads z success.");
             }
         }
 
@@ -648,7 +648,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
         intraPodStepNum = omniPipeSliceInfoAG.dataSliceLevel0.size() / interPodStepNum;
         for (u32 stepZ = 0; stepZ < interPodStepNum; stepZ++) {
             if (rankSizeLevel2_ > 1) {
-                HCCL_INFO("rankSizeLevel2_ > 1-----AG-Z");
+                HCCL_DEBUG("rankSizeLevel2_ > 1-----AG-Z");
                 CHK_RET(PreSyncInterThreads(controlThread_, tempMainThreadsLevel2AG_, ntfIdxCtrlToTempLevel2AG_));
                 CHK_RET(GenTemplateAlgParamsByDimData(
                     tempAlgParamMap[OMNIPIPE_AG_LEVEL2], omniPipeSliceInfoAG.dataSliceLevel2[stepZ]));
@@ -658,7 +658,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
             for (u32 stepXY = 0; stepXY < intraPodStepNum; stepXY++) {
                 CHK_RET(PreSyncInterThreads(controlThread_, tempMainThreadsLevel01AG_, ntfIdxCtrlToTempLevel01AG_));
                 if (rankSizeLevel0_ > 1) {
-                    HCCL_INFO("rankSizeLevel0_ > 1-----AG-X");
+                    HCCL_DEBUG("rankSizeLevel0_ > 1-----AG-X");
                     CHK_RET(GenTemplateAlgParamsByDimData(
                         tempAlgParamMap[OMNIPIPE_AG_LEVEL0],
                         omniPipeSliceInfoAG.dataSliceLevel0[stepZ * intraPodStepNum + stepXY]));
@@ -666,7 +666,7 @@ HcclResult InsV2AllReduceOmniPipeExecutor<
                         param, tempAlgParamMap[OMNIPIPE_AG_LEVEL0], tempResMap[OMNIPIPE_AG_LEVEL0]));
                 }
                 if (rankSizeLevel1_ > 1) {
-                    HCCL_INFO("rankSizeLevel1_ > 1-----AG-Y");
+                    HCCL_DEBUG("rankSizeLevel1_ > 1-----AG-Y");
                     CHK_RET(GenTemplateAlgParamsByDimData(
                         tempAlgParamMap[OMNIPIPE_AG_LEVEL1],
                         omniPipeSliceInfoAG.dataSliceLevel1[stepZ * intraPodStepNum + stepXY]));

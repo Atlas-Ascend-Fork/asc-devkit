@@ -25,6 +25,7 @@
 #include "topo_pattern.h"
 #include "kfc_server_protocol.h"
 #include "sim_communicator.h"
+#include "sim_stream.h"
 #include "sim_world.h"
 #include "topo_model.h"
 #include "sim_common.h"
@@ -295,8 +296,7 @@ protected:
         ASSERT_EQ(ret, HCCL_SUCCESS) << "Comm init failed";
         ASSERT_NE(comm_, nullptr) << "Comm is nullptr after init";
 
-        int dummyStream = 1;
-        stream_ = &dummyStream;
+        stream_ = &dummyStream_;
     }
     void TearDown() override
     {
@@ -309,6 +309,7 @@ protected:
         StubCleanup();
     }
     HcclComm comm_ = nullptr;
+    HcclSim::SimStream dummyStream_{0U};
     aclrtStream stream_ = nullptr;
 };
 

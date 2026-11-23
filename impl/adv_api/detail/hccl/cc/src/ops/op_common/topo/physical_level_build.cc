@@ -79,8 +79,9 @@ void FetchEndpoints(HcclComm comm, u32 layer, u32 instId, std::vector<EndpointDe
     // 合理性阈值, 不截断: 截断只会把异常掩盖成"正常但数据少", 直接局部降级并告警
     if (num > ENDPOINT_NUM_SANITY_LIMIT) {
         HCCL_WARNING(
-            "[PhysicalLevel][Build] implausible endpoint num[%u] at layer[%u] inst[%u], skip endpoints", num, layer,
-            instId);
+            "[PhysicalLevel][Build] implausible endpoint num[%u] exceeds limit[%u] at layer[%u] inst[%u], skip "
+            "endpoints",
+            num, ENDPOINT_NUM_SANITY_LIMIT, layer, instId);
         return;
     }
 
@@ -146,9 +147,9 @@ void FetchPortNums(HcclComm comm, u32 myRank, const std::vector<EndpointDesc>& e
         // 0与超限都判为不可信, 口径对齐op_common.cc的BuildChannelInfo
         if (portNum == 0 || portNum > PORT_NUM_SANITY_LIMIT) {
             HCCL_WARNING(
-                "[PhysicalLevel][Build] implausible port num[%u] for rank[%u] protocol[%d], drop port nums of "
-                "this level",
-                portNum, myRank, static_cast<s32>(desc.protocol));
+                "[PhysicalLevel][Build] implausible port num[%u] valid range is [1, %u] for rank[%u] protocol[%d], "
+                "drop port nums of this level",
+                portNum, PORT_NUM_SANITY_LIMIT, myRank, static_cast<s32>(desc.protocol));
             return;
         }
         seenAddrs.push_back(desc.commAddr);
@@ -266,7 +267,10 @@ HcclResult FetchNetInstance(
     const NetLayerDetails& details = topoInfo->netLayerDetails;
     const u32 myRank = topoInfo->userRank;
     if (layer >= details.localNetInsSizeOfLayer.size() || layer >= details.instSizeListOfLayer.size()) {
-        HCCL_WARNING("[PhysicalLevel][Build] netLayer[%u] out of range of netLayerDetails arrays", layer);
+        HCCL_WARNING(
+            "[PhysicalLevel][Build] netLayer[%u] out of range of netLayerDetails arrays, valid layer range is "
+            "[0, %zu)",
+            layer, std::min(details.localNetInsSizeOfLayer.size(), details.instSizeListOfLayer.size()));
         return HCCL_E_INTERNAL;
     }
     HcclResult ret = FetchLocalNetRanks(comm, details, layer, myRank, ranks);

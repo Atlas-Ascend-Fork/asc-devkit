@@ -82,9 +82,10 @@ HcclResult InsV2ReduceScatterOmniPipeExecutor<AlgTopoMatch, InsAlgTemplate0, Ins
         if (algHierarchyInfo_.infos.empty() || algHierarchyInfo_.infos[0].size() < RANK_SIZE_LEVEL_2 ||
             algHierarchyInfo_.infos[0][0].empty() || algHierarchyInfo_.infos[0][1].empty()) {
             HCCL_ERROR(
-                "[%s] invalid MESH_1D_CLOS algHierarchyInfo, infosSize[%zu], level0Size[%zu].", __func__,
-                algHierarchyInfo_.infos.size(),
-                algHierarchyInfo_.infos.empty() ? 0 : algHierarchyInfo_.infos[0].size());
+                "[%s] invalid MESH_1D_CLOS algHierarchyInfo, infosSize[%zu], level0Size[%zu], level0Size should "
+                "be at least [%llu].",
+                __func__, algHierarchyInfo_.infos.size(),
+                algHierarchyInfo_.infos.empty() ? 0 : algHierarchyInfo_.infos[0].size(), RANK_SIZE_LEVEL_2);
             return HCCL_E_PARA;
         }
         std::vector<u32> closRanks;
@@ -525,7 +526,7 @@ InsV2ReduceScatterOmniPipeExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate
         (void)axisReduceId;
         std::vector<TemplateDataParams> axisReduceTempParams;
         for (u32 i = 0; i < level2StepCount; i++) {
-            HCCL_INFO("[InsV2ReduceScatterOmniPipeExecutor][OrchestrateLoop]Step [%u] in level2", i);
+            HCCL_DEBUG("[InsV2ReduceScatterOmniPipeExecutor][OrchestrateLoop]Step [%u] in level2", i);
             if (rankSizeLevel2_ > 1) {
                 HCCL_DEBUG("rankSizeLevel2_ > 1");
                 CHK_RET(GenTemplateAlgParamsByDimData(

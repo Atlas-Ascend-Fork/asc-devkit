@@ -176,7 +176,10 @@ HcclResult TopoMatchMultilevel::MatchTopo(
 #ifndef AICPU_COMPILE
     CHK_PRT_RET(
         topoInfo->topoLevelNums == 0 || topoInfo->topoLevelNums > COMM_LAYER_SIZE_2,
-        HCCL_ERROR("[CalcTopoLevelNums] topoLevelNum[%u] is invalid.", topoInfo->topoLevelNums), HCCL_E_INTERNAL);
+        HCCL_ERROR(
+            "[CalcTopoLevelNums] topoLevelNum[%u] is invalid, valid range is [1, %d].", topoInfo->topoLevelNums,
+            COMM_LAYER_SIZE_2),
+        HCCL_E_INTERNAL);
 
     uint32_t myRank;
     CHK_RET(HcclGetRankId(comm, &myRank));

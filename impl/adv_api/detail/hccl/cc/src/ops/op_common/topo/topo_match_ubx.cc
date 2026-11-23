@@ -124,7 +124,10 @@ HcclResult TopoMatchUBX::MatchTopo(
     constexpr uint32_t EXPECTED_TOPO_LEVEL_NUM_2 = 2;
     CHK_PRT_RET(
         topoInfo->topoLevelNums == 0 || topoInfo->topoLevelNums > EXPECTED_TOPO_LEVEL_NUM_2,
-        HCCL_ERROR("[CalcTopoLevelNums] topoLevelNum[%u] is invalid.", topoInfo->topoLevelNums), HCCL_E_INTERNAL);
+        HCCL_ERROR(
+            "[CalcTopoLevelNums] topoLevelNum[%u] is invalid, valid range is [1, %u].", topoInfo->topoLevelNums,
+            EXPECTED_TOPO_LEVEL_NUM_2),
+        HCCL_E_INTERNAL);
     uint32_t myRank;
     CHK_RET(HcclGetRankId(comm, &myRank));
 #ifdef MACRO_DEV_TYPE_NEW

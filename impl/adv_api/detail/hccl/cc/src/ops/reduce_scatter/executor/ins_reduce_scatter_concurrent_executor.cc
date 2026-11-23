@@ -311,7 +311,7 @@ HcclResult InsReduceScatterConcurrentExecutor<AlgTopoMatch, InsAlgTemplate0, Ins
     tempAlgParamsforTemp1.outputRepeatStride = 0;
     // 循环处理每个template
     for (u32 loopIndex = 0; loopIndex < loopTimesforTemp0 || loopIndex < loopTimesforTemp1; loopIndex++) {
-        HCCL_INFO(
+        HCCL_DEBUG(
             "[%s]loopIndex[%u], loopTimesforTemp0[%u], loopTimesforTemp1[%u]", __func__, loopIndex, loopTimesforTemp0,
             loopTimesforTemp1);
         if (loopIndex < loopTimesforTemp0) {
