@@ -28,7 +28,7 @@
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>
 
-在调用PostMessage或PostFakeMessage后，查询该消息是否已被AIC处理完。
+在调用PostMessage或PostFakeMsg后，查询该消息是否已被AIC处理完。
 
 ## 函数原型<a name="section765814724715"></a>
 
@@ -72,7 +72,7 @@ __aicore__ inline bool Wait(uint16_t offset)
 </td>
 <td class="cellrowborder" valign="top" width="7.93%" headers="mcps1.2.4.1.2 "><p id="p741317331213"><a name="p741317331213"></a><a name="p741317331213"></a>输入</p>
 </td>
-<td class="cellrowborder" valign="top" width="82.98%" headers="mcps1.2.4.1.3 "><p id="p1660161516133"><a name="p1660161516133"></a><a name="p1660161516133"></a>消息空间地址偏移量，通过PostMessage或者PostFakeMessage的返回值获取。</p>
+<td class="cellrowborder" valign="top" width="82.98%" headers="mcps1.2.4.1.3 "><p id="p1660161516133"><a name="p1660161516133"></a><a name="p1660161516133"></a>消息空间地址偏移量，通过PostMessage或者PostFakeMsg的返回值获取。</p>
 </td>
 </tr>
 </tbody>

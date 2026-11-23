@@ -48,6 +48,10 @@
   4. `V_MTE3`同步：等待UB→UB转换完成。
   5. UB→L1连续搬运（MTE3管线）：将UB临时区域的NZ数据搬至L1。
 
+- AIV分工和核间同步：
+  - AIV0负责A矩阵的GM→UB→L1搬运，AIV1负责B矩阵的GM→UB→L1搬运，避免两个AIV并发写入同一片L1区域。
+  - 两个AIV完成各自的MTE3搬运后，均通过 `CrossCoreSetFlag<0x2, PIPE_MTE3>(0x8)` 通知AIC；AIC通过 `CrossCoreWaitFlag<0x2, PIPE_MTE1>(0x8)` 等待两个AIV完成后，再执行L1→L0搬运。
+
 - 样例规格：
   <table>
   <tr><td rowspan="3" align="center">样例输入</td><td align="center">name</td><td align="center">shape</td><td align="center">data type</td><td align="center">format（场景1 / 场景2）</td></tr>

@@ -24,7 +24,7 @@ CubeResGroupHandle用于在分离模式下对AI Core计算资源分组。分组�
 
     ```
     // A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, CFG_NORM根据实际需求场景构造
-    using MatmulApiType = Matmul<A_TYPE, B_TYPE, C_TYPE, C_TYPE, CFG_NORM>;
+    using MatmulApiType = Matmul<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, CFG_NORM>;
     ```
 
 2.  创建KfcWorkspace。

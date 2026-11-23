@@ -113,5 +113,5 @@ uint8_t msgQueueSize = 10;
 uint8_t evtIDIn = 0; //用户自行管理事件ID
 AscendC::KfcWorkspace desc(workspace); // 用户自行管理的workspace指针。
 AscendC::CubeResGroupHandle<CubeMsgBody> handle;
-handle = AscendC::CubeResGroupHandle<MatmulApiType, MyCallbackFunc, CubeMsgBody>(desc.GetMsgStart(), blockStart, blockSize, msgQueueSize, evtIDIn); 
+handle = AscendC::CubeResGroupHandle<CubeMsgBody>(desc.GetMsgStart(), blockStart, blockSize, msgQueueSize, evtIDIn); 
 ```

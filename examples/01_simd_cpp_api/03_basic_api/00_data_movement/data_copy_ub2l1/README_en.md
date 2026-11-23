@@ -48,6 +48,10 @@ This sample demonstrates data movement from UB (Unified Buffer) to L1 (L1 Buffer
   4. `V_MTE3` sync: Wait for UB→UB conversion to complete.
   5. UB→L1 contiguous copy (MTE3 pipeline): NZ data in the UB temporary region is copied to L1.
 
+- AIV Partitioning and Inter-core Synchronization:
+  - AIV0 performs the GM→UB→L1 transfer for matrix A, and AIV1 performs the GM→UB→L1 transfer for matrix B, preventing concurrent writes to the same L1 region.
+  - After completing their respective MTE3 transfers, both AIVs notify the AIC with `CrossCoreSetFlag<0x2, PIPE_MTE3>(0x8)`. The AIC calls `CrossCoreWaitFlag<0x2, PIPE_MTE1>(0x8)` before the L1→L0 transfer to wait for both AIVs to finish.
+
 - Sample Specifications:
   <table>
   <tr><td rowspan="3" align="center">Input</td><td align="center">name</td><td align="center">shape</td><td align="center">data type</td><td align="center">format (Scenario 1 / Scenario 2)</td></tr>

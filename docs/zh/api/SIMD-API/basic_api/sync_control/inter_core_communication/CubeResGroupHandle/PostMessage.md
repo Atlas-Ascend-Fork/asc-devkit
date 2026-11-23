@@ -28,13 +28,13 @@
 
 ## 功能说明<a name="zh-cn_topic_0000001526206862_section212607105720"></a>
 
-通过AllocMessage接口获取到消息空间地址msg后，构造消息结构体[CubeMsgType](CubeResGroupHandle_usage.md#table189051237164018)，发送该消息。
+通过AllocMessage接口获取到消息空间地址msg后，构造消息结构体[CubeMsgBody](CubeResGroupHandle_usage.md#table189051237164018)，发送该消息。
 
 ## 函数原型<a name="section765814724715"></a>
 
 ```
 template <PipeMode pipeMode = PipeMode::SCALAR_MODE>
-__aicore__ inline uint16_t PostMessage(__gm__ CubeMsgType* msg, CubeMsgType& msgInput)
+__aicore__ inline uint16_t PostMessage(__gm__ CubeMsgType* msg, CubeMsgBody& msgInput)
 ```
 
 ## 参数说明<a name="zh-cn_topic_0000001526206862_section129451113125413"></a>
