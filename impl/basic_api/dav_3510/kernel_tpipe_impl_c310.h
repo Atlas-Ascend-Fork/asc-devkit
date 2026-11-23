@@ -72,7 +72,9 @@ inline uint8_t* GetBaseAddrCpu(int8_t logicPos)
 {
     auto positionHardMap = ConstDefiner::Instance().positionHardMap;
     ASCENDC_ASSERT((positionHardMap.find((TPosition)logicPos) != positionHardMap.end()), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal logicPos %d ", int32_t(logicPos));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal logicPos %d; valid values are the keys of ConstDefiner::Instance().positionHardMap",
+            static_cast<int32_t>(logicPos));
     });
     Hardware hardType = positionHardMap.at((TPosition)logicPos);
     ASCENDC_ASSERT((hardType != Hardware::GM), { KERNEL_LOG(KERNEL_ERROR, "hardware position can not be gm"); });
@@ -101,7 +103,7 @@ __aicore__ inline void TPipe::Init()
 #if defined(ASCENDC_DEBUG) && !defined(ASCENDC_CPU_DEBUG)
     ASCENDC_DEBUG_ASSERT(
         GetTPipePtr() == nullptr,
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "TPipe has already been constructed at %p!\n", (void*)g_lastTpipeInitPos));
+        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "TPipe has already been constructed at %p!", (void*)g_lastTpipeInitPos));
     g_lastTpipeInitPos = get_pc();
 #endif
     ResetPool();
@@ -109,14 +111,20 @@ __aicore__ inline void TPipe::Init()
     // matmul macro only use M_MTE1 event id 0 1 currently.
     if ASCEND_IS_AIC {
         auto enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_ASSERT((enQueEvtID == 0), { KERNEL_LOG(KERNEL_ERROR, "enQueEvtID should be 0"); });
+        ASCENDC_ASSERT((enQueEvtID == 0), {
+            KERNEL_LOG(KERNEL_ERROR, "enQueEvtID is %d, should be 0", static_cast<int32_t>(enQueEvtID));
+        });
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
         enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_ASSERT((enQueEvtID == 1), { KERNEL_LOG(KERNEL_ERROR, "enQueEvtID should be 1"); });
+        ASCENDC_ASSERT((enQueEvtID == 1), {
+            KERNEL_LOG(KERNEL_ERROR, "enQueEvtID is %d, should be 1", static_cast<int32_t>(enQueEvtID));
+        });
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
         // For load Bias
         enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_ASSERT((enQueEvtID == 2), { KERNEL_LOG(KERNEL_ERROR, "enQueEvtID should be 2"); });
+        ASCENDC_ASSERT((enQueEvtID == 2), {
+            KERNEL_LOG(KERNEL_ERROR, "enQueEvtID is %d, should be 2", static_cast<int32_t>(enQueEvtID));
+        });
 
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
     }
@@ -231,7 +239,7 @@ __aicore__ inline bool TPipe::InitBuffer(T& que, const Std::tuple<U, V>& addr0, 
     ASCENDC_DEBUG_ASSERT(
         (this->g_tpipeImpl.curBufSize_ <= QBUF_MAX_LEN && this->g_tpipeImpl.curBufSize_ > 0),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Total buffer num managed by TPipe is %d, should be in range (0, %d]\n",
+            KERNEL_ERROR, "Total buffer num managed by TPipe is %d, should be in range (0, %d]",
             this->g_tpipeImpl.curBufSize_, QBUF_MAX_LEN));
     return true;
 }
@@ -309,20 +317,21 @@ __aicore__ inline bool TPipe::InitBuffer(T& que, uint8_t num, uint32_t len)
             curPoolAddr += len;
         }
         ASCENDC_ASSERT((curPoolAddr <= bufferInitLen.at(pool)), {
-            KERNEL_LOG(KERNEL_ERROR, "curPoolAddr is %d, limits is %d", curPoolAddr, bufferInitLen.at(pool));
+            KERNEL_LOG(KERNEL_ERROR, "curPoolAddr is %u bytes, limit is %u bytes", curPoolAddr, bufferInitLen.at(pool));
         });
         this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(pool)].maxAddr = curPoolAddr;
         this->g_tpipeImpl.curBufSize_ += num;
         ASCENDC_ASSERT((this->g_tpipeImpl.curBufSize_ < QBUF_MAX_LEN), {
-            KERNEL_LOG(KERNEL_ERROR, "buffer size is %d, limits is %d", this->g_tpipeImpl.curBufSize_, QBUF_MAX_LEN);
+            KERNEL_LOG(KERNEL_ERROR, "buffer size is %d, limit is %d", this->g_tpipeImpl.curBufSize_, QBUF_MAX_LEN);
         });
         ASCENDC_ASSERT(
             (this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr <=
              this->g_tpipeImpl.tscmBufferPtr_),
             {
                 KERNEL_LOG(
-                    KERNEL_ERROR, "tscm addr is %d, limits is %d", this->g_tpipeImpl.tscmBufferPtr_,
-                    this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr);
+                    KERNEL_ERROR, "L1 end address is %u, must not exceed TSCM start address %u",
+                    this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr,
+                    this->g_tpipeImpl.tscmBufferPtr_);
             });
         return true;
     }
@@ -405,14 +414,15 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len)
 #endif
     curPoolAddr += len;
     ASCENDC_ASSERT((curPoolAddr <= bufferInitLen.at(pool)), {
-        KERNEL_LOG(KERNEL_ERROR, "curPoolAddr is %d, limits is %d", curPoolAddr, bufferInitLen.at(pool));
+        KERNEL_LOG(KERNEL_ERROR, "curPoolAddr is %u bytes, limit is %u bytes", curPoolAddr, bufferInitLen.at(pool));
     });
     this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(pool)].maxAddr = curPoolAddr;
     ASCENDC_ASSERT(
         (this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr <= this->g_tpipeImpl.tscmBufferPtr_), {
             KERNEL_LOG(
-                KERNEL_ERROR, "tscm addr is %d, limits is %d", this->g_tpipeImpl.tscmBufferPtr_,
-                this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr);
+                KERNEL_ERROR, "L1 end address is %u, must not exceed TSCM start address %u",
+                this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr,
+                this->g_tpipeImpl.tscmBufferPtr_);
         });
     return true;
 }
@@ -427,7 +437,9 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
     len = AlignUp(len, ONE_BLK_SIZE);
     constexpr auto pool = GetPhyType(T::poolPos);
     ASCENDC_ASSERT((pool == GetPhyType(U::poolPos)), {
-        KERNEL_LOG(KERNEL_ERROR, "Hardware type of input bufPool should be same as shareBuf");
+        KERNEL_LOG(
+            KERNEL_ERROR, "Hardware type of input bufPool is %d, should equal shareBuf hardware type %d",
+            static_cast<int32_t>(pool), static_cast<int32_t>(GetPhyType(U::poolPos)));
     });
     static_assert((T::bufSize <= U::bufSize), "U bufIDSize must be > T bufIDSize");
 
@@ -438,7 +450,7 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
     bufPool.tBufPoolImpl.availableIdMask_ = bufPool.tBufPoolImpl.bufIdPool_;
     ASCENDC_ASSERT((len <= shareBuf.tBufPoolImpl.maxLen_), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Length of input bufPool should be shorter than len of shareBuf, which is %u",
+            KERNEL_ERROR, "Length of input bufPool is %u bytes, should be no longer than shareBuf length %u bytes", len,
             shareBuf.tBufPoolImpl.maxLen_);
     });
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
@@ -458,8 +470,11 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
 template <HardEvent evt>
 __aicore__ inline TEventID TPipe::AllocEventID()
 {
-    ASCENDC_ASSERT(
-        (evt < HardEvent::MAX), { KERNEL_LOG(KERNEL_ERROR, "illegal event %d", static_cast<int32_t>(evt)); });
+    ASCENDC_ASSERT((evt < HardEvent::MAX), {
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal event %d, should be in [0, %d)", static_cast<int32_t>(evt),
+            static_cast<int32_t>(HardEvent::MAX));
+    });
     auto ptr = this->g_tpipeImpl.eventPool_ + EventToIndex(evt);
     auto lastId = sff0(ptr->eventOccupy);
     ASCENDC_ASSERT((lastId < QUE_MAX_EVENT && lastId >= 0), {
@@ -780,7 +795,11 @@ template <TPosition pos>
 __aicore__ inline uint64_t TPipe::GetQueueEndAddress()
 {
     Hardware hardType = GetPhyType(pos);
-    ASCENDC_ASSERT((hardType == Hardware::UB), { KERNEL_LOG(KERNEL_ERROR, "hardType should be UB"); });
+    ASCENDC_ASSERT((hardType == Hardware::UB), {
+        KERNEL_LOG(
+            KERNEL_ERROR, "hardType is %d, should be UB (%d)", static_cast<int32_t>(hardType),
+            static_cast<int32_t>(Hardware::UB));
+    });
     return this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(hardType)].maxAddr;
 }
 
@@ -856,11 +875,15 @@ TPipe::GetAbsAddr(const LocalTensor<T>& tensor)
     int8_t logicPos = tensor.GetPosition();
     auto positionHardMap = ConstDefiner::Instance().positionHardMap;
     ASCENDC_ASSERT((positionHardMap.find((TPosition)logicPos) != positionHardMap.end()), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal logicPos %d ", static_cast<int32_t>(logicPos));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal logicPos %d; valid values are the keys of ConstDefiner::Instance().positionHardMap",
+            static_cast<int32_t>(logicPos));
     });
     Hardware hardType = positionHardMap.at((TPosition)logicPos);
     ASCENDC_ASSERT(((hardType == Hardware::UB) || (hardType == Hardware::L1)), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal hardType %d ", static_cast<int32_t>(hardType));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal hardType %d, should be UB (%d) or L1 (%d)", static_cast<int32_t>(hardType),
+            static_cast<int32_t>(Hardware::UB), static_cast<int32_t>(Hardware::L1));
     });
     uint8_t* phyAddr = reinterpret_cast<uint8_t*>(tensor.GetPhyAddr());
     uint8_t* baseAddr = static_cast<uint8_t*>(g_tpipeImpl.bufPoolBaseAddr_[static_cast<uint32_t>(hardType)].absAddr);
@@ -871,11 +894,15 @@ TPipe::GetAbsAddr(const LocalTensor<T>& tensor)
     uint64_t delta = phyAddr - baseAddr;
     if (hardType == Hardware::UB) {
         ASCENDC_ASSERT((delta < TMP_UB_OFFSET), {
-            KERNEL_LOG(KERNEL_ERROR, "addr %lu exceed ub limits %lu ", delta, TMP_UB_OFFSET);
+            KERNEL_LOG(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the UB limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TMP_UB_OFFSET));
         });
     } else {
         ASCENDC_ASSERT((delta < TOTAL_L1_SIZE), {
-            KERNEL_LOG(KERNEL_ERROR, "addr %lu exceed l1 limits %lu", delta, TOTAL_L1_SIZE);
+            KERNEL_LOG(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the L1 limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TOTAL_L1_SIZE));
         });
     }
     return delta;
@@ -890,11 +917,15 @@ inline uint64_t GetAbsAddr(TPipe* tpipe, const LocalTensor<T>& tensor)
     int8_t logicPos = tensor.GetPosition();
     auto positionHardMap = ConstDefiner::Instance().positionHardMap;
     ASCENDC_ASSERT((positionHardMap.find((TPosition)logicPos) != positionHardMap.end()), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal logicPos %d ", static_cast<int32_t>(logicPos));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal logicPos %d; valid values are the keys of ConstDefiner::Instance().positionHardMap",
+            static_cast<int32_t>(logicPos));
     });
     Hardware hardType = positionHardMap.at((TPosition)logicPos);
     ASCENDC_ASSERT(((hardType == Hardware::UB) || (hardType == Hardware::L1)), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal hardType %d ", static_cast<int32_t>(hardType));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal hardType %d, should be UB (%d) or L1 (%d)", static_cast<int32_t>(hardType),
+            static_cast<int32_t>(Hardware::UB), static_cast<int32_t>(Hardware::L1));
     });
     uint8_t* phyAddr = reinterpret_cast<uint8_t*>(tensor.GetPhyAddr());
     uint8_t* baseAddr =
@@ -906,11 +937,15 @@ inline uint64_t GetAbsAddr(TPipe* tpipe, const LocalTensor<T>& tensor)
     uint64_t delta = phyAddr - baseAddr;
     if (hardType == Hardware::UB) {
         ASCENDC_ASSERT((delta < TMP_UB_OFFSET), {
-            KERNEL_LOG(KERNEL_ERROR, "addr %lu exceed ub limits %lu ", delta, TMP_UB_OFFSET);
+            KERNEL_LOG(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the UB limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TMP_UB_OFFSET));
         });
     } else {
         ASCENDC_ASSERT((delta < TOTAL_L1_SIZE), {
-            KERNEL_LOG(KERNEL_ERROR, "addr %lu exceed l1 limits %lu", delta, TOTAL_L1_SIZE);
+            KERNEL_LOG(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the L1 limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TOTAL_L1_SIZE));
         });
     }
     return delta;
@@ -920,7 +955,9 @@ inline uint8_t* TPipe::GetBaseAddr(int8_t logicPos)
 {
     auto positionHardMap = ConstDefiner::Instance().positionHardMap;
     ASCENDC_ASSERT((positionHardMap.find((TPosition)logicPos) != positionHardMap.end()), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal logicPos %d ", int32_t(logicPos));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal logicPos %d; valid values are the keys of ConstDefiner::Instance().positionHardMap",
+            static_cast<int32_t>(logicPos));
     });
     Hardware hardType = positionHardMap.at((TPosition)logicPos);
     ASCENDC_ASSERT((hardType != Hardware::GM), { KERNEL_LOG(KERNEL_ERROR, "hardware position can not be gm"); });
@@ -933,7 +970,9 @@ void inline TPipe::SetBufferCtx(Hardware hard, struct BufPoolExtra* bufPool)
     ASCENDC_ASSERT((hard != Hardware::MAX), { KERNEL_LOG(KERNEL_ERROR, "hard type can not be Hardware::MAX"); });
     auto bufferInitLen = ConstDefiner::Instance().bufferInitLen;
     ASCENDC_ASSERT((bufferInitLen.find(hard) != bufferInitLen.end()), {
-        KERNEL_LOG(KERNEL_ERROR, "illegal hard type %d", static_cast<int32_t>(hard));
+        KERNEL_LOG(
+            KERNEL_ERROR, "illegal hard type %d; valid values are the keys of ConstDefiner::Instance().bufferInitLen",
+            static_cast<int32_t>(hard));
     });
     uint8_t* ptr;
     if (hard == Hardware::GM) {
@@ -1043,7 +1082,7 @@ __aicore__ inline bool TPipe::TscmInitBuffer(T& que, uint8_t num, uint32_t len)
     this->g_tpipeImpl.curBufSize_ += num;
     ASCENDC_ASSERT((this->g_tpipeImpl.curBufSize_ <= QBUF_MAX_LEN), {
         KERNEL_LOG(
-            KERNEL_ERROR, "max buffer num is %d, current buf size %d exceed this limits", QBUF_MAX_LEN,
+            KERNEL_ERROR, "max buffer num is %d, current buf size %d exceeds this limit", QBUF_MAX_LEN,
             this->g_tpipeImpl.curBufSize_);
     });
     return true;

@@ -87,8 +87,8 @@ __aicore__ inline TQueBind<src, dst, depth, mask>::TQueBind()
             bufferInitLen.at(Hardware::UB));
         ASCENDC_ASSERT((config.bufferLen * config.bufferNumber <= bufferInitLen.at(bufferType)), {
             KERNEL_LOG(
-                KERNEL_ERROR, "buffer size is %d, exceed limits %d", config.bufferLen * config.bufferNumber,
-                bufferInitLen.at(bufferType));
+                KERNEL_ERROR, "buffer size is %u bytes, exceeds the limit %u bytes",
+                static_cast<uint32_t>(config.bufferLen * config.bufferNumber), bufferInitLen.at(bufferType));
         });
         auto pos_ = GetPosition(src, dst);
         AscendCBufInit(
@@ -151,8 +151,8 @@ __aicore__ inline __sync_noalias__ LocalTensor<T> TQueBind<src, dst, depth, mask
     if constexpr (enableGlobalManageQue) {
         ASCENDC_ASSERT((num > 0 && num <= config.bufferNumber), {
             KERNEL_LOG(
-                KERNEL_ERROR, "StaticQue AllocTensor size is %d, which must be with (0, %d]", static_cast<int32_t>(num),
-                static_cast<int32_t>(config.bufferNumber));
+                KERNEL_ERROR, "StaticQue AllocTensor size is %d, which must be within (0, %d]",
+                static_cast<int32_t>(num), static_cast<int32_t>(config.bufferNumber));
         });
         const uint32_t maskLen = ConstantsInternal::FULL_MASK_B32 >> (maxBlockNum - num);
         const uint32_t pos = GetNext(num);
@@ -225,7 +225,7 @@ __aicore__ inline bool TQueBind<src, dst, depth, mask>::EnQue(TBufHandle buf)
 
     ASCENDC_ASSERT((this->usedCount < depth), {
         KERNEL_LOG(
-            KERNEL_ERROR, "usedCount is %d, which exceed depth limits %d", static_cast<int32_t>(usedCount), depth);
+            KERNEL_ERROR, "usedCount is %d, which exceeds the depth limit %d", static_cast<int32_t>(usedCount), depth);
     });
     auto ptr = reinterpret_cast<TBufType*>(buf);
     if constexpr (depth == 1) {
@@ -302,7 +302,8 @@ __aicore__ inline bool TQueBind<src, dst, depth, mask>::EnQue(TBufHandle buf)
     } else {
         ASCENDC_ASSERT((this->usedCount < depth), {
             KERNEL_LOG(
-                KERNEL_ERROR, "usedCount is %d, which exceed depth limits %d", static_cast<int32_t>(usedCount), depth);
+                KERNEL_ERROR, "usedCount is %d, which exceeds the depth limit %d", static_cast<int32_t>(usedCount),
+                depth);
         });
         auto ptr = reinterpret_cast<TBufType*>(buf);
         if constexpr (depth == 1) {
@@ -404,8 +405,8 @@ __aicore__ inline TBufHandle TQueBind<src, dst, depth, mask>::DeQue()
         TBufHandle bufHandle = reinterpret_cast<TBufHandle>(bufStart.bufInfo + staticEnqueHead);
         ASCENDC_ASSERT((this->staticEnqueHead != INVALID_STATIC_ENQUE_HEAD), {
             KERNEL_LOG(
-                KERNEL_ERROR, "staticUsedCount is %d, which can only larger than 0",
-                static_cast<int32_t>(this->staticUsedCount));
+                KERNEL_ERROR, "staticEnqueHead is %d, must not equal INVALID_STATIC_ENQUE_HEAD (%d)",
+                static_cast<int32_t>(this->staticEnqueHead), static_cast<int32_t>(INVALID_STATIC_ENQUE_HEAD));
         });
         DEBUG_CODE(staticEnqueHead = INVALID_STATIC_ENQUE_HEAD);
         GetBuffImpl<dstPipe, false>(staticEnqueHead + bufIdOffset);
@@ -425,7 +426,7 @@ __aicore__ inline TBufHandle TQueBind<src, dst, depth, mask>::DeQue()
         });
         ASCENDC_ASSERT((this->usedCount > 0), {
             KERNEL_LOG(
-                KERNEL_ERROR, "usedCount is %d, which can only larger than 0", static_cast<int32_t>(this->usedCount));
+                KERNEL_ERROR, "usedCount is %d, which must be larger than 0", static_cast<int32_t>(this->usedCount));
         });
         if constexpr (config.enableStaticEvtId) {
             DEBUG_CODE(this->usedCount--);
@@ -534,8 +535,7 @@ __aicore__ inline TBufHandle TQueBind<src, dst, depth, mask>::DeQue()
         KERNEL_LOG(KERNEL_ERROR, "ptr state is %d, which can only be ENQUE", static_cast<int32_t>(ptr->state));
     });
     ASCENDC_ASSERT((this->usedCount > 0), {
-        KERNEL_LOG(
-            KERNEL_ERROR, "usedCount is %d, which can only larger than 0", static_cast<int32_t>(this->usedCount));
+        KERNEL_LOG(KERNEL_ERROR, "usedCount is %d, which must be larger than 0", static_cast<int32_t>(this->usedCount));
     });
     this->usedCount--;
     DEBUG_CODE(ptr->state = TBufState::DEQUE);
@@ -675,7 +675,7 @@ __aicore__ inline TBufHandle TQueBind<src, dst, depth, mask>::AllocBuffer()
             }
             ASCENDC_ASSERT((++size <= this->bufNum), {
                 KERNEL_LOG(
-                    KERNEL_ERROR, "size is %d, which exceed limits %d", size, static_cast<int32_t>(this->bufNum));
+                    KERNEL_ERROR, "size is %d, which exceeds the limit %d", size, static_cast<int32_t>(this->bufNum));
             });
         } while (true);
     }
@@ -945,7 +945,7 @@ __aicore__ inline __sync_noalias__ LocalTensor<T> TBuf<pos>::Get(uint32_t len)
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
     ASCENDC_ASSERT((len > 0), { KERNEL_LOG(KERNEL_ERROR, "buffer length is %u, which should be larger than 0", len); });
     ASCENDC_ASSERT((len * sizeof(T) % 32 == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "buffer length is %u, which should be times of 32 Bytes", len);
+        KERNEL_LOG(KERNEL_ERROR, "buffer length is %u, which should be a multiple of 32 bytes", len);
     });
     ASCENDC_ASSERT(((len * sizeof(T)) <= bufLen), {
         KERNEL_LOG(KERNEL_ERROR, "len is %u, max buffer len is %u", len * sizeof(T), bufLen);
@@ -1156,14 +1156,20 @@ __aicore__ inline void TPipe::Init()
     // matmul macro only use M_MTE1 event id 0 1 currently.
     if ASCEND_IS_AIC {
         auto enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_ASSERT((enQueEvtID == 0), { KERNEL_LOG(KERNEL_ERROR, "enQueEvtID should be 0"); });
+        ASCENDC_ASSERT((enQueEvtID == 0), {
+            KERNEL_LOG(KERNEL_ERROR, "enQueEvtID is %d, should be 0", static_cast<int32_t>(enQueEvtID));
+        });
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
         enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_ASSERT((enQueEvtID == 1), { KERNEL_LOG(KERNEL_ERROR, "enQueEvtID should be 1"); });
+        ASCENDC_ASSERT((enQueEvtID == 1), {
+            KERNEL_LOG(KERNEL_ERROR, "enQueEvtID is %d, should be 1", static_cast<int32_t>(enQueEvtID));
+        });
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
         // For load Bias
         enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_ASSERT((enQueEvtID == 2), { KERNEL_LOG(KERNEL_ERROR, "enQueEvtID should be 2"); });
+        ASCENDC_ASSERT((enQueEvtID == 2), {
+            KERNEL_LOG(KERNEL_ERROR, "enQueEvtID is %d, should be 2", static_cast<int32_t>(enQueEvtID));
+        });
 
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
     }
@@ -1386,7 +1392,9 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
     len = AlignUp(len, ONE_BLK_SIZE);
     constexpr auto pool = GetPhyType(T::poolPos);
     ASCENDC_ASSERT((pool == GetPhyType(U::poolPos)), {
-        KERNEL_LOG(KERNEL_ERROR, "Hardware type of input bufPool should be same with shareBuf");
+        KERNEL_LOG(
+            KERNEL_ERROR, "Hardware type of input bufPool is %d, should equal shareBuf hardware type %d",
+            static_cast<int32_t>(pool), static_cast<int32_t>(GetPhyType(U::poolPos)));
     });
     static_assert((T::bufSize <= U::bufSize), "U bufIDSize must be > T bufIDSize");
 
@@ -1396,7 +1404,7 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
     bufPool.tBufPoolImpl.bufIdPool_ = shareBuf.tBufPoolImpl.bufIdPool_;
     ASCENDC_ASSERT((len <= shareBuf.tBufPoolImpl.maxLen_), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Length of input bufPool should be shorter than len of shareBuf, which is %u",
+            KERNEL_ERROR, "Length of input bufPool is %u bytes, should be no longer than shareBuf length %u bytes", len,
             shareBuf.tBufPoolImpl.maxLen_);
     });
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
@@ -1464,8 +1472,8 @@ __aicore__ inline TBufId TPipe::AllocTscmBufId()
     TBufId bufId = this->g_tpipeImpl.tscmBufIdPool_;
     ASCENDC_ASSERT((bufId <= MAX_TBUFID), {
         KERNEL_LOG(
-            KERNEL_ERROR,
-            "L1 Buffer(TSCM) source from GM with staticEvtID used is out of limits, allocates over 20 buffers");
+            KERNEL_ERROR, "L1 TSCM static-event buffer ID is %u, must be <= MAX_TBUFID (%u)",
+            static_cast<uint32_t>(bufId), static_cast<uint32_t>(MAX_TBUFID));
     });
     ASCENDC_ASSERT((bufId >= this->g_tpipeImpl.bufIdPool_), {
         KERNEL_LOG(
@@ -1786,7 +1794,11 @@ template <TPosition pos>
 __aicore__ inline uint64_t TPipe::GetQueueEndAddress()
 {
     Hardware hardType = GetPhyType(pos);
-    ASCENDC_ASSERT((hardType == Hardware::UB), { KERNEL_LOG(KERNEL_ERROR, "hardType should be UB"); });
+    ASCENDC_ASSERT((hardType == Hardware::UB), {
+        KERNEL_LOG(
+            KERNEL_ERROR, "hardType is %d, should be UB (%d)", static_cast<int32_t>(hardType),
+            static_cast<int32_t>(Hardware::UB));
+    });
     return this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(hardType)].maxAddr;
 }
 
@@ -2118,15 +2130,22 @@ __aicore__ inline bool TBufPoolExtImpl<pos, bufIDSize>::InitBuffer(T& que, uint8
     ASCENDC_ASSERT(
         (this->tBufPoolImpl.maxAddr_ + num * len <= this->tBufPoolImpl.startAddr_ + this->tBufPoolImpl.maxLen_), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Buffer Init length exceeds limit of BufPool. Max Length of BufPool is %u",
+                KERNEL_ERROR,
+                "Buffer Init total length %llu bytes (count=%u, aligned length=%u bytes) must not exceed "
+                "remaining BufPool capacity %u bytes (total capacity=%u bytes)",
+                static_cast<unsigned long long>(num) * len, static_cast<uint32_t>(num), len,
+                this->tBufPoolImpl.maxLen_ - (this->tBufPoolImpl.maxAddr_ - this->tBufPoolImpl.startAddr_),
                 this->tBufPoolImpl.maxLen_);
         });
     auto curPoolAddr = this->tBufPoolImpl.maxAddr_;
     auto ptr = que.bufStart;
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
     Hardware pool = GetBufferPos(T::srcPosition, T::dstPosition);
-    ASCENDC_ASSERT(
-        (pool == GetPhyType(pos)), { KERNEL_LOG(KERNEL_ERROR, "buffer pos should be same with pos of TbufPool"); });
+    ASCENDC_ASSERT((pool == GetPhyType(pos)), {
+        KERNEL_LOG(
+            KERNEL_ERROR, "buffer hardware type is %d, should equal TBufPool hardware type %d",
+            static_cast<int32_t>(pool), static_cast<int32_t>(GetPhyType(pos)));
+    });
     auto bufferInitLen = ConstDefiner::Instance().bufferInitLen;
     ASCENDC_ASSERT((num * len <= bufferInitLen.at(pool)), {
         KERNEL_LOG(KERNEL_ERROR, "buffer size is %d, exceed limits %d", num * len, bufferInitLen.at(pool));
@@ -2174,12 +2193,17 @@ __aicore__ inline bool TBufPoolExtImpl<pos, bufIDSize>::InitBuffer(TBuf<bufPos>&
     buf.offset = 0;
     ASCENDC_ASSERT((this->tBufPoolImpl.maxAddr_ + len <= this->tBufPoolImpl.startAddr_ + this->tBufPoolImpl.maxLen_), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Buffer Init length exceeds limit of BufPool. Max Length of BufPool is %u",
+            KERNEL_ERROR,
+            "Buffer Init length %u bytes after alignment must not exceed remaining BufPool capacity %u bytes "
+            "(total capacity=%u bytes)",
+            len, this->tBufPoolImpl.maxLen_ - (this->tBufPoolImpl.maxAddr_ - this->tBufPoolImpl.startAddr_),
             this->tBufPoolImpl.maxLen_);
     });
     constexpr auto pool = GetPhyType(bufPos);
     ASCENDC_ASSERT((GetPhyType(bufPos) == GetPhyType(pos)), {
-        KERNEL_LOG(KERNEL_ERROR, "buffer pos should be same with pos of TBufPool");
+        KERNEL_LOG(
+            KERNEL_ERROR, "buffer hardware type is %d, should equal TBufPool hardware type %d",
+            static_cast<int32_t>(GetPhyType(bufPos)), static_cast<int32_t>(GetPhyType(pos)));
     });
     auto curPoolAddr = this->tBufPoolImpl.maxAddr_;
     auto ptr = buf.bufStart;
@@ -2229,11 +2253,16 @@ __aicore__ inline bool TBufPoolExtImpl<pos, bufIDSize>::InitBufPool(T& bufPool, 
     bufPool.tBufPoolImpl.bufIdPool_ = this->tBufPoolImpl.bufIdPool_ + this->tBufPoolImpl.curBufSize_;
     this->tBufPoolImpl.curBufSize_ += T::bufSize;
     ASCENDC_ASSERT((this->tBufPoolImpl.curBufSize_ <= bufIDSize), {
-        KERNEL_LOG(KERNEL_ERROR, "InitBuffer numbers exceeds limits");
+        KERNEL_LOG(
+            KERNEL_ERROR, "InitBuffer count is %u, exceeds the limit %u",
+            static_cast<uint32_t>(this->tBufPoolImpl.curBufSize_), static_cast<uint32_t>(bufIDSize));
     });
     ASCENDC_ASSERT((this->tBufPoolImpl.maxAddr_ + len <= this->tBufPoolImpl.startAddr_ + this->tBufPoolImpl.maxLen_), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Buffer Init length exceeds limit of BufPool. Max Length of BufPool is %u",
+            KERNEL_ERROR,
+            "Buffer Init length %u bytes after alignment must not exceed remaining BufPool capacity %u bytes "
+            "(total capacity=%u bytes)",
+            len, this->tBufPoolImpl.maxLen_ - (this->tBufPoolImpl.maxAddr_ - this->tBufPoolImpl.startAddr_),
             this->tBufPoolImpl.maxLen_);
     });
     auto curPoolAddr = this->tBufPoolImpl.maxAddr_;
@@ -2277,11 +2306,13 @@ __aicore__ inline bool TBufPoolExtImpl<pos, bufIDSize>::InitBufPool(T& bufPool, 
     bufPool.tBufPoolImpl.maxLen_ = shareBuf.tBufPoolImpl.maxLen_;
     bufPool.tBufPoolImpl.bufIdPool_ = shareBuf.tBufPoolImpl.bufIdPool_;
     ASCENDC_ASSERT((U::bufSize >= T::bufSize), {
-        KERNEL_LOG(KERNEL_ERROR, "InitBufferSize couldn't larger than shared TBufPool");
+        KERNEL_LOG(
+            KERNEL_ERROR, "InitBufferSize is %u, must not exceed shared TBufPool size %u",
+            static_cast<uint32_t>(T::bufSize), static_cast<uint32_t>(U::bufSize));
     });
     ASCENDC_ASSERT((len <= shareBuf.tBufPoolImpl.maxLen_), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Length of input bufPool should be no longer than length of shareBuf, which is %u",
+            KERNEL_ERROR, "Length of input bufPool is %u bytes, should be no longer than shareBuf length %u bytes", len,
             shareBuf.tBufPoolImpl.maxLen_);
     });
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1

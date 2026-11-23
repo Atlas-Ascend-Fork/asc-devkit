@@ -370,7 +370,7 @@ def find_kernel_type_by_source(path: str, data: str, build_mode: str) -> CodeMod
         elif (kernel_type in STR_TO_KERNEL_TYPE_C310) and is_c310:
             return STR_TO_KERNEL_TYPE_C310[kernel_type]
         else:
-            print(f"[WARNING]: {kernel_type} in path: {path} do not support in soc {build_mode}!")
+            print(f"[WARNING]: {kernel_type} in path: {path} is not supported on soc {build_mode}!")
             if is_v220 or is_c310:
                 return None
             else:

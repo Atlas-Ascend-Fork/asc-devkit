@@ -236,7 +236,7 @@ def check_attr_dict(attr_dict, is_valid, attr):
     param_type = attr_dict.get("paramType")
     if attr_type is None or value is None:
         is_valid = False
-        print("If attr.list is exist, {0}.type and {0}.value is required".format(attr))
+        print("If attr.list exists, {0}.type and {0}.value are required".format(attr))
     if param_type and param_type not in ATTR_PARAMTYPE_LIST:
         is_valid = False
         print("{0}.paramType only support {1}.".format(attr, ATTR_PARAMTYPE_LIST))

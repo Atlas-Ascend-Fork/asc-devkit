@@ -103,14 +103,20 @@ __aicore__ inline void TPipe::Init()
 #if __NPU_ARCH__ == 2201
     if ASCEND_IS_AIC {
         auto enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_DEBUG_ASSERT((enQueEvtID == 0), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID should be 0"));
+        ASCENDC_DEBUG_ASSERT(
+            (enQueEvtID == 0),
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID is %d, should be 0", static_cast<int32_t>(enQueEvtID)));
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
         enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_DEBUG_ASSERT((enQueEvtID == 1), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID should be 1"));
+        ASCENDC_DEBUG_ASSERT(
+            (enQueEvtID == 1),
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID is %d, should be 1", static_cast<int32_t>(enQueEvtID)));
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
         // For load Bias
         enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-        ASCENDC_DEBUG_ASSERT((enQueEvtID == 2), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID should be 2"));
+        ASCENDC_DEBUG_ASSERT(
+            (enQueEvtID == 2),
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID is %d, should be 2", static_cast<int32_t>(enQueEvtID)));
 
         SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
     }
@@ -118,15 +124,21 @@ __aicore__ inline void TPipe::Init()
     __NPU_ARCH__ == 3002 || __NPU_ARCH__ == 5102 || __NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3103 || \
     __NPU_ARCH__ == 3113 || __NPU_ARCH__ == 5162)
     auto enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-    ASCENDC_DEBUG_ASSERT((enQueEvtID == 0), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID should be 0"));
+    ASCENDC_DEBUG_ASSERT(
+        (enQueEvtID == 0),
+        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID is %d, should be 0", static_cast<int32_t>(enQueEvtID)));
     SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
 
     enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-    ASCENDC_DEBUG_ASSERT((enQueEvtID == 1), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID should be 1"));
+    ASCENDC_DEBUG_ASSERT(
+        (enQueEvtID == 1),
+        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID is %d, should be 1", static_cast<int32_t>(enQueEvtID)));
     SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
     // For load Bias
     enQueEvtID = this->AllocEventID<HardEvent::M_MTE1>();
-    ASCENDC_DEBUG_ASSERT((enQueEvtID == 2), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID should be 2"));
+    ASCENDC_DEBUG_ASSERT(
+        (enQueEvtID == 2),
+        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enQueEvtID is %d, should be 2", static_cast<int32_t>(enQueEvtID)));
     SetFlag<HardEvent::M_MTE1>(static_cast<event_t>(enQueEvtID));
 #endif
 
@@ -337,7 +349,8 @@ __aicore__ inline bool TPipe::InitBuffer(T& que, uint8_t num, uint32_t len)
 #if defined(ASCENDC_CPU_DEBUG) && (ASCENDC_CPU_DEBUG == 1)
     ASCENDC_DEBUG_ASSERT(
         (curPoolAddr <= bufferInitLen.at(pool)),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "curPoolAddr is %d, limits is %d", curPoolAddr, bufferInitLen.at(pool)));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR, "curPoolAddr is %u bytes, limit is %u bytes", curPoolAddr, bufferInitLen.at(pool)));
 #endif
     this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(pool)].maxAddr = curPoolAddr;
     this->g_tpipeImpl.curBufSize_ += num;
@@ -350,7 +363,7 @@ __aicore__ inline bool TPipe::InitBuffer(T& que, uint8_t num, uint32_t len)
     ASCENDC_DEBUG_ASSERT(
         (this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr <= this->g_tpipeImpl.tscmBufferPtr_),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "tscm addr is %d, limits is %d",
+            KERNEL_ERROR, "L1 end address is %u, must not exceed TSCM start address %u",
             this->g_tpipeImpl.bufPool_[static_cast<uint8_t>(Hardware::L1)].maxAddr, this->g_tpipeImpl.tscmBufferPtr_));
 #ifdef ASCENDC_TIME_STAMP_ON
     PrintTimeStamp(static_cast<uint32_t>(TimeStampId::TIME_STAMP_BUFFER));
@@ -418,7 +431,7 @@ __aicore__ inline bool TPipe::InitBuffer(TBuf<pos>& buf, uint32_t len)
     ASCENDC_DEBUG_ASSERT(
         (this->g_tpipeImpl.curBufSize_ <= QBUF_MAX_LEN && this->g_tpipeImpl.curBufSize_ > 0),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Total buffer num managed by TPipe is %d, should be in range (0, %d]\n",
+            KERNEL_ERROR, "Total buffer num managed by TPipe is %d, should be in range (0, %d]",
             this->g_tpipeImpl.curBufSize_, QBUF_MAX_LEN));
 #ifdef ASCENDC_TIME_STAMP_ON
     PrintTimeStamp(static_cast<uint32_t>(TimeStampId::TIME_STAMP_BUFFER));
@@ -481,7 +494,9 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
     constexpr auto pool = GetPhyType(T::poolPos);
     ASCENDC_DEBUG_ASSERT(
         (pool == GetPhyType(U::poolPos)),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "Hardware type of input bufPool should be same as shareBuf"));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR, "Hardware type of input bufPool is %d, should equal shareBuf hardware type %d",
+            static_cast<int32_t>(pool), static_cast<int32_t>(GetPhyType(U::poolPos))));
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
     auto bufferInitLen = ConstDefiner::Instance().bufferInitLen;
     auto currentPoolSize = bufferInitLen.at(pool);
@@ -499,7 +514,7 @@ __aicore__ inline bool TPipe::InitBufPool(T& bufPool, uint32_t len, U& shareBuf)
     ASCENDC_DEBUG_ASSERT(
         (len <= shareBuf.tBufPoolImpl.maxLen_),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Length of input bufPool should be shorter than len of shareBuf, which is %u",
+            KERNEL_ERROR, "Length of input bufPool is %u bytes, should be no longer than shareBuf length %u bytes", len,
             shareBuf.tBufPoolImpl.maxLen_));
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
     ASCENDC_DEBUG_ASSERT(
@@ -746,7 +761,7 @@ __aicore__ inline void TPipe::WriteSpmBuffer(
     } else if (g_tpipeImpl.spmInfo_.spmBufType == static_cast<uint8_t>(Hardware::L1)) {
         ASCENDC_DEBUG_ASSERT(
             (writeOffset % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "writeOffset is %d, which must be 32B aligned \n", writeOffset));
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "writeOffset is %d, which must be 32B aligned", writeOffset));
         DataCopyUB2L1Impl(
             reinterpret_cast<__cbuf__ T*>(g_tpipeImpl.spmInfo_.spmAddr) + writeOffset,
             reinterpret_cast<__ubuf__ T*>(write.GetPhyAddr()), copyParams);
@@ -784,7 +799,7 @@ __aicore__ inline void TPipe::ReadSpmBuffer(
     } else if (g_tpipeImpl.spmInfo_.spmBufType == static_cast<uint8_t>(Hardware::L1)) {
         ASCENDC_DEBUG_ASSERT(
             (readOffset % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "readOffset is %d, which must be 32B aligned \n", readOffset));
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "readOffset is %d, which must be 32B aligned", readOffset));
         event_t eventIDVToMTE1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE1));
         event_t eventIDMTE1ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE1_V));
         event_t eventIDMTE1ToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE1_MTE3));
@@ -830,10 +845,10 @@ __aicore__ inline void TPipe::WriteSpmBuffer(const LocalTensor<T>& write, const 
     } else if (g_tpipeImpl.spmInfo_.spmBufType == static_cast<uint8_t>(Hardware::L1)) {
         ASCENDC_DEBUG_ASSERT(
             (writeOffset % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "writeOffset is %d, which must be 32B aligned \n", writeOffset));
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "writeOffset is %d, which must be 32B aligned", writeOffset));
         ASCENDC_DEBUG_ASSERT(
             (writeSize % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "writeSize is %d, which must be 32B aligned \n", writeSize));
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "writeSize is %d, which must be 32B aligned", writeSize));
         DataCopyUB2L1Impl(
             reinterpret_cast<__cbuf__ T*>(g_tpipeImpl.spmInfo_.spmAddr) + writeOffset,
             reinterpret_cast<__ubuf__ T*>(write.GetPhyAddr()), repeatParams);
@@ -874,10 +889,10 @@ __aicore__ inline void TPipe::ReadSpmBuffer(const LocalTensor<T>& read, const in
     } else if (g_tpipeImpl.spmInfo_.spmBufType == static_cast<uint8_t>(Hardware::L1)) {
         ASCENDC_DEBUG_ASSERT(
             (readOffset % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "readOffset is %d, which must be 32B aligned \n", readOffset));
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "readOffset is %d, which must be 32B aligned", readOffset));
         ASCENDC_DEBUG_ASSERT(
             (readSize % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "readSize is %d, which must be 32B aligned \n", readSize));
+            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "readSize is %d, which must be 32B aligned", readSize));
         event_t eventIDVToMTE1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE1));
         event_t eventIDMTE1ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE1_V));
         event_t eventIDMTE1ToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE1_MTE3));
@@ -956,11 +971,15 @@ TPipe::GetAbsAddr(const LocalTensor<T>& input)
     if (hardType == Hardware::UB) {
         ASCENDC_DEBUG_ASSERT(
             (delta < TMP_UB_OFFSET),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "addr %lu exceed ub limits %lu ", delta, TMP_UB_OFFSET));
+            KERNEL_LOG_INTERNAL(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the UB limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TMP_UB_OFFSET)));
     } else {
         ASCENDC_DEBUG_ASSERT(
             (delta < TOTAL_L1_SIZE),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "addr %lu exceed l1 limits %lu", delta, TOTAL_L1_SIZE));
+            KERNEL_LOG_INTERNAL(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the L1 limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TOTAL_L1_SIZE)));
     }
     return delta;
 }
@@ -991,11 +1010,15 @@ inline uint64_t GetAbsAddr(TPipe* tpipe, const LocalTensor<T>& input)
     if (hardType == Hardware::UB) {
         ASCENDC_DEBUG_ASSERT(
             (delta < TMP_UB_OFFSET),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "addr %lu exceed ub limits %lu ", delta, TMP_UB_OFFSET));
+            KERNEL_LOG_INTERNAL(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the UB limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TMP_UB_OFFSET)));
     } else {
         ASCENDC_DEBUG_ASSERT(
             (delta < TOTAL_L1_SIZE),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "addr %lu exceed l1 limits %lu", delta, TOTAL_L1_SIZE));
+            KERNEL_LOG_INTERNAL(
+                KERNEL_ERROR, "address offset %llu bytes exceeds the L1 limit %llu bytes",
+                static_cast<unsigned long long>(delta), static_cast<unsigned long long>(TOTAL_L1_SIZE)));
     }
     return delta;
 }
@@ -1124,7 +1147,7 @@ __aicore__ inline bool TPipe::TscmInitBuffer(T& que, uint8_t num, uint32_t len)
     ASCENDC_DEBUG_ASSERT(
         (this->g_tpipeImpl.curBufSize_ <= QBUF_MAX_LEN && this->g_tpipeImpl.curBufSize_ > 0),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Total buffer num managed by TPipe is %d, should be in range (0, %d]\n",
+            KERNEL_ERROR, "Total buffer num managed by TPipe is %d, should be in range (0, %d]",
             this->g_tpipeImpl.curBufSize_, QBUF_MAX_LEN));
     return true;
 }

@@ -51,9 +51,8 @@ def copy_dir(src_dir, dst_dir, exclude_dir=None):
             raise NotADirectoryError(f"kernel src dir not exists: {src_dir}")
         if exclude_dir is not None and is_subdirectory(exclude_dir, src_dir):
             warnings.warn(
-                f"\n[Warning]: Copy Warning, src_dir include dst_dir."
-                f"\n[Warning]: src: KERNEL_DIR:{src_dir}"
-                f"\n[Warning]: dst :{exclude_dir}",
+                f"[Warning]: Copy warning, src_dir includes the excluded directory. "
+                f"src: KERNEL_DIR:{src_dir}; excluded directory: {exclude_dir}",
                 category=UserWarning,
             )
         if os.path.islink(src_dir):
@@ -70,8 +69,8 @@ def copy_dir(src_dir, dst_dir, exclude_dir=None):
                     continue
                 if not check_file_extension(src_item, ["", ".txt", ".h", ".hpp", ".cpp", ".c"]):
                     warnings.warn(
-                        f"\n[Warning]: Unexpected file type found in {os.path.abspath(src_item)}"
-                        f"\n[Warning]: Please check dir is required and correct : {os.path.abspath(dir_path)}",
+                        f"[Warning]: Unexpected file type found in {os.path.abspath(src_item)}. "
+                        f"Please check whether the directory is required and correct: {os.path.abspath(dir_path)}",
                         category=UserWarning,
                     )
                 copy_file(src_item, dst_item)

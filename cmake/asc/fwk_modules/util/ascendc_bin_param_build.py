@@ -86,7 +86,7 @@ def gen_bin_param_file(
     kernel_spec_dir: str = None,
 ):
     if not os.path.exists(cfgfile):
-        print(f"INFO: {cfgfile} does not exists in this project, skip generating compile commands.")
+        print(f"INFO: {cfgfile} does not exist in this project, skip generating compile commands.")
         return
 
     debug_config = defaultdict(set)

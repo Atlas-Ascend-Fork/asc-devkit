@@ -252,7 +252,7 @@ class BinParamBuilder(opdesc_parser.OpDesc):
                     bin_file += "_relocatable"
                     self._write_build_cmd(new_param_file, bin_file, index_value, output_dir, True)
         else:
-            print("[ERROR]the generation of input_json based on specified json is failed")
+            print("[ERROR] failed to generate input_json based on specified json")
 
     def gen_input_json_based_on_specified_json(self: any, ori_json: str, output_dir: str):
         generated_files = split_json_files(ori_json, output_dir, expected_op_type=self.op_type)
@@ -269,7 +269,7 @@ class BinParamBuilder(opdesc_parser.OpDesc):
                     bin_file += "_relocatable"
                     self._write_build_cmd(new_param_file, bin_file, index_value, output_dir, True)
         else:
-            print("[ERROR]the generation of input_json based on specified json is failed")
+            print("[ERROR] failed to generate input_json based on specified json")
 
     def _gen_inputs_for_input_json(self: any, index, required_parameter, inputs):
         input_name_len = len(self.input_name)

@@ -236,9 +236,9 @@ def check_single_op_is_void(root_dir, skip_error=False):
             dir_path = os.path.join(root, sub_dir)
             if len(os.listdir(dir_path)) == 0:
                 if skip_error:
-                    print(f"[WARNING] op {sub_dir}: not any obj compile success")
+                    print(f"[WARNING] op {sub_dir}: no object files were compiled successfully")
                 else:
-                    print(f"[ERROR] op {sub_dir}: not any obj compile success")
+                    print(f"[ERROR] op {sub_dir}: no object files were compiled successfully")
                     return False
     return True
 

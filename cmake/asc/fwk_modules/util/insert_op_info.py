@@ -24,7 +24,7 @@ import const_var
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print(sys.argv)
-        print("argv error, inert_op_info.py your_op_file lib_op_file")
+        print("argv error, insert_op_info.py your_op_file lib_op_file")
         sys.exit(2)
 
     with open(sys.argv[1], "r") as load_f:

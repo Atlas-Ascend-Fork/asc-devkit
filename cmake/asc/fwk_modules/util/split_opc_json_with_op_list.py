@@ -76,10 +76,10 @@ def split_json_files(ori_json, output_dir, expected_op_type=None):
     gen output json by binary_file and opc json file
     """
     if not os.path.exists(ori_json):
-        print("[ERROR]the ori_json doesn't exist")
+        print(f"[ERROR] the ori_json file does not exist: {ori_json}")
         return []
     if not os.path.exists(output_dir):
-        print("[ERROR]the out_dir of split_json doesn't exist")
+        print(f"[ERROR] the out_dir of split_json does not exist: {output_dir}")
         return []
     try:
         with open(ori_json, "r") as file_wr:
