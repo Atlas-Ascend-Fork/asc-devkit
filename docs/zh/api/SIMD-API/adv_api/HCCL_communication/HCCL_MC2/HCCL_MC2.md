@@ -16,8 +16,12 @@
 
 -   **[Mc2SetCcReduceType](Mc2SetCcReduceType.md)**
 
+-   **[Mc2SetCcDataLenRange](Mc2SetCcDataLenRange.md)**
+
 -   **[Mc2AcquireCcResCtx](Mc2AcquireCcResCtx.md)**
 
 -   **[Mc2CcKernelLaunch](Mc2CcKernelLaunch.md)**
+
+-   **[Mc2GetSupportAlgList](Mc2GetSupportAlgList.md)**
 
 -   **[CheckOpResSufficient](CheckOpResSufficient.md)**

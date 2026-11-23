@@ -2463,8 +2463,10 @@
                 -   [Mc2SetCcSrcDataType](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2SetCcSrcDataType.md)
                 -   [Mc2SetCcDstDataType](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2SetCcDstDataType.md)
                 -   [Mc2SetCcReduceType](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2SetCcReduceType.md)
+                -   [Mc2SetCcDataLenRange](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2SetCcDataLenRange.md)
                 -   [Mc2AcquireCcResCtx](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2AcquireCcResCtx.md)
                 -   [Mc2CcKernelLaunch](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2CcKernelLaunch.md)
+                -   [Mc2GetSupportAlgList](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/Mc2GetSupportAlgList.md)
                 -   [CheckOpResSufficient](SIMD-API/adv_api/HCCL_communication/HCCL_MC2/CheckOpResSufficient.md)
 
             -   [HCCL Context](SIMD-API/adv_api/HCCL_communication/HCCL-Context/HCCL-Context.md)

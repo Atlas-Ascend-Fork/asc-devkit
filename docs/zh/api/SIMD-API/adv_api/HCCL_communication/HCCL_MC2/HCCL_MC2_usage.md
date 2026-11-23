@@ -9,6 +9,8 @@ HCCL MC2接口由Host侧参数配置、资源上下文申请和通信服务端�
 
 正式申请资源前，通信引擎设置为`CCU_SCHED`时，可以调用[CheckOpResSufficient](CheckOpResSufficient.md)预检查通信资源是否充足。
 
+正式申请资源前，也可以调用[Mc2GetSupportAlgList](Mc2GetSupportAlgList.md)查询当前通信域上指定通信任务类型和通信引擎下的可用算法名单。查询前可通过[Mc2SetCcDataLenRange](Mc2SetCcDataLenRange.md)设置数据长度范围，设置后名单按该范围过滤；不设置时查询全部可用算法。查询结果中的名字可直接作为[Mc2SetCcAlgConfig](Mc2SetCcAlgConfig.md)的算法名参数，设置后按正常流程申请通信资源并执行。查询不申请通信资源，也不启动通信服务端，调用示例请见[Mc2GetSupportAlgList](Mc2GetSupportAlgList.md)。
+
 典型流程如下：
 
 1.  调用[Mc2GetCcArgs](Mc2GetCcArgs.md)创建通信参数对象。
@@ -20,6 +22,7 @@ HCCL MC2接口由Host侧参数配置、资源上下文申请和通信服务端�
     -   [Mc2SetCcDstDataType](Mc2SetCcDstDataType.md)：设置输出数据类型。
     -   [Mc2SetCcReduceType](Mc2SetCcReduceType.md)：设置Reduce操作类型，仅AllReduce、ReduceScatter等归约类任务需要配置。
     -   [Mc2SetCcAlgConfig](Mc2SetCcAlgConfig.md)：设置通信算法。
+    -   [Mc2SetCcDataLenRange](Mc2SetCcDataLenRange.md)：设置单卡数据长度窗口，单位字节，可选配置，仅影响[Mc2GetSupportAlgList](Mc2GetSupportAlgList.md)的查询结果。
 
 3.  调用[Mc2AcquireCcResCtx](Mc2AcquireCcResCtx.md)申请通信资源上下文，获得设备侧资源上下文地址和大小。
 
