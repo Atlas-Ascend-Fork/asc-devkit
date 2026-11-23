@@ -177,7 +177,6 @@ __simd_callee__ inline void SpNetworkKernel(
 {
     // pragma unroll vs manual unroll(442).
     // when count=16384, round 10, cycles(6904 vs 5549), vex(6822 vs 4260), ipc(0.988 vs 0.768)
-    // #pragma unroll  // ccec may have a bug: https://codehub-y.huawei.com/c00564736/D_Compile_Issue/issues/172
     for (uint16_t j = 0; j < Rounds; j++) {
         ASC_PHILOX_3510_ROUND(
             tmpL0, tmpH0, tmpL1, tmpH1, tmpCtr0, tmpCtr1, tmpCtr2, tmpCtr3, tmpKey0, tmpKey1, cMul0, cMul1, pg);
