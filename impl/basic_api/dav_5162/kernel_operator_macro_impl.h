@@ -135,23 +135,10 @@ __aicore__ inline void SetConvPaddingCal(const ConvPaddingBitModeParams<T>& para
 template <typename T>
 __aicore__ inline void SetConvPaddingCal(const ConvPaddingParams<T>& params)
 {
-    constexpr uint8_t POS_PADDING_VALUE = 0;
     constexpr uint8_t POS_PADDING_CONTROL_MODE = 32;
     constexpr uint8_t POS_PADDING_VALUE_ADDR = 34;
-    T tmpValue = params.paddingValue;
-    uint64_t padding = 0;
 
-    if constexpr (sizeof(T) == B16_BYTE_SIZE) {
-        uint64_t paddingValue = static_cast<uint64_t>(tmpValue) & 0xffff;
-        padding = paddingValue;
-    } else if constexpr (sizeof(T) == B8_BYTE_SIZE) {
-        uint64_t paddingValue = static_cast<uint64_t>(tmpValue) & 0xff;
-        padding = (paddingValue << 8 | paddingValue);
-    } else {
-        uint64_t paddingValue = static_cast<uint64_t>(tmpValue) & 0xf;
-        padding = (paddingValue << 12 | paddingValue << 8 | paddingValue << 4 | paddingValue);
-    }
-
+    uint64_t padding = GetConvPaddingValueField(params.paddingValue);
     padding |= (uint64_t)(params.paddingMode & 0x3) << POS_PADDING_CONTROL_MODE;
     padding |= (uint64_t)(params.paddingAddr & 0xffff) << POS_PADDING_VALUE_ADDR;
     set_m_padding(padding);

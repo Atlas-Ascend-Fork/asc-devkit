@@ -156,6 +156,48 @@ struct ConvFMatrixDual1BitModeConfig0 {
     __aicore__ inline uint16_t GetSecondStride() const { return secondStride; };
 };
 
+// The padding value field of m_padding is fixed at b16, so the padding value must be replicated to fill it:
+// b4 is replicated 4 times, b8 is replicated twice and b16 keeps the original value.
+constexpr uint32_t CONV_PADDING_VALUE_BIT_NUM = SizeOfBits<uint16_t>::value;
+
+template <uint32_t BitWidth>
+__aicore__ constexpr uint16_t ReplicateToConvPaddingValue(uint16_t value)
+{
+    constexpr uint16_t VALUE_MASK = static_cast<uint16_t>((1U << BitWidth) - 1U);
+    uint16_t paddingValue = static_cast<uint16_t>(value & VALUE_MASK);
+    for (uint32_t shift = BitWidth; shift < CONV_PADDING_VALUE_BIT_NUM; shift <<= 1U) {
+        paddingValue = static_cast<uint16_t>(paddingValue | static_cast<uint16_t>(paddingValue << shift));
+    }
+    return paddingValue;
+}
+
+template <typename T>
+__aicore__ inline uint16_t GetConvPaddingValueField(T paddingValue)
+{
+    constexpr uint32_t BIT_WIDTH = SizeOfBits<T>::value;
+    static_assert(
+        BIT_WIDTH == INT4_BIT_NUM || BIT_WIDTH == SizeOfBits<int8_t>::value || BIT_WIDTH == CONV_PADDING_VALUE_BIT_NUM,
+        "Conv padding value only supports b4, b8 and b16 data types.");
+    union {
+        T t;
+        uint16_t u;
+    } cvt{};
+    cvt.t = paddingValue;
+    return ReplicateToConvPaddingValue<BIT_WIDTH>(cvt.u);
+}
+
+template <typename T>
+__aicore__ inline T GetConvPaddingValueFromField(uint16_t field)
+{
+    constexpr uint16_t VALUE_MASK = static_cast<uint16_t>((1U << SizeOfBits<T>::value) - 1U);
+    union {
+        T t;
+        uint16_t u;
+    } cvt{};
+    cvt.u = static_cast<uint16_t>(field & VALUE_MASK);
+    return cvt.t;
+}
+
 template <typename T>
 struct ConvPaddingBitModeConfig0 {
     uint64_t paddingValue : 16;
@@ -165,37 +207,19 @@ struct ConvPaddingBitModeConfig0 {
 
     __aicore__ inline void Init(const ConvPaddingParams<T>& params)
     {
-        union {
-            T t;
-            uint16_t u;
-        } cvt;
-        cvt.t = params.paddingValue;
-        paddingValue = cvt.u;
+        SetPaddingValue(params.paddingValue);
         paddingMode = params.paddingMode;
         paddingAddr = params.paddingAddr;
     }
 
-    __aicore__ inline void SetPaddingValue(T paddingValue_)
-    {
-        union {
-            T t;
-            uint16_t u;
-        } cvt;
-        cvt.t = paddingValue_;
-        paddingValue = cvt.u;
-    }
+    __aicore__ inline void SetPaddingValue(T paddingValue_) { paddingValue = GetConvPaddingValueField(paddingValue_); }
 
     __aicore__ inline void SetPaddingMode(uint8_t paddingMode_) { paddingMode = paddingMode_; };
     __aicore__ inline void SetPaddingAddr(uint16_t paddingAddr_) { paddingAddr = paddingAddr_; };
 
     __aicore__ inline T GetPaddingValue() const
     {
-        union {
-            T t;
-            uint16_t u;
-        } cvt;
-        cvt.u = static_cast<uint16_t>(paddingValue);
-        return cvt.t;
+        return GetConvPaddingValueFromField<T>(static_cast<uint16_t>(paddingValue));
     }
     __aicore__ inline uint8_t GetPaddingMode() const { return paddingMode; };
     __aicore__ inline uint16_t GetPaddingAddr() const { return paddingAddr; };
