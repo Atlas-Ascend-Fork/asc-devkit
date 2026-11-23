@@ -81,7 +81,7 @@ template <typename T>
 __aicore__ inline void LoadData2DL12L0BTransposeCal(
     __cb__ T* dst, __cbuf__ T* src, const LoadData2dTransposeParams& loadDataParam)
 {
-    if constexpr (SupportType<T, int4b_t>) {
+    if constexpr (SupportType<T, int4b_t>()) {
         load_cbuf_to_cb_transpose_s4(
             (__cb__ void*)dst, (__cbuf__ void*)src, loadDataParam.startIndex, loadDataParam.repeatTimes,
             loadDataParam.srcStride, loadDataParam.dstGap, inc, loadDataParam.dstFracGap);
