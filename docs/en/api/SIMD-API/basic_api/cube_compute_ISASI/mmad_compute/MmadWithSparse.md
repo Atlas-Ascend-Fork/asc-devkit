@@ -131,7 +131,7 @@ __aicore__ inline void MmadWithSparse(const LocalTensor<T>& dst, const LocalTens
 
 ## Data Type<a id="zh_cn_topic_mmadsparse_section_datatype"></a>
 
-**Table 6** Supported precision type combinations of A, B, and C (Atlas 200I/500 A2 inference product) (Atlas A2 products) (Atlas A3 products)
+**Table 6** Supported precision type combinations of A, B, and C (Atlas A2 products) (Atlas A3 products)
 
 | Left matrix A | Right matrix B | Result matrix C |
 | ------- | ------- | --------- |

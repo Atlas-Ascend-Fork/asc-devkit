@@ -111,7 +111,7 @@ This example selects different output scenarios through the compilation paramete
 
 **Scenario 7: Output format Nz, output data type float, ChannelSplit enabled**
 - Input: A [128, 128] half type, ND format; B [128, 256] half type, ND format
-- Output: C [128, 512] float type, Nz format (channel split enabled)
+- Output: C [128, 256] float type, Nz format (channel split enabled)
 - Implementation: Call `asc_copy_l0c2gm` with `enable_channel_split = true`, while layout conversion, quantization, and ReLU remain disabled
 - Description: Enable channel split during L0C Buffer-to-GM transfer, splitting each 16x16 small-z fractal into two independent 16x8 small-z fractals. The `asc_copy_l0c2gm` input and output must both be float, and only Nz output is supported
 

@@ -111,7 +111,7 @@
 
 **场景7：输出格式Nz，输出数据类型float，使能ChannelSplit**
 - 输入：A [128, 128] half类型，ND格式；B [128, 256] half类型，ND格式
-- 输出：C [128, 512] float类型，Nz格式（使能通道拆分）
+- 输出：C [128, 256] float类型，Nz格式（使能通道拆分）
 - 实现：调用`asc_copy_l0c2gm`时设置`enable_channel_split = true`，并关闭格式转换、量化和ReLU
 - 说明：在数据从L0C Buffer搬出到GM的过程中开启通道拆分功能，即将16x16小z分形矩阵拆分成两个独立的16x8小z分形矩阵输出到GM；`asc_copy_l0c2gm`的输入输出必须均为float类型，且仅支持Nz格式
 
