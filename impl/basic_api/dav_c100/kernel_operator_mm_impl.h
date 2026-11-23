@@ -207,7 +207,7 @@ template <typename T, typename U, typename S>
 __aicore__ inline void MmadCal(__cc__ T* c, __ca__ U* a, __cb__ S* b, const MmadParams& mmadParams)
 {
     ASCENDC_ASSERT(mmadParams.cmatrixSource == 0, {
-        KERNEL_LOG(KERNEL_ERROR, "the C matrix source not support BT buffer on current device");
+        KERNEL_LOG(KERNEL_ERROR, "The C matrix source does not support BT buffer on current device");
     });
     bool cmatrixInitVal = mmadParams.cmatrixInitVal && (!mmadParams.isBias);
     return mad(c, a, b, mmadParams.m, mmadParams.k, mmadParams.n, cmatrixInitVal);

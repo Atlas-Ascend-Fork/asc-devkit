@@ -424,15 +424,16 @@ __aicore__ inline void MmadCal(__cc__ T* c, __ca__ U* a, __cb__ S* b, const Mmad
             Tuple<int32_t, int4b_t, int4b_t> >()),
         {
             KERNEL_LOG(
-                KERNEL_ERROR,
-                "Failed to check dtype in Mmad, current api support dtype combination is Dst: int32_t, src0: int8_t, "
-                "src1: int8_t; Dst: int32_t, src0: uint8_t, src1: int8_t; Dst: int32_t, src0: uint8_t, src1: uint8_t; "
-                "Dst: half, src0: half, src1: half; Dst: float, src0: half, src1: half"
-                "Dst: int32_t, src0: int4b_t, src1: int4b_t");
+                KERNEL_ERROR, "Failed to check dtype in Mmad, supported dtype combinations are Dst: int32_t, "
+                              "src0: int8_t, src1: int8_t; Dst: int32_t, src0: uint8_t, src1: int8_t; Dst: "
+                              "int32_t, src0: uint8_t, src1: uint8_t; Dst: half, src0: half, src1: half; Dst: "
+                              "float, src0: half, src1: half; Dst: int32_t, src0: int4b_t, src1: int4b_t");
         });
     if constexpr ((IsSameType<U, int4b_t>::value) && (IsSameType<S, int4b_t>::value)) {
         ASCENDC_ASSERT(mmadParams.k % 2 == 0, {
-            KERNEL_LOG(KERNEL_ERROR, "When src0 and src1 are int4b_t, k must be even number.");
+            KERNEL_LOG(
+                KERNEL_ERROR, "When src0 and src1 are int4b_t, k must be an even number, current k=%u.",
+                static_cast<unsigned int>(mmadParams.k));
         });
         mad_s4(c, a, b, mmadParams.m, mmadParams.k, mmadParams.n, cmatrixInitVal);
     } else {

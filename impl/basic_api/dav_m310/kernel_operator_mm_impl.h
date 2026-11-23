@@ -29,31 +29,31 @@ namespace AscendC {
 template <typename T>
 __aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const LoadData2DParams& loadDataParam)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData2DParams on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData2DParams"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DL12L0BCal(__cb__ T* dst, __cbuf__ T* src, const LoadData2DParams& loadDataParam)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData2DParams on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData2DParams"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DGM2L0ACal(__ca__ T* dst, __gm__ T* src, const LoadData2DParams& loadDataParam)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData2DParams on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData2DParams"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DGM2L0BCal(__cb__ T* dst, __gm__ T* src, const LoadData2DParams& loadDataParam)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData2DParams on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData2DParams"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DGM2L1Cal(__cbuf__ T* dst, __gm__ T* src, const LoadData2DParams& loadDataParam)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData2DParams on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData2DParams"); });
 }
 
 template <typename T>
@@ -62,8 +62,8 @@ __aicore__ inline void LoadData2DL12L0ATransposeCal(
 {
     ASCENDC_ASSERT(false, {
         KERNEL_LOG(
-            KERNEL_ERROR, "not support LoadDataWithTranspose from L1 Buffer(A1/B1) to L0A Buffer(A2) "
-                          "on current device");
+            KERNEL_ERROR, "The current device does not support LoadDataWithTranspose from L1 Buffer(A1/B1) to "
+                          "L0A Buffer(A2)");
     });
 }
 
@@ -204,21 +204,21 @@ template <typename T>
 __aicore__ inline void LoadData3DV1L12L0ACal(
     __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV1<T>& loadDataParams)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData3DV1 on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData3DV1"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData3DV1L12L0BCal(
     __cb__ T* dst, __cbuf__ T* src, const LoadData3DParamsV1<T>& loadDataParams)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData3DV1 on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData3DV1"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData3DV1L12UBCal(
     __ubuf__ T* dst, __cbuf__ T* src, const LoadData3DParamsV1<T>& loadDataParams)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadData3DV1 on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData3DV1"); });
 }
 
 /* **************************************************************************************************
@@ -242,12 +242,13 @@ template <typename T, typename U, typename V>
 __aicore__ inline void MmadCal(
     __cc__ T* c, __ca__ U* a, __cb__ V* b, uint64_t bias, const MmadParams& mmadParams, bool cmatrixSource)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support mmad with bias calculate on current device"); });
+    ASCENDC_ASSERT(
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support mmad with bias calculation"); });
 }
 
 __aicore__ inline void MmadSpCal(__cc__ int32_t* c, __ca__ int8_t* a, __cb__ int8_t* b, const MmadParams& mmadParams)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support mmadSp calculate on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support mmadSp calculation"); });
 }
 
 template <
@@ -258,13 +259,14 @@ __aicore__ inline void LoadDataWithSparseCal(
     const LocalTensor<T>& dst, const LocalTensor<T>& src, const LocalTensor<U>& idx,
     const LoadData2dParams& loadDataParam)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadDataWithSparse calculate on current device"); });
+    ASCENDC_ASSERT(
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadDataWithSparse calculation"); });
 }
 
 template <typename T = int8_t, typename std::enable_if<IsSameType<PrimT<T>, int8_t>::value, bool>::type = true>
 __aicore__ inline void LoadUnzipIndexCal(const GlobalTensor<T>& src, uint32_t numOfIndexTabEntry)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadUnzipIndex on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadUnzipIndex"); });
 }
 /* **************************************************************************************************
  * BroadCastVecToMM                                             *

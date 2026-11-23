@@ -278,7 +278,7 @@ __aicore__ inline void LoadData2DL12L0ACal(
     const LoadData2DMxParams& loadMxDataParams)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DMxParams"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DMxParams"); });
 }
 
 template <typename T, typename U = T, typename V = fp8_e8m0_t>
@@ -287,7 +287,7 @@ __aicore__ inline void LoadData2DL12L0BCal(
     const LoadData2DMxParams& loadMxDataParams)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DMxParams"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DMxParams"); });
 }
 
 template <typename T>

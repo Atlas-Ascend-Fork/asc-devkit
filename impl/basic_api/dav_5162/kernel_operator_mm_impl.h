@@ -603,24 +603,27 @@ template <typename T>
 __aicore__ inline void LoadData3DV2L12L0ACal(
     __ca__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2Pro& loadDataParams)
 {
-    ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "LoadData3DV2L12L0A is not supported 3DParamsV2Pro on current device"); });
+    ASCENDC_ASSERT(false, {
+        KERNEL_LOG(KERNEL_ERROR, "LoadData3DV2L12L0A does not support LoadData3DParamsV2Pro on current device");
+    });
 }
 
 template <typename T>
 __aicore__ inline void LoadData3DV2L12L0BCal(
     __cb__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2Pro& loadDataParams)
 {
-    ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "LoadData3DV2L12L0B is not supported 3DParamsV2Pro on current device"); });
+    ASCENDC_ASSERT(false, {
+        KERNEL_LOG(KERNEL_ERROR, "LoadData3DV2L12L0B does not support LoadData3DParamsV2Pro on current device");
+    });
 }
 
 template <typename T>
 __aicore__ inline void LoadData3DV2L12UBCal(
     __ubuf__ T* dst, __cbuf__ T* src, const LoadData3DParamsV2Pro& loadDataParams)
 {
-    ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "LoadData3DV2L12UB is not supported 3DParamsV2Pro on current device"); });
+    ASCENDC_ASSERT(false, {
+        KERNEL_LOG(KERNEL_ERROR, "LoadData3DV2L12UB does not support LoadData3DParamsV2Pro on current device");
+    });
 }
 
 /* **************************************************************************************************

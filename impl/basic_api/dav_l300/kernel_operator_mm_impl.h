@@ -397,7 +397,11 @@ __aicore__ inline void MmadCal(
     __cc__ DstT* c, __ca__ Src0T* a, __cb__ Src1T* b, uint64_t bias, const MmadParams& mmadParams, bool cmatrixSource)
 {
     ASCENDC_ASSERT((cmatrixSource == mmadParams.cmatrixSource), {
-        KERNEL_LOG(KERNEL_ERROR, "Mmad cmatrixSource param config error");
+        KERNEL_LOG(
+            KERNEL_ERROR,
+            "Mmad cmatrixSource param config error, configured cmatrixSource=%u, derived from "
+            "bias position=%u",
+            static_cast<unsigned int>(mmadParams.cmatrixSource), static_cast<unsigned int>(cmatrixSource));
     });
     ASCENDC_ASSERT(
         (SupportType<
@@ -611,7 +615,7 @@ __aicore__ inline void InitL1BufferCal(__cbuf__ T* dst, const InitConstValuePara
         config |= (uint64_t)initConstValueParams.dstGap << 32;
         set_l1_2d((__cbuf__ half*)dst, config);
     } else {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "unsupported the data type!"); });
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "The current data type is not supported."); });
     }
 }
 
@@ -637,7 +641,7 @@ __aicore__ inline void InitL0ANzMatrixCal(__ca__ T* dst, const InitConstValuePar
         config |= static_cast<uint64_t>(initConstValueParams.dstGap) << 32;
         set_l0a_2d((__ca__ half*)dst, config);
     } else {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "unsupported the data type!"); });
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "The current data type is not supported."); });
     }
 }
 
@@ -663,7 +667,7 @@ __aicore__ inline void InitL0BNzMatrixCal(__cb__ T* dst, const InitConstValuePar
         config |= static_cast<uint64_t>(initConstValueParams.dstGap) << 32;
         set_l0b_2d((__cb__ half*)dst, config);
     } else {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "unsupported the data type!"); });
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "The current data type is not supported."); });
     }
 }
 

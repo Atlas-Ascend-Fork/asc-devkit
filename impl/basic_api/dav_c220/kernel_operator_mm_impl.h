@@ -381,9 +381,8 @@ __aicore__ inline void MmadCal(__cc__ T* c, __ca__ U* a, __cb__ S* b, const Mmad
         bool cmatrixInitVal = mmadParams.cmatrixInitVal && (!mmadParams.isBias);
         if constexpr ((IsSameType<U, int4b_t>::value) && (IsSameType<S, int4b_t>::value)) {
             ASCENDC_DEBUG_ASSERT(
-                (mmadParams.k % 2 == 0), KERNEL_LOG_INTERNAL(
-                                             KERNEL_ERROR, "MmadParams.k must be an "
-                                                           "even number when U and S are int4b_t.\n"));
+                (mmadParams.k % 2 == 0),
+                KERNEL_LOG_INTERNAL(KERNEL_ERROR, "MmadParams.k must be an even number when U and S are int4b_t."));
             mad_s4(
                 c, (__ca__ void*)a, (__cb__ void*)b, mmadParams.m, mmadParams.k, mmadParams.n, mmadParams.unitFlag,
                 mmadParams.kDirectionAlign, mmadParams.cmatrixSource, cmatrixInitVal);

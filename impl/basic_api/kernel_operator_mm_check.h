@@ -70,7 +70,10 @@ __aicore__ inline void CheckMmadParamsCommon(const MmadParams& mmadParams, const
     ASCENDC_DEBUG_ASSERT(
         (mmadParams.unitFlag == 0 || mmadParams.unitFlag == 2 || mmadParams.unitFlag == 3),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check unitFlag value in %s, supported values are 0, 2, and 3.\n", apiName));
+            KERNEL_ERROR,
+            "Failed to check unitFlag value in %s, supported values are 0, 2, and 3, current "
+            "value=%u",
+            apiName, static_cast<unsigned int>(mmadParams.unitFlag)));
     ReportNopWarning<uint16_t>(mmadParams.m, "mmadParams.m", apiName);
     ReportNopWarning<uint16_t>(mmadParams.n, "mmadParams.n", apiName);
     ReportNopWarning<uint16_t>(mmadParams.k, "mmadParams.k", apiName);
@@ -113,9 +116,9 @@ __aicore__ inline void CheckFixpipeQuantPreWithWorkspaceCommon(const QuantMode_t
         (quantPre == QuantMode_t::VDEQF16 || quantPre == QuantMode_t::VQF322B8_PRE || quantPre == QuantMode_t::VREQ8),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR,
-            "Failed to check quantPre value in %s, "
-            "when cbufWorkspace is given, supported values are VDEQF16 / VQF322B8_PRE / VREQ8.\n",
-            apiName));
+            "Failed to check quantPre value in %s, when cbufWorkspace is given, supported values "
+            "are VDEQF16 / VQF322B8_PRE / VREQ8, current value=%u",
+            apiName, static_cast<unsigned int>(quantPre)));
 }
 
 __aicore__ inline void CheckFixpipeQuantPreValid(const QuantMode_t quantPre, const __gm__ char* apiName)
@@ -126,9 +129,10 @@ __aicore__ inline void CheckFixpipeQuantPreValid(const QuantMode_t quantPre, con
          quantPre == QuantMode_t::VQF322B8_PRE || quantPre == QuantMode_t::REQ8 || quantPre == QuantMode_t::VREQ8),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR,
-            "Failed to check quantPre value in %s, supported values are NoQuant / F322F16 / F322BF16 / DEQF16 / "
-            "VDEQF16 / QF322B8_PRE / VQF322B8_PRE / REQ8 / VREQ8.\n",
-            apiName));
+            "Failed to check quantPre value in %s, supported values are NoQuant / F322F16 / "
+            "F322BF16 / DEQF16 / VDEQF16 / QF322B8_PRE / VQF322B8_PRE / REQ8 / VREQ8, current "
+            "value=%u",
+            apiName, static_cast<unsigned int>(quantPre)));
 }
 
 template <typename T, typename U>
@@ -140,16 +144,17 @@ __aicore__ inline void CheckFixpipeQuantPreCommon(const QuantMode_t quantPre, co
             (quantPre == QuantMode_t::QF322B8_PRE || quantPre == QuantMode_t::VQF322B8_PRE),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR,
-                "Failed to check quantPre value in %s, when src is float and dst is int8_t / uint8_t, supported values "
-                "are QF322B8_PRE and VQF322B8_PRE.\n",
-                apiName));
+                "Failed to check quantPre value in %s, when src is float and dst is int8_t / "
+                "uint8_t, supported values are QF322B8_PRE and VQF322B8_PRE, current value=%u",
+                apiName, static_cast<unsigned int>(quantPre)));
     } else if constexpr (IsSameType<PrimT<U>, float>::value && IsSameType<PrimT<T>, half>::value) {
         ASCENDC_DEBUG_ASSERT(
-            (quantPre == QuantMode_t::F322F16), KERNEL_LOG_INTERNAL(
-                                                    KERNEL_ERROR,
-                                                    "Failed to check quantPre value in %s, when src is float and dst "
-                                                    "is half, supported value is F322F16.\n",
-                                                    apiName));
+            (quantPre == QuantMode_t::F322F16),
+            KERNEL_LOG_INTERNAL(
+                KERNEL_ERROR,
+                "Failed to check quantPre value in %s, when src is float and dst is half, "
+                "supported value is F322F16, current value=%u",
+                apiName, static_cast<unsigned int>(quantPre)));
 #if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 2201) || (__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 5102) || \
                               (__NPU_ARCH__ == 5162) || (__NPU_ARCH__ == 9201) || (__NPU_ARCH__ == 9202))
     } else if constexpr (IsSameType<PrimT<U>, float>::value && IsSameType<PrimT<T>, bfloat16_t>::value) {
@@ -157,28 +162,26 @@ __aicore__ inline void CheckFixpipeQuantPreCommon(const QuantMode_t quantPre, co
             (quantPre == QuantMode_t::F322BF16),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR,
-                "Failed to check quantPre value in %s, when src is float and dst is bfloat16_t, supported value is "
-                "F322BF16.\n",
-                apiName));
+                "Failed to check quantPre value in %s, when src is float and dst is bfloat16_t, "
+                "supported value is F322BF16, current value=%u",
+                apiName, static_cast<unsigned int>(quantPre)));
 #endif
     } else if constexpr (IsSameType<PrimT<U>, int32_t>::value && SupportType<PrimT<T>, int8_t, uint8_t>()) {
         ASCENDC_DEBUG_ASSERT(
             (quantPre == QuantMode_t::REQ8 || quantPre == QuantMode_t::VREQ8),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR,
-                "Failed to check quantPre value in %s, when src is int32_t and dst is int8_t / uint8_t, supported "
-                "values "
-                "are REQ8 and VREQ8.\n",
-                apiName));
+                "Failed to check quantPre value in %s, when src is int32_t and dst is int8_t / "
+                "uint8_t, supported values are REQ8 and VREQ8, current value=%u",
+                apiName, static_cast<unsigned int>(quantPre)));
     } else if constexpr (IsSameType<PrimT<U>, int32_t>::value && IsSameType<PrimT<T>, half>::value) {
         ASCENDC_DEBUG_ASSERT(
             (quantPre == QuantMode_t::DEQF16 || quantPre == QuantMode_t::VDEQF16),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR,
-                "Failed to check quantPre value in %s, when src is int32_t and dst is half, supported values are "
-                "DEQF16 "
-                "and VDEQF16.\n",
-                apiName));
+                "Failed to check quantPre value in %s, when src is int32_t and dst is half, "
+                "supported values are DEQF16 and VDEQF16, current value=%u",
+                apiName, static_cast<unsigned int>(quantPre)));
     }
 }
 
@@ -242,7 +245,10 @@ __aicore__ inline void CheckFixpipeParamsV220Common(const FixpipeParamsV220& int
     ASCENDC_DEBUG_ASSERT(
         (intriParams.unitFlag == 0 || intriParams.unitFlag == 2 || intriParams.unitFlag == 3),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check unitFlag value in %s, supported values are 0, 2, and 3.\n", apiName));
+            KERNEL_ERROR,
+            "Failed to check unitFlag value in %s, supported values are 0, 2, and 3, current "
+            "value=%u",
+            apiName, static_cast<unsigned int>(intriParams.unitFlag)));
 
     CheckFixpipeQuantPreCommon<T, U>(intriParams.quantPre, apiName);
 }
@@ -262,9 +268,9 @@ __aicore__ inline void CheckFixpipeWorkspace(
          intriParams.quantPre == QuantMode_t::VREQ8),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR,
-            "Failed to check quantPre value in %s, "
-            "when cbufWorkspace is given, supported values are VDEQF16 / VQF322B8_PRE / VREQ8.\n",
-            apiName));
+            "Failed to check quantPre value in %s, when cbufWorkspace is given, supported values "
+            "are VDEQF16 / VQF322B8_PRE / VREQ8, current value=%u",
+            apiName, static_cast<unsigned int>(intriParams.quantPre)));
 }
 
 template <typename T, typename U, const FixpipeConfig& config>

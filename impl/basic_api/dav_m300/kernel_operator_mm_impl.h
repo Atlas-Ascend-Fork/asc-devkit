@@ -78,7 +78,8 @@ __aicore__ inline void LoadData2DL12L0BTransposeCal(
 {
     ASCENDC_ASSERT(false, {
         KERNEL_LOG(
-            KERNEL_ERROR, "current device don't support load_cbuf_to_cb_transpose using LoadData2dTransposeParamsV2");
+            KERNEL_ERROR, "The current device does not support load_cbuf_to_cb_transpose using "
+                          "LoadData2dTransposeParamsV2");
     });
 }
 
@@ -130,35 +131,35 @@ template <typename T>
 __aicore__ inline void LoadData2DL12L0ACal(__ca__ T* dst, __cbuf__ T* src, const LoadData2DParamsV2& loadDataParam)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DParamsV2"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DParamsV2"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DL12L0BCal(__cb__ T* dst, __cbuf__ T* src, const LoadData2DParamsV2& loadDataParam)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DParamsV2"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DParamsV2"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DGM2L0ACal(__ca__ T* dst, __gm__ T* src, const LoadData2DParamsV2& loadDataParam)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DParamsV2"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DParamsV2"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DGM2L0BCal(__cb__ T* dst, __gm__ T* src, const LoadData2DParamsV2& loadDataParam)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DParamsV2"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DParamsV2"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadData2DGM2L1Cal(__cbuf__ T* dst, __gm__ T* src, const LoadData2DParamsV2& loadDataParam)
 {
     ASCENDC_ASSERT(
-        false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadData using LoadData2DParamsV2"); });
+        false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadData using LoadData2DParamsV2"); });
 }
 
 /* **************************************************************************************************
@@ -381,7 +382,7 @@ __aicore__ inline void LoadDataWithSparseCal(
 template <typename T = int8_t, typename std::enable_if<IsSameType<PrimT<T>, int8_t>::value, bool>::type = true>
 __aicore__ inline void LoadUnzipIndexCal(const GlobalTensor<T>& src, uint32_t numOfIndexTabEntry)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "not support LoadUnzipIndex on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadUnzipIndex"); });
 }
 /* **************************************************************************************************
  * LoadData 3dv1                                             *
@@ -632,19 +633,19 @@ __aicore__ inline void LoadImageToLocalCal(__cbuf__ T* dst, const LoadImageToLoc
 template <typename T>
 __aicore__ inline void LoadDataUnzipToL1Cal(__cbuf__ T* dst, __gm__ T* src)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadDataUnzip"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadDataUnzip"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadDataUnzipToL0BCal(__cb__ T* dst, __gm__ T* src)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadDataUnzip"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadDataUnzip"); });
 }
 
 template <typename T>
 __aicore__ inline void LoadDataUnzipToL0ACal(__ca__ T* dst, __gm__ T* src)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "current device don't support LoadDataUnzip"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "The current device does not support LoadDataUnzip"); });
 }
 } // namespace AscendC
 #endif // ASCENDC_MODULE_OPERATOR_MM_IMPL_H
