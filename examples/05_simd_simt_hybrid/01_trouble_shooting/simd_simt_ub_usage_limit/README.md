@@ -299,7 +299,7 @@ Case 0说明了UB访问越界可能表现为精度异常。混合编程场景涉
 
 本Case包含四条路径：不调用VF、仅调用SIMD VF、仅调用SIMT VF、同时调用SIMD VF和SIMT VF。存在VF调用时，分别验证默认配置、关闭VF预留和关闭全部预留时的UB最大可用上限。
 
-单个Vector Core共有256KB UB。存在VF调用时，默认配置下有8KB预留空间（6KB VF预留和2KB Ascend C API预留）；不调用VF的路径，不预留该部分UB空间。`--cce-disable-vf-stack-reserved-ubuf`用于关闭6KB VF预留，`--cce-disable-asc-reserved-ubuf`用于关闭2KB Ascend C API预留。根据[SIMT内存层级](../../../../docs/zh/guide/programming_guide/programming_model/ai_core_simt_programming/memory_hierarchy.md#共享内存大小的限制)，Data Cache是SIMT专有空间，用于缓存SIMT线程访问GM的数据，空间范围为32KB～128KB。包含SIMT VF的混合编程场景下，需要从UB中划分Data Cache；因此，应按“至少保留32KB Data Cache”反推静态UB与动态UB可占用的最大空间。Data Cache实际大小由UB总量扣除静态内存、动态内存和预留空间后的剩余空间计算。
+单个Vector Core共有256KB UB。存在VF调用时，默认配置下有8KB预留空间（6KB VF预留和2KB Ascend C API预留）；不调用VF的路径，不预留该部分UB空间。`--cce-disable-vf-stack-reserved-ubuf`用于关闭6KB VF预留，`--cce-disable-asc-reserved-ubuf`用于关闭2KB Ascend C API预留。根据[SIMT内存层级](../../../../docs/zh/guide/programming_guide/programming_model/ai_core_simt_programming/memory_hierarchy.md#共享内存)，Data Cache是SIMT专有空间，用于缓存SIMT线程访问GM的数据，空间范围为32KB～128KB。包含SIMT VF的混合编程场景下，需要从UB中划分Data Cache；因此，应按“至少保留32KB Data Cache”反推静态UB与动态UB可占用的最大空间。Data Cache实际大小由UB总量扣除静态内存、动态内存和预留空间后的剩余空间计算。
 
 | SCENARIO_NUM | VF调用 | Data Cache约束 | 默认配置场景可用UB大小（预留8KB） | 关闭VF预留场景可用UB大小（预留2KB） | 关闭全部预留场景可用UB大小（预留0KB） |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -591,7 +591,7 @@ The extend info: errcode:(341) errorStr: The address for VEC to access UB is out
 
 **分析**：
 
-精度校验通过只能说明输出数据未观察到精度异常，不能说明申请的静态UB后面的区域可以越界访问。[SIMT内存层级](../../../../docs/zh/guide/programming_guide/programming_model/ai_core_simt_programming/memory_hierarchy.md#共享内存大小的限制)指出，访问超出已申请的静态UB或动态UB范围后，不一定立即表现为内存分配失败，但可能破坏Data Cache并导致计算结果不稳定或精度异常。当前结果中，MainScalar写Data Cache未报告运行错误但出现精度异常；SIMT VF写越界目标区域则触发VEC访问UB越界错误。
+精度校验通过只能说明输出数据未观察到精度异常，不能说明申请的静态UB后面的区域可以越界访问。[SIMT内存层级](../../../../docs/zh/guide/programming_guide/programming_model/ai_core_simt_programming/memory_hierarchy.md#共享内存)指出，访问超出已申请的静态UB或动态UB范围后，不一定立即表现为内存分配失败，但可能破坏Data Cache并导致计算结果不稳定或精度异常。当前结果中，MainScalar写Data Cache未报告运行错误但出现精度异常；SIMT VF写越界目标区域则触发VEC访问UB越界错误。
 
 **结论**：
 
