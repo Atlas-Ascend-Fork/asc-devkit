@@ -8,7 +8,7 @@
 
 | 产品 | CANN软件版本 |
 |------|-------------|
-| Ascend 950PR/Ascend 950DT | >= CANN 9.1.0 |
+| Ascend 950PR&950DT系列产品 | >= CANN 9.3.0 |
 
 ## 目录结构介绍
 
@@ -42,7 +42,7 @@
 ## 编译运行
 在本样例根目录下执行如下步骤，编译并执行样例。
 - 配置环境变量  
-  请根据当前环境上CANN开发套件包的[安装方式](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md)，配置环境变量，**当前仅支持使用[CANN master](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md)**。
+  请根据当前环境上CANN开发套件包的[安装方式](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md#prepare&install)，配置环境变量。
 
   > **说明：** `${install_path}` 为CANN包安装目录，未指定安装目录时默认安装至 `/usr/local/Ascend` 下。
 
@@ -70,7 +70,7 @@
 | 选项　　　　　　　　　　　| 可选值　　　　　　　　　　　| 说明　　　　　　　　　　　　　　　　　　　　　　　|
 | ---------------------------| -----------------------------| ---------------------------------------------------|
 | `CMAKE_ASC_RUN_MODE`　　　| `npu`（默认）、`sim` | 运行模式：NPU 运行、NPU仿真　　　　　　　|
-| `CMAKE_ASC_ARCHITECTURES` | `dav-3510`　　　　　　　　　| NPU 架构：dav-3510 对应 Ascend 950PR/Ascend 950DT |
+| `CMAKE_ASC_ARCHITECTURES` | `dav-3510`　　　　　　　　　| NPU 架构：dav-3510 对应 Ascend 950PR&950DT系列产品 |
 
 - 执行结果
 

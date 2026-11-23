@@ -10,9 +10,11 @@
 y[i] = convert<To>(x[i])
 ```
 
-## 支持的产品
+## 本样例支持的产品及CANN软件版本
 
-- Ascend 950PR/Ascend 950DT
+| 产品 | CANN软件版本 |
+| --- | --- |
+| Ascend 950PR&950DT系列产品 | >= CANN 9.3.0 |
 
 ## 目录结构介绍
 
@@ -32,13 +34,17 @@ y[i] = convert<To>(x[i])
 
   | SCENARIO_NUM | 输入类型 | 输出类型 | Layout | Round | Sat | 转换说明 |
   | --- | --- | --- | --- | --- | --- | --- |
-  | 1 | `half` | `int32_t` | `zero` | `floor` | `not_sat` | 向下取整后转换为32位有符号整数 |
+  | 1 | `half` | `int32_t` | `zero` | `floor` | `unknown` | 向下取整后转换为32位有符号整数 |
   | 2 | `float` | `int16_t` | `zero` | `rint` | `sat` | 舍入到最近整数并饱和到 `int16_t` 范围 |
-  | 3 | `int8_t` | `int32_t` | `zero` | `rint` | `not_sat` | 8位有符号整数扩展为32位有符号整数 |
-  | 4 | `int32_t` | `uint8_t` | `zero` | `rint` | `sat` | 饱和到 `[0, 255]` 后转换为8位无符号整数 |
-  | 5 | `bfloat16_t` | `float` | `zero` | `rint` | `not_sat` | `bfloat16_t` 扩展为 `float` |
+  | 3 | `int8_t` | `int32_t` | `zero` | `unknown` | `unknown` | 8位有符号整数扩展为32位有符号整数 |
+  | 4 | `int32_t` | `uint8_t` | `zero` | `unknown` | `sat` | 饱和到 `[0, 255]` 后转换为8位无符号整数 |
+  | 5 | `bfloat16_t` | `float` | `zero` | `unknown` | `unknown` | `bfloat16_t` 扩展为 `float` |
   | 6 | `float` | `bfloat16_t` | `zero` | `rint` | `not_sat` | `float` 舍入为 `bfloat16_t` |
-  | 7 | UB：`int4b_t`，寄存器：`int4x2_t` | `half` | `zero/one/two/three` | `rint` | `not_sat` | 直接加载512个 packed INT4，分别转换四个 quarter |
+  | 7 | UB：`int4b_t`，寄存器：`int4x2_t` | `half` | `zero/one/two/three` | `unknown` | `unknown` | 直接加载512个`int4b_t`，通过四种 layout 分别转换每组4字节中的对应字节，每次得到128个 half，并按 layout 顺序分段写回。|
+
+  每次调用 `cast` 都必须显式传入编译期 `cast_options`。表中的 `unknown` 表示该转换不提供对应模式选择，并不表示可以替换为 `rint` 或 `not_sat`。支持的完整配置组合请参考 [cast API资料](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/api/SIMD-API/tensor_api/reg_vector_compute/type_conversion/cast.md)。
+
+  Kernel在SIMD VF外保存CTRL，清零 `CTRL[60]` 以采用单指令饱和配置，并在计算及搬出完成后同步全部流水、恢复原CTRL，避免依赖全局饱和配置。场景2的数据包含舍入中间值和超出 `int16_t` 范围的数值；场景4包含负数、255附近的边界值及 `int32_t` 的极值，用于校验饱和转换。
 
 - 样例规格：
 
@@ -87,45 +93,42 @@ y[i] = convert<To>(x[i])
   | 4 | 512个 `int32_t` | 2048 B | 512个 `uint8_t` | 512 B |
   | 5 | 512个 `bfloat16_t` | 1024 B | 512个 `float` | 2048 B |
   | 6 | 512个 `float` | 2048 B | 512个 `bfloat16_t` | 1024 B |
-  | 7 | 512个 packed INT4（256个字节） | 256 B | 四个 quarter 的128个 `half`，共512个 | 1024 B |
-
-  场景7使用直接加载，源寄存器类型为 `reg_tensor<int4x2_t>`。layout 为 `q` 的
-  转换结果是输入逻辑元素 `8 * i + 2 * q` 和 `8 * i + 2 * q + 1`，即每4字节中的第q字节
-  包含的两个INT4，按 quarter 顺序写入输出。使用字节粒度的全掩码激活所有源位置。可将下方仿真命令中的
-  `SCENARIO_NUM` 和 `scenario_num` 同时设为7运行。
+  | 7 | 512个 `int4b_t`（256个字节） | 256 B | 四个 quarter 的128个 `half`，共512个 | 1024 B |
 
   场景7在GM和UB上直接构造 `int4b_t` Tensor，layout 均表示512个逻辑元素。
-  普通 `copy(x_ub, x_gm)` 由公共 B4 搬运逻辑处理256字节 packed 输入，无需 `uint8_t` 视图。
+  普通 `copy(x_ub, x_gm)` 由公共 B4 搬运逻辑处理256字节 packed 输入。
   低半字节对应偶数元素，高半字节对应奇数元素。
   普通 `load` 一次加载全部512个逻辑元素，四种 layout 分别转换128个元素，
   然后使用普通 `store` 写入输出的四个连续区段。
   输入覆盖全部256种打包字节，结果按half的16位编码逐项精确比较，无需浮点容差。
-  加载结果使用 `auto` 推导寄存器类型为 `reg_tensor<int4x2_t>`；
-  逻辑偏移到字节地址的换算由公共 Tensor 指针实现完成，样例不再单独换算。
-  编译使用 CANN 包内的头文件，不添加本地仓库头文件覆盖路径。
 
 - 样例实现：
 
   - Kernel关键步骤
 
     1. 使用 `asc::te::make_tensor`、`asc::te::make_mem_ptr` 和一维 layout 构造GM、UB Tensor；layout 使用 `make_shape(512)` 和 `make_stride(1)`。
-    2. 使用 `asc_lock/asc_unlock` 包围MTE2流水，通过 `asc::te::copy` 将输入从GM搬运到UB。
+    2. 使用 `asc::te::mutex` 包围MTE2流水，通过 `asc::te::copy` 将输入从GM搬运到UB。
     3. 根据源类型和目标类型的较大位宽计算单次寄存器处理元素数，使用 `asc::te::experimental::update_mask` 设置有效元素掩码。
     4. 相同位宽使用普通 `load/store`；扩宽转换使用 `unpack` 或 `unpack4` 加载；窄化转换使用 `deinterleave` 压紧寄存器数据后调用普通 `store`。
     5. 调用 `experimental::cast` 完成寄存器类型转换。
-    6. 使用同一个mutex依次锁定Vector和MTE3流水，再将结果从UB搬运回GM。
+    6. 使用同一个asc::te::mutex依次锁定Vector和MTE3流水，再将结果从UB搬运回GM。
 
     核心转换代码如下：
 
     ```cpp
-    auto src_reg = asc::te::experimental::load(src, coord);
+    constexpr asc::te::experimental::cast_options widening_cast_ops = {
+        asc::te::experimental::cast_layout::zero,
+        asc::te::experimental::cast_round_mode::unknown,
+        asc::te::experimental::cast_sat_mode::unknown};
+
+    auto src_reg = asc::te::experimental::load<asc::te::experimental::load_sideband_mode::unpack4>(src, coord);
     src_reg = src_reg.with_mask(asc::te::experimental::update_mask<WiderT>(remain));
 
-    auto dst_reg = asc::te::experimental::cast<int32_t>(src_reg);
+    auto dst_reg = asc::te::experimental::cast<int32_t, widening_cast_ops>(src_reg);
     asc::te::experimental::store(dst, coord, dst_reg);
     ```
 
-    窄化转换使用 layout zero 生成寄存器结果：2倍窄化通过一级 `deinterleave` 提取偶数位置，4倍窄化通过两级 `deinterleave` 提取每四个位置中的第一个元素，再使用普通 `store` 写入连续的目标数据。
+    上述片段以场景3的 `int8_t → int32_t` 为例，`WiderT` 为 `int32_t`，采用 `unpack4` 搬入。窄化转换使用 layout zero 生成寄存器结果：2倍窄化通过一级 `deinterleave` 提取偶数位置，4倍窄化通过两级 `deinterleave` 提取每四个位置中的第一个元素，再使用普通 `store` 写入连续的目标数据。
 
 ## 编译运行
 
@@ -133,7 +136,7 @@ y[i] = convert<To>(x[i])
 
 - 配置环境变量
 
-  请根据当前环境上CANN开发套件包的[安装方式](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md)，配置环境变量。**当前仅支持使用[CANN master](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md)**。
+  请根据当前环境上CANN开发套件包的[安装方式](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md#prepare&install)，配置环境变量。
   ```bash
   source ${install_path}/cann/set_env.sh
   ```
@@ -153,7 +156,7 @@ y[i] = convert<To>(x[i])
   ./demo
   ```
 
-  所有场景使用相同的编译和执行流程，仅需修改 `SCENARIO_NUM`。可选编号为1至7；运行场景7时设为 `SCENARIO_NUM=7`。生成数据时传入的 `scenario_num` 必须与编译时的 `SCENARIO_NUM` 一致。
+  所有场景使用相同的编译和执行流程，仅需修改 `SCENARIO_NUM`。可选编号为1至7。生成数据时传入的 `scenario_num` 必须与编译时的 `SCENARIO_NUM` 一致。
 
   使用NPU仿真时，可分别增加以下编译选项：
 

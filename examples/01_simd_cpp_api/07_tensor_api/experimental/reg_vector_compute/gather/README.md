@@ -12,9 +12,11 @@ dst[i] = src[index[i]], 0 <= i < 128
 
 索引范围为 `[0, 127]`，表示源寄存器内的元素位置，不是字节偏移或 GM 全局索引。128个 `half` 元素恰好占满一个256字节寄存器。
 
-## 支持的产品
+## 本样例支持的产品及CANN软件版本
 
-- Ascend 950PR/Ascend 950DT
+| 产品 | CANN软件版本 |
+| --- | --- |
+| Ascend 950PR&950DT系列产品 | >= CANN 9.3.0 |
 
 ## 目录结构介绍
 
@@ -48,7 +50,7 @@ dst[i] = src[index[i]], 0 <= i < 128
   - Kernel关键步骤
 
     1. 使用 `asc::te::make_tensor`、`asc::te::make_mem_ptr` 和 layout 构造 GM、UB Tensor。
-    2. 使用 `asc_lock/asc_unlock` 包围 MTE2 流水，通过 `make_copy(copy_gm_to_ub{})` 和 `copy` 将源数据与索引从 GM 搬运到 UB。
+    2. 使用 `asc::te::mutex` 包围 MTE2 流水，通过 `make_copy(copy_gm_to_ub{})` 和 `copy` 将源数据与索引从 GM 搬运到 UB。
     3. 使用 `update_mask<half>` 创建128个有效元素的 mask，通过 `load` 加载源数据与索引，并使用 `with_mask` 设置有效元素。
     4. 调用 `gather(source_reg, index_reg)` 完成索引收集，结果继承索引寄存器的 mask。
     5. 使用 `store` 写入 UB 输出 Tensor，再通过 `make_copy(copy_ub_to_gm{})` 和 `copy` 写回 GM。
@@ -83,9 +85,12 @@ dst[i] = src[index[i]], 0 <= i < 128
   mkdir -p build && cd build
   cmake -DCMAKE_ASC_ARCHITECTURES=dav-3510 ..
   make -j
-  python3 ../scripts/gen_data.py
+  python3 ../scripts/gen_data.py \
+    --source input/input_x.bin --indexes input/input_y.bin --golden output/golden.bin
   ./demo
   ```
+
+  数据生成脚本通过必填参数指定源数据、索引和真值文件路径，不内置文件名。`--case` 可选 `random`、`identity`、`reverse`、`repeated`，默认 `random`。Host 程序使用固定的样例目录布局，因此运行 `./demo` 时请使用上述路径。
 
   在支持的 NPU 环境运行时，可省略 `-DCMAKE_ASC_RUN_MODE=sim`，默认运行模式为 `npu`。使用仿真模式时，在上述 CMake 命令中添加 `-DCMAKE_ASC_RUN_MODE=sim`。切换运行模式或芯片型号时，建议先清除 `build` 目录中的 CMake 缓存。
 
@@ -107,5 +112,5 @@ dst[i] = src[index[i]], 0 <= i < 128
   Host 程序已包含精度校验，也可以在 `build` 目录下执行以下命令，使用 Python 脚本独立校验输出文件：
 
   ```bash
-  python3 ../scripts/verify_result.py
+  python3 ../scripts/verify_result.py --output output/output.bin --golden output/golden.bin
   ```

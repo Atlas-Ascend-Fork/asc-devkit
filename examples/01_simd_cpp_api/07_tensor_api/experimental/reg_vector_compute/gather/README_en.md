@@ -12,9 +12,11 @@ dst[i] = src[index[i]], 0 <= i < 128
 
 Indexes range from 0 to 127 and represent element positions within the source register, not byte offsets or global GM indexes. The 128 `half` elements exactly fill one 256-byte register.
 
-## Supported Products
+## Supported Products and CANN Versions
 
-- Ascend 950PR/Ascend 950DT
+| Product | CANN Version |
+| --- | --- |
+| Ascend 950PR&950DT products | >= CANN 9.3.0 |
 
 ## Directory Structure
 
@@ -48,7 +50,7 @@ Indexes range from 0 to 127 and represent element positions within the source re
   - Key kernel steps
 
     1. Construct GM and UB Tensors using `asc::te::make_tensor`, `asc::te::make_mem_ptr`, and a layout.
-    2. Enclose the MTE2 pipeline operations with `asc_lock/asc_unlock`, and transfer source data and indexes from GM to UB using `make_copy(copy_gm_to_ub{})` and `copy`.
+    2. Enclose the MTE2 pipeline operations with `asc::te::mutex`, and transfer source data and indexes from GM to UB using `make_copy(copy_gm_to_ub{})` and `copy`.
     3. Use `update_mask<half>` to create a mask with 128 active elements, load source data and indexes with `load`, and set the active elements with `with_mask`.
     4. Call `gather(source_reg, index_reg)` to gather elements by index. The result inherits the index register mask.
     5. Use `store` to write to the UB output Tensor, then transfer the result to GM using `make_copy(copy_ub_to_gm{})` and `copy`.
@@ -83,9 +85,12 @@ Perform the following steps from the sample root directory to build and run the 
   mkdir -p build && cd build
   cmake -DCMAKE_ASC_ARCHITECTURES=dav-3510 ..
   make -j
-  python3 ../scripts/gen_data.py
+  python3 ../scripts/gen_data.py \
+    --source input/input_x.bin --indexes input/input_y.bin --golden output/golden.bin
   ./demo
   ```
+
+  The data generation script requires explicit paths for the source, indexes, and golden data; it does not embed file names. The optional `--case` accepts `random`, `identity`, `reverse`, or `repeated` and defaults to `random`. The host program uses a fixed sample directory layout, so use the paths above when running `./demo`.
 
   When running in a supported NPU environment, `-DCMAKE_ASC_RUN_MODE=sim` can be omitted; the default run mode is `npu`. For simulation mode, add `-DCMAKE_ASC_RUN_MODE=sim` to the CMake command above. When switching run modes or chip models, it is recommended to clear the CMake cache in the `build` directory first.
 
@@ -107,5 +112,5 @@ Perform the following steps from the sample root directory to build and run the 
   The host program already includes accuracy verification. You can also run the following command from the `build` directory to independently verify the output file using the Python script:
 
   ```bash
-  python3 ../scripts/verify_result.py
+  python3 ../scripts/verify_result.py --output output/output.bin --golden output/golden.bin
   ```

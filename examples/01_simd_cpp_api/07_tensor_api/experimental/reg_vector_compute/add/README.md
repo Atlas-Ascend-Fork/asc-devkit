@@ -10,9 +10,11 @@
 dst[i] = src0[i] + src1[i]
 ```
 
-## 支持的产品
+## 本样例支持的产品及CANN软件版本
 
-- Ascend 950PR/Ascend 950DT
+| 产品 | CANN软件版本 |
+| --- | --- |
+| Ascend 950PR&950DT系列产品 | >= CANN 9.3.0 |
 
 ## 目录结构介绍
 
@@ -33,7 +35,7 @@ dst[i] = src0[i] + src1[i]
   - Kernel关键步骤
 
     1. 使用 `asc::te::make_tensor`、`asc::te::make_mem_ptr` 和 `asc::te::make_frame_layout` 构造 GM、UB 上的一维 Tensor。
-    2. 使用 `asc_lock/asc_unlock` 包围 MTE2 流水，通过 `asc::te::copy` 将两个输入从 GM 搬运到 UB。
+    2. 使用 `asc::te::mutex` 包围 MTE2 流水，通过 `asc::te::copy` 将两个输入从 GM 搬运到 UB。
     3. 使用 `all_mask` 和 `load` 将 UB 数据加载为 Reg Tensor。
     4. 调用实验性 `operator+` 完成逐元素加法。
     5. 使用 `store` 和 `asc::te::copy` 将结果写回 UB 和 GM。
@@ -55,7 +57,7 @@ dst[i] = src0[i] + src1[i]
 
 - 配置环境变量
 
-  配置 CANN 软件包环境变量，详细操作请参考[环境变量配置](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md)。
+  配置 CANN 软件包环境变量，详细操作请参考[环境变量配置](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md#prepare&install)。
 
   ```bash
   source ${install_path}/set_env.sh

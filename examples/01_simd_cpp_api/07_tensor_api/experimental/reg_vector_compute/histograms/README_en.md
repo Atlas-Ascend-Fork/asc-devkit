@@ -4,9 +4,11 @@
 
 This sample demonstrates how to use the experimental Tensor API `asc::te::experimental::histograms` to compute the cumulative histogram for the high-half range `[128, 255]` from 256 `uint8_t` elements and output 128 `uint16_t` elements.
 
-## Supported Products
+## Supported Products and CANN Versions
 
-- Ascend 950PR&950DT products
+| Product | CANN Version |
+| --- | --- |
+| Ascend 950PR&950DT products | >= CANN 9.3.0 |
 
 ## Directory Structure
 
@@ -35,7 +37,7 @@ Perform the following steps in the sample root directory to build and run the sa
 
 - Configure environment variables
 
-  Configure the CANN package environment variables by following the [environment configuration guide](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md).
+  Configure the CANN package environment variables by following the [environment configuration guide](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md#prepare&install).
 
   ```bash
   source ${install_path}/set_env.sh

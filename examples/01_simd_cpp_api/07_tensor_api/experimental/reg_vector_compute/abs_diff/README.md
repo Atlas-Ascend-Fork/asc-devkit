@@ -8,9 +8,11 @@
 dst[i] = |src0[i] - src1[i]|
 ```
 
-## 支持的产品
+## 本样例支持的产品及CANN软件版本
 
-- Ascend 950PR&950DT系列产品
+| 产品 | CANN软件版本 |
+| --- | --- |
+| Ascend 950PR&950DT系列产品 | >= CANN 9.3.0 |
 
 ## 目录结构介绍
 
@@ -48,7 +50,7 @@ dst[i] = |src0[i] - src1[i]|
 
 - 配置环境变量
 
-  配置CANN软件包环境变量，详细操作请参考[环境变量配置](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md)。
+  配置CANN软件包环境变量，详细操作请参考[环境变量配置](https://gitcode.com/cann/asc-devkit/blob/master/docs/zh/quick_start.md#prepare&install)。
 
   ```bash
   source ${install_path}/set_env.sh

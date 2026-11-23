@@ -8,7 +8,7 @@ This example uses the experimental `asc::te::experimental::fill` interface for s
 
 | Product | CANN Version |
 | --- | --- |
-| Ascend 950PR/Ascend 950DT | >= CANN 9.1.0 |
+| Ascend 950PR&950DT products | >= CANN 9.3.0 |
 
 ## Directory Structure
 
@@ -44,7 +44,7 @@ fill
 Perform the following steps in the example root directory to build and run the example.
 
 - Configure environment variables  
-  Configure the environment variables according to the CANN development kit [installation instructions](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md). **Currently, only [CANN master](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md) is supported.**
+  Configure the environment variables according to the CANN development kit [installation instructions](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md#prepare&install).
 
   > **Note:** `${install_path}` is the CANN package installation directory. If no installation directory is specified, the default directory is `/usr/local/Ascend`.
 
@@ -74,7 +74,7 @@ Perform the following steps in the example root directory to build and run the e
 | Option | Values | Description |
 | --- | --- | --- |
 | `CMAKE_ASC_RUN_MODE` | `npu` (default), `sim` | Run mode: NPU execution or NPU simulation |
-| `CMAKE_ASC_ARCHITECTURES` | `dav-3510` | NPU architecture: `dav-3510` corresponds to Ascend 950PR/Ascend 950DT |
+| `CMAKE_ASC_ARCHITECTURES` | `dav-3510` | NPU architecture: `dav-3510` corresponds to Ascend 950PR&950DT products |
 
 - Execution result
 

@@ -26,14 +26,14 @@ def gen_golden_data(scenario_num):
         golden = np.floor(x).astype(np.int32)
     elif scenario_num == 2:
         x = np.random.uniform(-100, 100, total_length).astype(np.float32)
-        golden = np.clip(
-            np.rint(x), np.iinfo(np.int16).min, np.iinfo(np.int16).max
-        ).astype(np.int16)
+        x[:12] = [-40000.0, -32769.0, -32768.0, -32767.5, -2.5, -1.5, 1.5, 2.5, 32766.5, 32767.0, 32768.0, 40000.0]
+        golden = np.clip(np.rint(x), np.iinfo(np.int16).min, np.iinfo(np.int16).max).astype(np.int16)
     elif scenario_num == 3:
         x = np.random.randint(-128, 128, total_length).astype(np.int8)
         golden = x.astype(np.int32)
     elif scenario_num == 4:
         x = np.random.randint(-128, 384, total_length).astype(np.int32)
+        x[:10] = [np.iinfo(np.int32).min, -1, 0, 1, 254, 255, 256, 511, 512, np.iinfo(np.int32).max]
         golden = np.clip(x, 0, 255).astype(np.uint8)
     elif scenario_num == 5:
         x_f32 = np.random.uniform(-100, 100, total_length).astype(np.float32)
@@ -44,9 +44,7 @@ def gen_golden_data(scenario_num):
         bits = x.view(np.uint32)
         upper = bits >> np.uint32(16)
         lower = bits & np.uint32(0xFFFF)
-        carry = (lower > np.uint32(0x8000)) | (
-            (lower == np.uint32(0x8000)) & ((upper & np.uint32(1)) != 0)
-        )
+        carry = (lower > np.uint32(0x8000)) | ((lower == np.uint32(0x8000)) & ((upper & np.uint32(1)) != 0))
         golden = (upper + carry.astype(np.uint32)).astype(np.uint16)
     else:
         x = ((np.arange(total_length // 2, dtype=np.uint16) * 73 + 19) % 256).astype(np.uint8)
@@ -64,8 +62,6 @@ def gen_golden_data(scenario_num):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--scenario_num", type=int, default=1, choices=[1, 2, 3, 4, 5, 6, 7]
-    )
+    parser.add_argument("--scenario_num", type=int, default=1, choices=[1, 2, 3, 4, 5, 6, 7])
     args = parser.parse_args()
     gen_golden_data(args.scenario_num)

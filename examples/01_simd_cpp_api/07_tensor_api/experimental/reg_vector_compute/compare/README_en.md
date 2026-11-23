@@ -11,9 +11,11 @@ The sample supports the following two comparison scenarios, selected by the CMak
 | 1 | The right operand is a `reg_tensor`: compares one vector with another vector element by element. |
 | 2 | The right operand is an immediate: compares a vector with a scalar element by element. |
 
-## Supported Products
+## Supported Products and CANN Versions
 
-- Ascend 950PR/Ascend 950DT
+| Product | CANN Version |
+| --- | --- |
+| Ascend 950PR&950DT products | >= CANN 9.3.0 |
 
 ## Directory Structure
 
@@ -75,7 +77,7 @@ Use the build option `SCENARIO_NUM` to select one of the following scenarios.
 
 - Sample Implementation:
 
-  - Call the `Compares` interface in GT (greater than) mode to compare the `src0_reg` vector with the scalar `0` and write the result to `mask_reg`. If an element of `src0_reg` is greater than `0`, the corresponding bit in `mask_reg` is set to 1; otherwise, it is set to 0.
+  - Call `operator>` to compare the `src0_reg` vector with the scalar `0` and write the result to `mask_reg`. If an element of `src0_reg` is greater than `0`, the corresponding bit in `mask_reg` is set to 1; otherwise, it is set to 0.
   - Call the `Select` interface with the comparison result `mask_reg`. If the corresponding bit in `mask_reg` is 1, the element from `src0_reg` is selected; otherwise, the element from `src1_reg` is selected.
   - For the `float` data type, each mask in `mask_reg` occupies four bits. `Compare` sequentially reads data from `src0_reg` and `src1_reg`, compares the elements, and writes each result to bit position `4 * N` in `mask_reg`. `Select` uses bit position `4 * N` in `mask_reg` to select data from either `src0_reg` or `src1_reg`.
   - Invoke the kernel function using the `<<<>>>` kernel launch syntax.
@@ -86,7 +88,7 @@ Perform the following steps in the sample root directory to build and run the sa
 
 - Configure Environment Variables
 
-  Configure the environment variables according to the CANN development kit [installation instructions](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md). **Currently, only [CANN master](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md) is supported.**
+  Configure the environment variables according to the CANN development kit [installation instructions](https://gitcode.com/cann/asc-devkit/blob/master/docs/en/quick_start.md#prepare&install).
 
   > **Note:** `${install_path}` is the CANN package installation directory. If no installation directory is specified, the default directory is `/usr/local/Ascend`.
 
