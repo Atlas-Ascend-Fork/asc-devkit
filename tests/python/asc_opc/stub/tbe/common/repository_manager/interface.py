@@ -17,7 +17,7 @@ External interfaces of the cann knowledege bank manager.
 __all__ = ["cann_kb_search"]
 
 
-def cann_kb_search(info_dict: str, search_config: dict, option: dict = {}) -> list:
+def cann_kb_search(info_dict: str, search_config: dict, option: dict = None) -> list:
     """Cann Knowledge Search
 
     Parameters:
