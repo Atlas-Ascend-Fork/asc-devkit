@@ -1879,7 +1879,7 @@ __simd_callee__ inline void asc_storeunalign_post_postupdate(
 __simd_callee__ inline void asc_storeunalign_post_postupdate(
     __ubuf__ int64_t*& dst, vector_store_unalign src, int32_t offset);
 
-#if (ASC_DEVKIT_VERSION_NUM >= 90200000)
+#if (ASC_DEVKIT_VERSION_NUM >= 90300000)
 __simd_callee__ inline void asc_storeunalign(
     __ubuf__ fp8_e6m2_t* dst, vector_store_unalign& src0, vector_fp8_e6m2_t src1, uint32_t count);
 __simd_callee__ inline void asc_storeunalign_postupdate(

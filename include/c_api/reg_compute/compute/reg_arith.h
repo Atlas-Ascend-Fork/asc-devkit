@@ -2365,7 +2365,7 @@ __simd_callee__ inline void asc_exp(vector_half& dst, vector_half src, vector_bo
  */
 __simd_callee__ inline void asc_exp(vector_float& dst, vector_float src, vector_bool mask);
 
-#if (ASC_DEVKIT_VERSION_NUM >= 90200000)
+#if (ASC_DEVKIT_VERSION_NUM >= 90300000)
 /**
  * @ingroup simd_c_api.reg_compute.reg_arith
  * @brief Computes the elementwise natural exponential of the half src under mask control with the compile-time

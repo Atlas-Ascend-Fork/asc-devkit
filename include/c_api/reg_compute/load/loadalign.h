@@ -10758,7 +10758,7 @@ __simd_callee__ inline void asc_loadalign_brc_elem2datablock_postupdate(
 __simd_callee__ inline void asc_loadalign_brc_elem2datablock_postupdate(
     vector_float& dst, __ubuf__ float*& src, int32_t offset);
 
-#if (ASC_DEVKIT_VERSION_NUM >= 90200000)
+#if (ASC_DEVKIT_VERSION_NUM >= 90300000)
 __simd_callee__ inline void asc_loadalign(vector_fp8_e6m2_t& dst, __ubuf__ fp8_e6m2_t* src);
 __simd_callee__ inline void asc_loadalign(vector_fp8_e6m2_t& dst, __ubuf__ fp8_e6m2_t* src, int32_t offset);
 __simd_callee__ inline void asc_loadalign(vector_fp8_e6m2_t& dst, __ubuf__ fp8_e6m2_t* src, addr_reg offset);

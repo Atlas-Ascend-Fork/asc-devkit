@@ -194,7 +194,7 @@ __simd_callee__ inline void asc_scatter(__ubuf__ float* dst, vector_float src, v
 __simd_callee__ inline void asc_scatter(
     __ubuf__ fp8_e8m0_t* dst, vector_fp8_e8m0_t src, vector_uint16_t index, vector_bool mask);
 
-#if (ASC_DEVKIT_VERSION_NUM >= 90200000)
+#if (ASC_DEVKIT_VERSION_NUM >= 90300000)
 __simd_callee__ inline void asc_scatter(
     __ubuf__ fp8_e6m2_t* dst, vector_fp8_e6m2_t src, vector_uint16_t index, vector_bool mask);
 #endif

@@ -2719,7 +2719,7 @@ __aicore__ inline void asc_copy_ub2l1(
  */
 __aicore__ inline void asc_copy_ub2l1(__cbuf__ void* dst, __ubuf__ void* src, uint32_t size);
 
-#if (ASC_DEVKIT_VERSION_NUM >= 90200000)
+#if (ASC_DEVKIT_VERSION_NUM >= 90300000)
 __aicore__ inline void asc_copy_gm2ub_align(
     __ubuf__ fp8_e6m2_t* dst, __gm__ fp8_e6m2_t* src, uint32_t burst_count, uint32_t burst_len,
     uint8_t left_padding_num, uint8_t right_padding_num, bool enable_constant_pad, asc_load_l2_cache_mode l2_cache_mode,
