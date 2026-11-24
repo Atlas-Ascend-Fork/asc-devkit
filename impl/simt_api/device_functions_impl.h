@@ -2008,7 +2008,9 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __sad(int x, int y, unsigned 
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuser-defined-warnings"
-    return z + abs(x - y);
+    unsigned int ux = static_cast<unsigned int>(x);
+    unsigned int uy = static_cast<unsigned int>(y);
+    return z + (x > y ? ux - uy : uy - ux);
 #pragma GCC diagnostic pop
 }
 

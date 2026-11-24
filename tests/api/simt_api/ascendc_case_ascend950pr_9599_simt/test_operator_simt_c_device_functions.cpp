@@ -44,6 +44,9 @@ TEST_F(DeviceTestsuite, MathApiTest)
     EXPECT_EQ(0.0f, __saturatef(-1.0f));
     EXPECT_EQ(0.0f, __saturatef(NAN));
     EXPECT_EQ(12U, __sad(3, 1, 10));
+    EXPECT_EQ(2147483659, __sad(-2147483648, 1, 10));
+    EXPECT_EQ(2147483658, __sad(2147483647, -1, 10));
+    EXPECT_EQ(2147483657, __sad(-2147483648, -1, 10));
     EXPECT_EQ(12U, __usad(1, 3, 10));
     EXPECT_EQ(16384, __mul24(0x80, 0x80));
     EXPECT_EQ(33554430U, __umul24(0xFFFFFF, 2));
