@@ -137,6 +137,11 @@ enum class asc_relu_pre_mode : uint8_t {
     VECTOR = 3,
 };
 
+enum class asc_quant_pre_round_mode : uint8_t {
+    RN = 0, // Round to nearest, ties to even.
+    RO,     // Round to nearest odd.
+};
+
 using asc_quant_mode = QuantMode_t;
 
 constexpr std::integral_constant<asc_position_quarter_mode, asc_position_quarter_mode::DISPERSE_FIRST_QUARTER>

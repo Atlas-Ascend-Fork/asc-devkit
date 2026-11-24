@@ -39,27 +39,31 @@ protected:
             dst, src, n_size, m_size, dst_stride, src_stride, unit_flag_mode, quant_pre_mode, relu_pre_mode, \
             enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre);                         \
         GlobalMockObject::verify();                                                                          \
-    }                                                                                                        \
-    TEST_F(TestCubeDatamoveCopyL0C2UB, c_api_name##_QuantPreRnd_##dst_data_type##_##src_data_type##_Succ)    \
-    {                                                                                                        \
-        __ubuf__ dst_data_type* dst = reinterpret_cast<__ubuf__ dst_data_type*>(1);                          \
-        __cc__ src_data_type* src = reinterpret_cast<__cc__ src_data_type*>(2);                              \
-        uint16_t n_size = 3;                                                                                 \
-        uint16_t m_size = 4;                                                                                 \
-        uint32_t dst_stride = 6;                                                                             \
-        uint16_t src_stride = 7;                                                                             \
-        bool quant_pre_rnd = true;                                                                           \
-        asc_unit_flag_mode unit_flag_mode = asc_unit_flag_mode::ENABLE_KEEP;                                 \
-        asc_quant_mode quant_pre_mode = static_cast<asc_quant_mode>(0);                                      \
-        asc_relu_pre_mode relu_pre_mode = asc_relu_pre_mode::NORMAL;                                         \
-        bool enable_channel_split = true;                                                                    \
-        bool enable_nz2nd = true;                                                                            \
-        bool enable_nz2dn = false;                                                                           \
-        bool enable_clip_relu_pre = true;                                                                    \
-        c_api_name(                                                                                          \
-            dst, src, n_size, m_size, dst_stride, src_stride, quant_pre_rnd, unit_flag_mode, quant_pre_mode, \
-            relu_pre_mode, enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre);          \
-        GlobalMockObject::verify();                                                                          \
+    }
+
+#define TEST_CUBE_DATAMOVE_L0C2UB_RND(                                                                                \
+    class_name, c_api_name, cce_name, dst_data_type, src_data_type, quant_mode, round_mode)                           \
+    TEST_F(                                                                                                           \
+        TestCubeDatamoveCopyL0C2UB, c_api_name##_QuantPreRnd_##dst_data_type##_##src_data_type##_##round_mode##_Succ) \
+    {                                                                                                                 \
+        __ubuf__ dst_data_type* dst = reinterpret_cast<__ubuf__ dst_data_type*>(1);                                   \
+        __cc__ src_data_type* src = reinterpret_cast<__cc__ src_data_type*>(2);                                       \
+        uint16_t n_size = 3;                                                                                          \
+        uint16_t m_size = 4;                                                                                          \
+        uint32_t dst_stride = 6;                                                                                      \
+        uint16_t src_stride = 7;                                                                                      \
+        auto quant_pre_rnd = asc_quant_pre_round_mode::round_mode;                                                    \
+        asc_unit_flag_mode unit_flag_mode = asc_unit_flag_mode::ENABLE_KEEP;                                          \
+        asc_quant_mode quant_pre_mode = asc_quant_mode::quant_mode;                                                   \
+        asc_relu_pre_mode relu_pre_mode = asc_relu_pre_mode::NORMAL;                                                  \
+        bool enable_channel_split = true;                                                                             \
+        bool enable_nz2nd = true;                                                                                     \
+        bool enable_nz2dn = false;                                                                                    \
+        bool enable_clip_relu_pre = true;                                                                             \
+        c_api_name(                                                                                                   \
+            dst, src, n_size, m_size, dst_stride, src_stride, quant_pre_rnd, unit_flag_mode, quant_pre_mode,          \
+            relu_pre_mode, enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre);                   \
+        GlobalMockObject::verify();                                                                                   \
     }
 
 TEST_CUBE_DATAMOVE_L0C2UB(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub_s4, int4b_t, float);
@@ -77,3 +81,8 @@ TEST_CUBE_DATAMOVE_L0C2UB(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, uint8_t
 TEST_CUBE_DATAMOVE_L0C2UB(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, half, int32_t);
 TEST_CUBE_DATAMOVE_L0C2UB(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, bfloat16_t, int32_t);
 TEST_CUBE_DATAMOVE_L0C2UB(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, int32_t, int32_t);
+
+TEST_CUBE_DATAMOVE_L0C2UB_RND(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, half, float, F322F16, RN);
+TEST_CUBE_DATAMOVE_L0C2UB_RND(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, half, float, F322F16, RO);
+TEST_CUBE_DATAMOVE_L0C2UB_RND(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, bfloat16_t, float, F322BF16, RN);
+TEST_CUBE_DATAMOVE_L0C2UB_RND(L0C2UB, asc_copy_l0c2ub, copy_matrix_cc_to_ub, bfloat16_t, float, F322BF16, RO);

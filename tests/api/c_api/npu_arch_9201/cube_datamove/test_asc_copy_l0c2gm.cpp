@@ -19,63 +19,67 @@ protected:
     void TearDown() { g_coreType = C_API_AIV_TYPE; }
 };
 
-#define TEST_CUBE_DATAMOVE_L0C2GM(class_name, c_api_name, cce_name, dst_data_type, src_data_type)                   \
-    TEST_F(TestCubeDatamoveCopyL0C2GM, c_api_name##_##dst_data_type##_##src_data_type##_Succ)                       \
-    {                                                                                                               \
-        __cbuf__ dst_data_type* dst = reinterpret_cast<__cbuf__ dst_data_type*>(1);                                 \
-        __cc__ src_data_type* src = reinterpret_cast<__cc__ src_data_type*>(2);                                     \
-        uint16_t n_size = 3;                                                                                        \
-        uint16_t m_size = 4;                                                                                        \
-        uint32_t dst_stride = 6;                                                                                    \
-        uint16_t src_stride = 7;                                                                                    \
-        asc_store_l2_cache_mode l2_cache_mode = asc_store_l2_cache_mode::NORMAL_FIRST_VICTIM;                       \
-        uint8_t enable_clip_relu_pre = 8;                                                                           \
-        asc_unit_flag_mode unit_flag_mode = asc_unit_flag_mode::ENABLE_KEEP;                                        \
-        asc_quant_mode quant_pre_mode = static_cast<asc_quant_mode>(0);                                             \
-        asc_relu_pre_mode relu_pre_mode = asc_relu_pre_mode::NORMAL;                                                \
-        bool enable_channel_split = true;                                                                           \
-        bool enable_nz2nd = true;                                                                                   \
-        uint64_t quant_post = 13;                                                                                   \
-        uint8_t relu_post = 14;                                                                                     \
-        bool clip_relu_post = true;                                                                                 \
-        uint8_t eltwise_op = 15;                                                                                    \
-        bool eltwise_antq_en = true;                                                                                \
-        bool c0_pad_en = true;                                                                                      \
-        bool broadcast_en = false;                                                                                  \
-        bool enable_nz2dn = false;                                                                                  \
-        c_api_name(                                                                                                 \
-            dst, src, n_size, m_size, dst_stride, src_stride, l2_cache_mode, unit_flag_mode, quant_pre_mode,        \
-            relu_pre_mode, enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre);                 \
-        GlobalMockObject::verify();                                                                                 \
-    }                                                                                                               \
-    TEST_F(TestCubeDatamoveCopyL0C2GM, c_api_name##_QuantPreRnd_##dst_data_type##_##src_data_type##_Succ)           \
-    {                                                                                                               \
-        __cbuf__ dst_data_type* dst = reinterpret_cast<__cbuf__ dst_data_type*>(1);                                 \
-        __cc__ src_data_type* src = reinterpret_cast<__cc__ src_data_type*>(2);                                     \
-        uint16_t n_size = 3;                                                                                        \
-        uint16_t m_size = 4;                                                                                        \
-        uint32_t dst_stride = 6;                                                                                    \
-        uint16_t src_stride = 7;                                                                                    \
-        asc_store_l2_cache_mode l2_cache_mode = asc_store_l2_cache_mode::NORMAL_FIRST_VICTIM;                       \
-        bool quant_pre_rnd = true;                                                                                  \
-        uint8_t enable_clip_relu_pre = 8;                                                                           \
-        asc_unit_flag_mode unit_flag_mode = asc_unit_flag_mode::ENABLE_KEEP;                                        \
-        asc_quant_mode quant_pre_mode = static_cast<asc_quant_mode>(0);                                             \
-        asc_relu_pre_mode relu_pre_mode = asc_relu_pre_mode::NORMAL;                                                \
-        bool enable_channel_split = true;                                                                           \
-        bool enable_nz2nd = true;                                                                                   \
-        uint64_t quant_post = 13;                                                                                   \
-        uint8_t relu_post = 14;                                                                                     \
-        bool clip_relu_post = true;                                                                                 \
-        uint8_t eltwise_op = 15;                                                                                    \
-        bool eltwise_antq_en = true;                                                                                \
-        bool c0_pad_en = true;                                                                                      \
-        bool broadcast_en = false;                                                                                  \
-        bool enable_nz2dn = false;                                                                                  \
-        c_api_name(                                                                                                 \
-            dst, src, n_size, m_size, dst_stride, src_stride, l2_cache_mode, quant_pre_rnd, unit_flag_mode,         \
-            quant_pre_mode, relu_pre_mode, enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre); \
-        GlobalMockObject::verify();                                                                                 \
+#define TEST_CUBE_DATAMOVE_L0C2GM(class_name, c_api_name, cce_name, dst_data_type, src_data_type)            \
+    TEST_F(TestCubeDatamoveCopyL0C2GM, c_api_name##_##dst_data_type##_##src_data_type##_Succ)                \
+    {                                                                                                        \
+        __cbuf__ dst_data_type* dst = reinterpret_cast<__cbuf__ dst_data_type*>(1);                          \
+        __cc__ src_data_type* src = reinterpret_cast<__cc__ src_data_type*>(2);                              \
+        uint16_t n_size = 3;                                                                                 \
+        uint16_t m_size = 4;                                                                                 \
+        uint32_t dst_stride = 6;                                                                             \
+        uint16_t src_stride = 7;                                                                             \
+        asc_store_l2_cache_mode l2_cache_mode = asc_store_l2_cache_mode::NORMAL_FIRST_VICTIM;                \
+        uint8_t enable_clip_relu_pre = 8;                                                                    \
+        asc_unit_flag_mode unit_flag_mode = asc_unit_flag_mode::ENABLE_KEEP;                                 \
+        asc_quant_mode quant_pre_mode = static_cast<asc_quant_mode>(0);                                      \
+        asc_relu_pre_mode relu_pre_mode = asc_relu_pre_mode::NORMAL;                                         \
+        bool enable_channel_split = true;                                                                    \
+        bool enable_nz2nd = true;                                                                            \
+        uint64_t quant_post = 13;                                                                            \
+        uint8_t relu_post = 14;                                                                              \
+        bool clip_relu_post = true;                                                                          \
+        uint8_t eltwise_op = 15;                                                                             \
+        bool eltwise_antq_en = true;                                                                         \
+        bool c0_pad_en = true;                                                                               \
+        bool broadcast_en = false;                                                                           \
+        bool enable_nz2dn = false;                                                                           \
+        c_api_name(                                                                                          \
+            dst, src, n_size, m_size, dst_stride, src_stride, l2_cache_mode, unit_flag_mode, quant_pre_mode, \
+            relu_pre_mode, enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre);          \
+        GlobalMockObject::verify();                                                                          \
+    }
+
+#define TEST_CUBE_DATAMOVE_L0C2GM_RND(                                                                                \
+    class_name, c_api_name, cce_name, dst_data_type, src_data_type, quant_mode, round_mode)                           \
+    TEST_F(                                                                                                           \
+        TestCubeDatamoveCopyL0C2GM, c_api_name##_QuantPreRnd_##dst_data_type##_##src_data_type##_##round_mode##_Succ) \
+    {                                                                                                                 \
+        __cbuf__ dst_data_type* dst = reinterpret_cast<__cbuf__ dst_data_type*>(1);                                   \
+        __cc__ src_data_type* src = reinterpret_cast<__cc__ src_data_type*>(2);                                       \
+        uint16_t n_size = 3;                                                                                          \
+        uint16_t m_size = 4;                                                                                          \
+        uint32_t dst_stride = 6;                                                                                      \
+        uint16_t src_stride = 7;                                                                                      \
+        asc_store_l2_cache_mode l2_cache_mode = asc_store_l2_cache_mode::NORMAL_FIRST_VICTIM;                         \
+        auto quant_pre_rnd = asc_quant_pre_round_mode::round_mode;                                                    \
+        uint8_t enable_clip_relu_pre = 8;                                                                             \
+        asc_unit_flag_mode unit_flag_mode = asc_unit_flag_mode::ENABLE_KEEP;                                          \
+        asc_quant_mode quant_pre_mode = asc_quant_mode::quant_mode;                                                   \
+        asc_relu_pre_mode relu_pre_mode = asc_relu_pre_mode::NORMAL;                                                  \
+        bool enable_channel_split = true;                                                                             \
+        bool enable_nz2nd = true;                                                                                     \
+        uint64_t quant_post = 13;                                                                                     \
+        uint8_t relu_post = 14;                                                                                       \
+        bool clip_relu_post = true;                                                                                   \
+        uint8_t eltwise_op = 15;                                                                                      \
+        bool eltwise_antq_en = true;                                                                                  \
+        bool c0_pad_en = true;                                                                                        \
+        bool broadcast_en = false;                                                                                    \
+        bool enable_nz2dn = false;                                                                                    \
+        c_api_name(                                                                                                   \
+            dst, src, n_size, m_size, dst_stride, src_stride, l2_cache_mode, quant_pre_rnd, unit_flag_mode,           \
+            quant_pre_mode, relu_pre_mode, enable_channel_split, enable_nz2nd, enable_nz2dn, enable_clip_relu_pre);   \
+        GlobalMockObject::verify();                                                                                   \
     }
 
 TEST_CUBE_DATAMOVE_L0C2GM(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm_s4, int4b_t, float);
@@ -93,3 +97,8 @@ TEST_CUBE_DATAMOVE_L0C2GM(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, uint8_t
 TEST_CUBE_DATAMOVE_L0C2GM(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, half, int32_t);
 TEST_CUBE_DATAMOVE_L0C2GM(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, bfloat16_t, int32_t);
 TEST_CUBE_DATAMOVE_L0C2GM(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, int32_t, int32_t);
+
+TEST_CUBE_DATAMOVE_L0C2GM_RND(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, half, float, F322F16, RN);
+TEST_CUBE_DATAMOVE_L0C2GM_RND(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, half, float, F322F16, RO);
+TEST_CUBE_DATAMOVE_L0C2GM_RND(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, bfloat16_t, float, F322BF16, RN);
+TEST_CUBE_DATAMOVE_L0C2GM_RND(L0C2GM, asc_copy_l0c2gm, copy_matrix_cc_to_gm, bfloat16_t, float, F322BF16, RO);
