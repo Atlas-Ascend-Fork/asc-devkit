@@ -490,35 +490,39 @@ __aicore__ inline void LnImpl(__ubuf__ T* dst, __ubuf__ T* src, const uint32_t c
 /* **************************************************************************************************
  * Not                                             *
  * ************************************************************************************************* */
-// Not::Level 0
-UNARY_VEC_NORMAL_NOT_SUPPORT(NotImpl);
-UNARY_VEC_BITWISE_NOT_SUPPORT(NotImpl);
-// normal mode
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, uint8_t)
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, int8_t)
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, uint16_t);
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, int16_t);
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, half);
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, float);
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, uint32_t);
-UNARY_VEC_NORMAL_IMPL(NotImpl, Not, int32_t);
-// bit mode
-UNARY_VEC_BITWISE_IMPL(NotImpl, Not, uint16_t);
-UNARY_VEC_BITWISE_IMPL(NotImpl, Not, int16_t);
-UNARY_VEC_BITWISE_IMPL(NotImpl, Not, half);
-UNARY_VEC_BITWISE_IMPL(NotImpl, Not, float);
-UNARY_VEC_BITWISE_IMPL(NotImpl, Not, uint32_t);
-UNARY_VEC_BITWISE_IMPL(NotImpl, Not, int32_t);
-// Not::Level 2
-UNARY_VEC_COUNTER_NOT_SUPPORT(NotImpl);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, uint8_t);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, int8_t);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, uint16_t);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, int16_t);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, half);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, float);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, uint32_t);
-UNARY_VEC_COUNTER_IMPL(NotImpl, Not, int32_t);
+template <typename T, bool isSetMask = true>
+__aicore__ inline void NotImpl(
+    __ubuf__ T* dst, __ubuf__ T* src, const uint64_t mask[], const uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    static_assert(
+        (SupportType<T, half, float, uint16_t, int16_t, uint32_t, int32_t>()),
+        "current data type is not supported on current device!");
+    constexpr auto func = Reg::Not<T, Reg::MaskMergeMode::ZEROING, Reg::RegTensor<T>>;
+    Internal::VecUnaryLevel0Template<func, isSetMask, true>(dst, src, mask, 0, repeatTime, repeatParams);
+}
+
+template <typename T, bool isSetMask = true>
+__aicore__ inline void NotImpl(
+    __ubuf__ T* dst, __ubuf__ T* src, const uint64_t mask, const uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    static_assert(
+        (SupportType<T, half, float, uint16_t, int16_t, uint32_t, int32_t>()),
+        "current data type is not supported on current device!");
+    constexpr auto func = Reg::Not<T, Reg::MaskMergeMode::ZEROING, Reg::RegTensor<T>>;
+    Internal::VecUnaryLevel0Template<func, isSetMask, false>(dst, src, nullptr, mask, repeatTime, repeatParams);
+}
+
+template <typename T>
+__aicore__ inline void NotImpl(__ubuf__ T* dst, __ubuf__ T* src, const uint32_t count)
+{
+    static_assert(
+        (SupportType<T, int8_t, uint8_t, half, float, uint16_t, int16_t, uint32_t, int32_t>()),
+        "current data type is not supported on current device!");
+    constexpr auto func = Reg::Not<T, Reg::MaskMergeMode::ZEROING, Reg::RegTensor<T>>;
+    Internal::VecUnaryLevel2ImplTemplate<func, T>(dst, src, count);
+}
 
 /* **************************************************************************************************
  * Neg                                            *
