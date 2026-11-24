@@ -46,7 +46,7 @@ bool __hbequx2(half2 x, half2 y)
 
 ## 返回值说明
 
-比较输入数据各分量是否均相等的结果。任一输入为nan时返回false。
+比较输入数据各分量是否均相等的结果。若任一输入的分量为nan，该分量的比较结果为true。当两个分量比较结果均为true时接口返回true。
 
 ## 约束说明
 
@@ -98,7 +98,7 @@ bool __hbequx2(half2 x, half2 y)
 输入输出示例如下：
 
 ```text
-x: (-1, 0), (1, -1), (inf, -inf), (nan, 0.5)
-y: (1, 0), (1, -2), (inf, inf), (0.5, nan)
-result: false, false, false, true
+x: (-1, 0), (1, -1), (inf, -inf), (nan, 0.5), (nan, 1)
+y: (1, 0), (1, -2), (inf, inf), (0.5, nan), (1, 2)
+result: false, false, false, true, false
 ```
