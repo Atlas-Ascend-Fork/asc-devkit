@@ -182,7 +182,9 @@ __aicore__ inline void SetLoop3Para(const FixpipeParamsArch3510<config.format>& 
 {
     // the loop3DstStride range has increased.
     if constexpr (config.format == CO2Layout::ROW_MAJOR) {
-        ASCENDC_ASSERT((intriParams.params.ndNum > 0), { KERNEL_LOG(KERNEL_ERROR, "ndNum must be larger than 0"); });
+        ASCENDC_ASSERT((intriParams.params.ndNum > 0), {
+            KERNEL_LOG(KERNEL_ERROR, "ndNum must be larger than 0, current value is %u", intriParams.params.ndNum);
+        });
         // Loop3_dst_stride in uint of element
         uint64_t loop3Para = static_cast<uint64_t>(intriParams.params.dstNdStride) << 32; // LOOP3_PARA[63:32]
         // original src_nd_stride in uint of fractal_size(1024B = 16 * 16 * sizeof(SrcT))
@@ -191,7 +193,9 @@ __aicore__ inline void SetLoop3Para(const FixpipeParamsArch3510<config.format>& 
         loop3Para |= static_cast<uint64_t>(intriParams.params.ndNum);             // LOOP3_PARA[15:0]
         set_loop3_para(loop3Para);
     } else if constexpr (config.format == CO2Layout::COLUMN_MAJOR) {
-        ASCENDC_ASSERT((intriParams.params.dnNum > 0), { KERNEL_LOG(KERNEL_ERROR, "dnNum must be larger than 0"); });
+        ASCENDC_ASSERT((intriParams.params.dnNum > 0), {
+            KERNEL_LOG(KERNEL_ERROR, "dnNum must be larger than 0, current value is %u", intriParams.params.dnNum);
+        });
         // Loop3_dst_stride in uint of element
         uint64_t loop3Para = static_cast<uint64_t>(intriParams.params.dstDnMatrixStride) << 32; // LOOP3_PARA[63:32]
         // src_nd_stride in unit of C0_SIZE, Loop3_src_stride
@@ -233,7 +237,7 @@ __aicore__ inline void FixpipeL0cToL1(
         (!(intriParams.isChannelSplit)),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check isChannelSplit in Fixpipe, when src position is "
-                          "L0C Buffer(CO1) and dst position is L1 Buffer(C1), isChannelSplit must be set as false \n"));
+                          "L0C Buffer(CO1) and dst position is L1 Buffer(C1), isChannelSplit must be set as false\n"));
 
     uint32_t srcOffset = 0;
     uint32_t dstOffset = 0;
@@ -260,7 +264,7 @@ __aicore__ inline void FixpipeL0cToUB(
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check isChannelSplit in Fixpipe, when src position is "
                           "L0C Buffer(CO1) and dst position is UB(VECIN/VECCALC/VECOUT), isChannelSplit must be set "
-                          "as false \n"));
+                          "as false\n"));
 
     // dual destination mode limit
     ASCENDC_ASSERT(
@@ -276,13 +280,17 @@ __aicore__ inline void FixpipeL0cToUB(
     ASCENDC_ASSERT(!(intriParams.dualDstCtl == 0b01 && intriParams.mSize % 2 != 0), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "dual destination mode, split in M dimension, M/2 * N is written to each UB, M must be number of 2.");
+            "dual destination mode, split in M dimension, M/2 * N is written to each UB, M must be a multiple of "
+            "2, current M is %u",
+            intriParams.mSize);
     });
 
     ASCENDC_ASSERT(!(intriParams.dualDstCtl == 0b10 && calNSize % 32 != 0), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "dual destination mode, split in N dimension, M * N/2 is written to each UB, N must be number of 32.");
+            "dual destination mode, split in N dimension, M * N/2 is written to each UB, N must be a multiple of "
+            "32, current N is %u",
+            calNSize);
     });
 
     uint32_t srcOffset = 0;
@@ -364,12 +372,12 @@ __aicore__ inline void FixpipeL0cToOut(
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format == CO2Layout::NZ),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
     uint32_t srcOffset = 0;
     uint32_t dstOffset = 0;
@@ -498,8 +506,10 @@ __aicore__ inline void CheckFixpipeParams(__cc__ SrcT* src, const FixpipeParamsA
     uint64_t srcAbsAddr = src - (SrcT*)(GetBaseAddrCpu(int8_t(TPosition::CO1)));
     ASCENDC_ASSERT((srcAbsAddr % L0C_SRC_ALIGN == 0), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check src start "
-                          "address alignment in Fixpipe");
+            KERNEL_ERROR,
+            "Failed to check src start address alignment in Fixpipe, current offset is %llu, required alignment "
+            "is %u bytes",
+            srcAbsAddr * sizeof(SrcT), L0C_SRC_ALIGN);
     });
 
     if (params.isChannelSplit) {
@@ -581,8 +591,10 @@ __aicore__ inline void CheckFixpipeL0C2UBParam(
     uint64_t dstAbsAddr = dst - (DstT*)(GetBaseAddrCpu(int8_t(TPosition::VECCALC)));
     ASCENDC_ASSERT((dstAbsAddr * sizeof(DstT) % ONE_BLK_SIZE == 0), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dst start "
-                          "address alignment in Fixpipe");
+            KERNEL_ERROR,
+            "Failed to check dst start address alignment in Fixpipe, current offset is %llu, required alignment "
+            "is %u bytes",
+            dstAbsAddr * sizeof(DstT), ONE_BLK_SIZE);
     });
 #endif
 }
@@ -596,8 +608,10 @@ __aicore__ inline void CheckFixpipeL0C2L1Param(
     uint64_t dstAbsAddr = dst - (DstT*)(GetBaseAddrCpu(int8_t(TPosition::C1)));
     ASCENDC_ASSERT((dstAbsAddr * sizeof(DstT) % ONE_BLK_SIZE == 0), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dst start "
-                          "address alignment in Fixpipe");
+            KERNEL_ERROR,
+            "Failed to check dst start address alignment in Fixpipe, current offset is %llu, required alignment "
+            "is %u bytes",
+            dstAbsAddr * sizeof(DstT), ONE_BLK_SIZE);
     });
 #endif
 }

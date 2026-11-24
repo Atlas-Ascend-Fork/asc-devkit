@@ -209,7 +209,9 @@ __aicore__ inline void SetLoop3Para(const FixpipeParamsL311<config.format>& intr
 {
     // the loop3DstStride range has increased.
     if constexpr (config.format == CO2Layout::ROW_MAJOR) {
-        ASCENDC_ASSERT((intriParams.params.ndNum > 0), { KERNEL_LOG(KERNEL_ERROR, "ndNum must larger than 0"); });
+        ASCENDC_ASSERT((intriParams.params.ndNum > 0), {
+            KERNEL_LOG(KERNEL_ERROR, "ndNum must be larger than 0, current value is %u", intriParams.params.ndNum);
+        });
         // Loop3_dst_stride in uint of element
         uint64_t loop3Para = static_cast<uint64_t>(intriParams.params.dstNdStride) << 32; // LOOP3_PARA[63:32]
         // original src_nd_stride in uint of fractal_size(1024B = 16 * 16 * sizeof(SrcT))
@@ -218,7 +220,9 @@ __aicore__ inline void SetLoop3Para(const FixpipeParamsL311<config.format>& intr
         loop3Para |= static_cast<uint64_t>(intriParams.params.srcNdStride) << 16; // LOOP3_PARA[31:16]
         set_loop3_para(loop3Para);
     } else if constexpr (config.format == CO2Layout::COLUMN_MAJOR) {
-        ASCENDC_ASSERT((intriParams.params.dnNum > 0), { KERNEL_LOG(KERNEL_ERROR, "dnNum must larger than 0"); });
+        ASCENDC_ASSERT((intriParams.params.dnNum > 0), {
+            KERNEL_LOG(KERNEL_ERROR, "dnNum must be larger than 0, current value is %u", intriParams.params.dnNum);
+        });
         // Loop3_dst_stride in uint of element
         uint64_t loop3Para = static_cast<uint64_t>(intriParams.params.dstDnMatrixStride) << 32; // LOOP3_PARA[63:32]
         // src_nd_stride in unit of C0_SIZE, Loop3_src_stride
@@ -239,7 +243,7 @@ __aicore__ inline void FixpipeL0cToL1(
         (!(intriParams.isChannelSplit)),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check isChannelSplit in Fixpipe, when src position is "
-                          "L0C Buffer(CO1) and dst position is L1 Buffer(C1), isChannelSplit must be set as false \n"));
+                          "L0C Buffer(CO1) and dst position is L1 Buffer(C1), isChannelSplit must be set as false\n"));
     static_assert(
         SupportType<
             Tuple<SrcT, DstT>, Tuple<half, int4b_t>, Tuple<half, int8_t>, Tuple<half, uint8_t>, Tuple<half, int16_t>,
@@ -362,12 +366,12 @@ __aicore__ inline void FixpipeL0cToOut(
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float.\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format == CO2Layout::NZ),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
     uint16_t cburstNum = fixpipeTiling.nSize / BLOCK_CUBE;
     uint32_t srcOffset = cburstNum * nIterIndex * intriParams.srcStride * BLOCK_CUBE;

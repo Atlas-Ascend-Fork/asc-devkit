@@ -47,12 +47,12 @@ __aicore__ inline void CheckFixpipeL0C2L1Param(__cbuf__ T* dst, __cc__ U* src, c
         (config.format != CO2Layout::ROW_MAJOR),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check format in Fixpipe, when src position is L0C Buffer(CO1) and dst position "
-                          "is L1 Buffer(C1), format must be set as NZ \n"));
+                          "is L1 Buffer(C1), format must be set as NZ\n"));
     ASCENDC_DEBUG_ASSERT(
         (!(params.isChannelSplit)),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check isChannelSplit in Fixpipe, when src position is "
-                          "L0C Buffer(CO1) and dst position is L1 Buffer(C1), isChannelSplit must be set as false \n"));
+                          "L0C Buffer(CO1) and dst position is L1 Buffer(C1), isChannelSplit must be set as false\n"));
 
     ASCENDC_DEBUG_ASSERT(
         (SupportType<
@@ -63,7 +63,7 @@ __aicore__ inline void CheckFixpipeL0C2L1Param(__cbuf__ T* dst, __cc__ U* src, c
             "Failed to check dtype in Fixpipe, when src position is L0C Buffer(CO1) and dst "
             "position is L1 Buffer(C1), support dtype combinations are src: float, dst: int8_t / uint8_t / half / "
             "bfloat16_t; "
-            "src: int32_t, dst: int8_t / uint8_t / half"));
+            "src: int32_t, dst: int8_t / uint8_t / half."));
 }
 
 template <typename T, typename U, const FixpipeConfig& config>
@@ -80,21 +80,23 @@ __aicore__ inline void CheckFixpipeL0C2GMParam(__gm__ T* dst, __cc__ U* src, con
             "dtype in Fixpipe, when src position is L0C Buffer(CO1) and dst position is GM, support dtype "
             "combinations are src: "
             "float, dst: int8_t / uint8_t / half / bfloat16_t / float; src: int32_t, dst: int8_t / uint8_t / half / "
-            "int32_t"));
+            "int32_t."));
     if constexpr (IsSameType<U, float>::value && IsSameType<T, float>::value) {
         ASCENDC_DEBUG_ASSERT(
             (params.quantPre == QuantMode_t::NoQuant),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR,
                 "Failed to check quantPre value in Fixpipe, when src is float, dst is float, supported value is "
-                "NoQuant"));
+                "NoQuant, current value is %d",
+                static_cast<int32_t>(params.quantPre)));
     } else if constexpr (IsSameType<U, int32_t>::value && IsSameType<T, int32_t>::value) {
         ASCENDC_DEBUG_ASSERT(
             (params.quantPre == QuantMode_t::NoQuant),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR,
                 "Failed to check quantPre value in Fixpipe, when src is int32_t, dst is int32_t, supported value is "
-                "NoQuant"));
+                "NoQuant, current value is %d",
+                static_cast<int32_t>(params.quantPre)));
     }
     if (params.isChannelSplit) {
         ASCENDC_DEBUG_ASSERT(
@@ -102,12 +104,12 @@ __aicore__ inline void CheckFixpipeL0C2GMParam(__gm__ T* dst, __cc__ U* src, con
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float.\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format != CO2Layout::ROW_MAJOR),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
 }
 
@@ -168,7 +170,7 @@ __aicore__ inline void FixpipeL0C2L1Impl(__cbuf__ T* dst, __cc__ T* src, const F
             KERNEL_ERROR,
             "Failed to check dtype in Fixpipe, when src position is L0C Buffer(CO1) and dst position is L1 Buffer(C1), "
             "support dtype combinations are src: float, dst: int8_t / uint8_t / half / bfloat16_t; src: int32_t, dst: "
-            "int8_t / uint8_t / half\n"));
+            "int8_t / uint8_t / half.\n"));
 }
 
 template <typename T, const FixpipeConfig& config>
@@ -181,7 +183,7 @@ __aicore__ inline void FixpipeL0C2L1Impl(
             KERNEL_ERROR,
             "Failed to check dtype in Fixpipe, when src position is L0C Buffer(CO1) and dst position is L1 Buffer(C1), "
             "support dtype combinations are src: float, dst: int8_t / uint8_t / half / bfloat16_t; src: int32_t, dst: "
-            "int8_t / uint8_t / half\n"));
+            "int8_t / uint8_t / half.\n"));
 }
 
 template <typename T, typename U, const FixpipeConfig& config>
@@ -392,7 +394,13 @@ __aicore__ inline void FixpipeL0cToL1(
                     static_cast<uint8_t>(intriParams.reluEn), false, false);
             default:
                 ASCENDC_DEBUG_ASSERT(
-                    false, KERNEL_LOG_INTERNAL(KERNEL_ERROR, "Fixpipe doesn't support this quantize mode \n"));
+                    false,
+                    KERNEL_LOG_INTERNAL(
+                        KERNEL_ERROR,
+                        "Fixpipe doesn't support this quantize mode, current quantPre is %d, supported modes are "
+                        "NoQuant / F322F16 / F322BF16 / DEQF16 / VDEQF16 / QF322B8_PRE / VQF322B8_PRE / REQ8 / "
+                        "VREQ8\n",
+                        static_cast<int32_t>(intriParams.quantPre)));
         }
     }
 }
@@ -483,7 +491,13 @@ __aicore__ inline void FixpipeL0cToOut(
                     static_cast<uint8_t>(intriParams.reluEn), intriParams.isChannelSplit, nz2ndEn);
             default:
                 ASCENDC_DEBUG_ASSERT(
-                    false, KERNEL_LOG_INTERNAL(KERNEL_ERROR, "Fixpipe doesn't support this quantize mode \n"));
+                    false,
+                    KERNEL_LOG_INTERNAL(
+                        KERNEL_ERROR,
+                        "Fixpipe doesn't support this quantize mode, current quantPre is %d, supported modes are "
+                        "NoQuant / F322F16 / F322BF16 / DEQF16 / VDEQF16 / QF322B8_PRE / VQF322B8_PRE / REQ8 / "
+                        "VREQ8\n",
+                        static_cast<int32_t>(intriParams.quantPre)));
         }
     }
 }

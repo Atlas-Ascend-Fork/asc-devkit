@@ -105,7 +105,9 @@ __aicore__ inline bool IsScalarQuantMode(QuantMode_t quantPre)
 
 __aicore__ inline void SetLoop3Para(const FixpipeParamsM310& intriParams)
 {
-    ASCENDC_ASSERT((intriParams.ndNum > 0), { KERNEL_LOG(KERNEL_ERROR, "ndNum must be larger than 0"); });
+    ASCENDC_ASSERT((intriParams.ndNum > 0), {
+        KERNEL_LOG(KERNEL_ERROR, "ndNum must be larger than 0, current value is %u", intriParams.ndNum);
+    });
     uint64_t loop3Para = static_cast<uint64_t>(intriParams.dstNdStride) << 32; // LOOP3_PARA[63:32]
     loop3Para |= static_cast<uint64_t>(intriParams.srcNdStride) << 16;         // LOOP3_PARA[31:16]
     loop3Para |= static_cast<uint64_t>(intriParams.ndNum);                     // LOOP3_PARA[15:0]
@@ -216,12 +218,12 @@ __aicore__ inline void CheckFixpipeL0C2UBParam(__ubuf__ T* dst, __cc__ U* src, c
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format != CO2Layout::ROW_MAJOR),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
 }
 
@@ -235,14 +237,16 @@ __aicore__ inline void CheckFixpipeL0C2L1Param(__cbuf__ T* dst, __cc__ U* src, c
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check dstLocal start "
-            "address alignment in Fixpipe, when dst position is L1 Buffer(A1), its start address must align with 32B");
+            "address alignment in Fixpipe, when dst position is L1 Buffer(A1), current offset is %llu, "
+            "required alignment is %u bytes",
+            dstAbsAddr * sizeof(T), ONE_BLK_SIZE);
     });
 #endif
     ASCENDC_DEBUG_ASSERT(
         (!(params.isChannelSplit)),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check isChannelSplit in Fixpipe, when src position is "
-                          "L0C Buffer(CO1) and dst position is L1 Buffer(A1), isChannelSplit must be set as false \n"));
+                          "L0C Buffer(CO1) and dst position is L1 Buffer(A1), isChannelSplit must be set as false\n"));
 
     static_assert(
         (SupportType<
@@ -284,12 +288,12 @@ __aicore__ inline void CheckFixpipeL0C2GMParam(__gm__ T* dst, __cc__ U* src, con
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format != CO2Layout::ROW_MAJOR),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
 }
 

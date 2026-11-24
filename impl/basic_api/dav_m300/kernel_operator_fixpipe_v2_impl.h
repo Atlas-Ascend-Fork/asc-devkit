@@ -80,8 +80,10 @@ __aicore__ inline void CheckCommonFixpipeParam(__cc__ U* src, const FixpipeParam
     uint64_t srcAbsAddr = src - (U*)(GetTPipePtr()->GetBaseAddr(int8_t(TPosition::CO1)));
     ASCENDC_ASSERT(srcAbsAddr % L0C_SRC_ALIGN == 0, {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check srcLocal start address "
-                          "alignment in Fixpipe, its start address must align with 64B");
+            KERNEL_ERROR,
+            "Failed to check srcLocal start address alignment in Fixpipe, its start address must align with 64B, "
+            "current offset is %llu",
+            srcAbsAddr * sizeof(U));
     });
     if (params.isChannelSplit) {
         ASCENDC_ASSERT((params.nSize <= 4095 && params.nSize >= 1 && params.nSize % 8 == 0), {
@@ -157,32 +159,45 @@ __aicore__ inline void CheckCommonFixpipeParam(__cc__ U* src, const FixpipeParam
     if constexpr (IsSameType<U, float>::value && SupportType<T, int8_t, uint8_t>()) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::QF322B8_PRE || params.quantPre == QuantMode_t::VQF322B8_PRE), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre value in Fixpipe, when src is float, dst is "
-                              "int8_t / uint8_t, supported values are QF322B8_PRE and VQF322B8_PRE");
+                KERNEL_ERROR,
+                "Failed to check quantPre value in Fixpipe, when src is float, dst is "
+                "int8_t / uint8_t, supported values are QF322B8_PRE and VQF322B8_PRE, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     } else if constexpr (IsSameType<U, float>::value && IsSameType<T, half>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::F322F16), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre "
-                              "value in Fixpipe, when src is float, dst is half, supported value is F322F16");
+                KERNEL_ERROR,
+                "Failed to check quantPre "
+                "value in Fixpipe, when src is float, dst is half, supported value is F322F16, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     } else if constexpr (IsSameType<U, float>::value && IsSameType<T, bfloat16_t>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::F322BF16), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre"
-                              " value in Fixpipe, when src is float, dst is bfloat16_t, supported value is F322BF16");
+                KERNEL_ERROR,
+                "Failed to check quantPre"
+                " value in Fixpipe, when src is float, dst is bfloat16_t, supported value is F322BF16, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     } else if constexpr (IsSameType<U, int32_t>::value && SupportType<T, int8_t, uint8_t>()) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::REQ8 || params.quantPre == QuantMode_t::VREQ8), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre value in Fixpipe, when src is int32_t, dst is "
-                              "int8_t / uint8_t, supported values are REQ8 and VREQ8");
+                KERNEL_ERROR,
+                "Failed to check quantPre value in Fixpipe, when src is int32_t, dst is "
+                "int8_t / uint8_t, supported values are REQ8 and VREQ8, current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     } else if constexpr (IsSameType<U, int32_t>::value && IsSameType<T, half>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::DEQF16 || params.quantPre == QuantMode_t::VDEQF16), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre value in Fixpipe, when src is int32_t, dst is half, "
-                              "supported values are DEQF16 and VDEQF16");
+                KERNEL_ERROR,
+                "Failed to check quantPre value in Fixpipe, when src is int32_t, dst is half, "
+                "supported values are DEQF16 and VDEQF16, current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     }
 #endif
@@ -206,14 +221,20 @@ __aicore__ inline void CheckFixpipeL0C2UBParam(__ubuf__ T* dst, __cc__ U* src, c
     if constexpr (IsSameType<U, float>::value && IsSameType<T, float>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::NoQuant), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre "
-                              "value in Fixpipe, when src is float, dst is float, supported value is NoQuant");
+                KERNEL_ERROR,
+                "Failed to check quantPre "
+                "value in Fixpipe, when src is float, dst is float, supported value is NoQuant, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     } else if constexpr (IsSameType<U, int32_t>::value && IsSameType<T, int32_t>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::NoQuant), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre "
-                              "value in Fixpipe, when src is int32_t, dst is int32_t, supported value is NoQuant");
+                KERNEL_ERROR,
+                "Failed to check quantPre "
+                "value in Fixpipe, when src is int32_t, dst is int32_t, supported value is NoQuant, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     }
     if (params.isChannelSplit) {
@@ -222,12 +243,12 @@ __aicore__ inline void CheckFixpipeL0C2UBParam(__ubuf__ T* dst, __cc__ U* src, c
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format != CO2Layout::ROW_MAJOR),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
 }
 
@@ -241,7 +262,7 @@ __aicore__ inline void CheckFixpipeL0C2L1Param(__cbuf__ T* dst, __cc__ U* src, c
         (!(params.isChannelSplit)),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR, "Failed to check isChannelSplit in Fixpipe, when src position is "
-                          "L0C Buffer(CO1) and dst position is L1 Buffer(A1), isChannelSplit must be set as false \n"));
+                          "L0C Buffer(CO1) and dst position is L1 Buffer(A1), isChannelSplit must be set as false\n"));
     static_assert(
         (SupportType<
             Tuple<U, T>, Tuple<float, int8_t>, Tuple<float, uint8_t>, Tuple<float, half>, Tuple<float, bfloat16_t>,
@@ -268,14 +289,20 @@ __aicore__ inline void CheckFixpipeL0C2GMParam(__gm__ T* dst, __cc__ U* src, con
     if constexpr (IsSameType<U, float>::value && IsSameType<T, float>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::NoQuant), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre "
-                              "value in Fixpipe, when src is float, dst is float, supported value is NoQuant");
+                KERNEL_ERROR,
+                "Failed to check quantPre "
+                "value in Fixpipe, when src is float, dst is float, supported value is NoQuant, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     } else if constexpr (IsSameType<U, int32_t>::value && IsSameType<T, int32_t>::value) {
         ASCENDC_ASSERT((params.quantPre == QuantMode_t::NoQuant), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check quantPre "
-                              "value in Fixpipe, when src is int32_t, dst is int32_t, supported value is NoQuant");
+                KERNEL_ERROR,
+                "Failed to check quantPre "
+                "value in Fixpipe, when src is int32_t, dst is int32_t, supported value is NoQuant, "
+                "current value is %d",
+                static_cast<int32_t>(params.quantPre));
         });
     }
     if (params.isChannelSplit) {
@@ -284,12 +311,12 @@ __aicore__ inline void CheckFixpipeL0C2GMParam(__gm__ T* dst, __cc__ U* src, con
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check "
                               "isChannelSplit value in Fixpipe, isChannelSplit can be set true only when src and dst "
-                              "are both float \n"));
+                              "are both float\n"));
         ASCENDC_DEBUG_ASSERT(
             (config.format != CO2Layout::ROW_MAJOR),
             KERNEL_LOG_INTERNAL(
                 KERNEL_ERROR, "Failed to check format value in Fixpipe, "
-                              "when isChannelSplit is set true, format must be set as NZ \n"));
+                              "when isChannelSplit is set true, format must be set as NZ\n"));
     }
 }
 
