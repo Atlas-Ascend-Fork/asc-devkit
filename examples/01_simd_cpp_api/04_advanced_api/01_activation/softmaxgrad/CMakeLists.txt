@@ -40,3 +40,11 @@ target_compile_options(demo PRIVATE
 if(USE_FRONT_MODE)
     target_compile_definitions(demo PRIVATE USE_FRONT_MODE)
 endif()
+
+# Use the same target SoC for host tiling and the CPU model selected by ASC.
+if(CMAKE_ASC_RUN_MODE STREQUAL "cpu")
+    if(NOT _SOC_DIR)
+        message(FATAL_ERROR "ASC did not configure a CPU model target SoC")
+    endif()
+    target_compile_definitions(demo PRIVATE ASCENDC_CPU_DEBUG_SOC_VERSION="${_SOC_DIR}")
+endif()
