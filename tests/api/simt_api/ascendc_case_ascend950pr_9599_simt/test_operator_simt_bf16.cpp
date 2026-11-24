@@ -338,7 +338,6 @@ TEST_F(SimtCastBf16Testsuite, CastBf16Test)
 }
 // ================================ Test cast end ===============================
 
-#ifdef __BISHENG_DISABLE_SOFT_IMPL
 TEST_F(BF16Testsuite, ExtendedMathApiTest)
 {
     bfloat16_t x = 1.0;
@@ -428,4 +427,3 @@ TEST_F(BF16Testsuite, ExtendedMathApiTest)
     EXPECT_EQ(__hdiv(y, x), bfloat16_t(2.0));
     EXPECT_EQ(__hneg(x), bfloat16_t(-1.0));
 }
-#endif

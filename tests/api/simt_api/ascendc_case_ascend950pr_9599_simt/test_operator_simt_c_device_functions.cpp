@@ -30,7 +30,6 @@ TEST_F(DeviceTestsuite, MathApiTest)
 {
     int result = __float_as_int(1);
     EXPECT_EQ(1065353216, result);
-#ifdef __BISHENG_DISABLE_SOFT_IMPL
     EXPECT_EQ(64, __mul64hi(1LL << 40, 1LL << 30));
     EXPECT_EQ(-1, __mul64hi(-1LL, 1LL));
     EXPECT_EQ(23, __clz(1LL << 40));
@@ -52,7 +51,6 @@ TEST_F(DeviceTestsuite, MathApiTest)
     EXPECT_EQ(2, __rhadd(1, 2));
     EXPECT_EQ(1U, __uhadd(1, 2));
     EXPECT_EQ(2U, __urhadd(1, 2));
-#endif
 }
 
 TEST_F(DeviceTestsuite, ByteSwapApiTest)

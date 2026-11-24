@@ -31,11 +31,6 @@ namespace {
 constexpr int16_t HALF_MAX_EXP = 31;
 const float HALF_SUBNORMAL_THRESHOLD = std::pow(2, -14);
 } // namespace
-#ifndef __BISHENG_DISABLE_SOFT_IMPL
-static half __hmax_nan(half x, half y) { return x >= y ? x : y; }
-
-static half __hmin_nan(half x, half y) { return x >= y ? y : x; }
-#endif
 
 template <typename T>
 T __shfl(T var, int32_t src_lane, int32_t width)

@@ -1392,7 +1392,6 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ushort_as_bfloat16(const unsi
     return data.f;
 }
 
-#ifdef __BISHENG_DISABLE_SOFT_IMPL
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bool __heq(bfloat16_t x, bfloat16_t y)
 {
     return (x == y) && !__hisnan(x) && !__hisnan(y);
@@ -1921,7 +1920,6 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16x2_t __hcmadd(
     h.y = img_tmp;
     return h;
 }
-#endif
 
 #endif
 #endif // IMPL_SIMT_API_ASC_BF16_IMPL_H

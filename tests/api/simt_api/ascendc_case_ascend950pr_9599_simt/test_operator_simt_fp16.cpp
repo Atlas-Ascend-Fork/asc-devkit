@@ -28,7 +28,6 @@ protected:
 
 TEST_F(FP16MathTestsuite, ExtendedMathApiTest)
 {
-#ifdef __BISHENG_DISABLE_SOFT_IMPL
     half x = 1.0;
     half y = 2.0;
     half nanValue = __ushort_as_half(0x7e00U);
@@ -116,5 +115,4 @@ TEST_F(FP16MathTestsuite, ExtendedMathApiTest)
     EXPECT_EQ(y, __hmul(x, y));
     EXPECT_FLOAT_EQ(static_cast<half>(2.0), __hdiv(y, x));
     EXPECT_EQ(static_cast<half>(-1.0), __hneg(x));
-#endif
 }

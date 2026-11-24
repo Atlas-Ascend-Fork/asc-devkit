@@ -1924,7 +1924,6 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline void asc_stwt(float4* address, float4 val)
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline void asc_dcci_entire(void* dst) { dcci(dst, 1); }
 #endif
 
-#ifdef __BISHENG_DISABLE_SOFT_IMPL
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline long long __mul64hi(long long x, long long y)
 {
     bool x_neg = x < 0;
@@ -2061,7 +2060,6 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __urhadd(unsigned int x, unsi
     unsigned int r = s & 1;
     return (s >> 1) + c + r;
 }
-#endif
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned short __asc_bswap16(unsigned short x)
 {

@@ -744,62 +744,6 @@ static __SIMT_DEVICE_FUNCTIONS_DECL__ int __mulhi(int x, int y);
 
 static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __umulhi(unsigned int x, unsigned int y);
 
-#ifndef __BISHENG_DISABLE_SOFT_IMPL
-static __SIMT_DEVICE_FUNCTIONS_DECL__ long long __mul64hi(long long x, long long y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned long long __umul64hi(unsigned long long x, unsigned long long y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ long long __mul_i32toi64(int x, int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned long long __mul_i32toi64(unsigned int x, unsigned int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __brev(unsigned int x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned long long __brev(unsigned long long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned long __brev(unsigned long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __clz(int x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __clz(long long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __clz(long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __ffs(int x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __ffs(long long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __ffs(long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __popc(unsigned int x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __popc(unsigned long long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __popc(unsigned long x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __byte_perm(unsigned int x, unsigned int y, unsigned int s);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ float __saturatef(float x);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __sad(int x, int y, unsigned int z);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __usad(unsigned int x, unsigned int y, unsigned int z);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __mul24(int x, int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __umul24(unsigned int x, unsigned int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ float __fdividef(float x, float y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __hadd(int x, int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ int __rhadd(int x, int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __uhadd(unsigned int x, unsigned int y);
-
-static __SIMT_DEVICE_FUNCTIONS_DECL__ unsigned int __urhadd(unsigned int x, unsigned int y);
-#else
-
 __ASC_SIMT_SIMULATION_CHECK__(
     3510, 5102, 9201, 9202, "Hardware lacks native support for `__mul64hi`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline long long __mul64hi(long long x, long long y);
@@ -885,7 +829,6 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __uhadd(unsigned int x, unsig
 __ASC_SIMT_SIMULATION_CHECK__(
     3510, 5102, 9201, 9202, "Hardware lacks native support for `__urhadd`. Falling back to software emulation.")
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned int __urhadd(unsigned int x, unsigned int y);
-#endif
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline unsigned short __asc_bswap16(unsigned short x);
 
