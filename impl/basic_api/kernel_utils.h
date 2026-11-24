@@ -54,7 +54,11 @@ __aicore__ inline bool IsCompatibleTo3510()
 {
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201) && defined(ASCEND_OP_COMPATIBILITY_MODE) && \
     ASCEND_OP_COMPATIBILITY_MODE == 1
-    return true;
+    if (__get_mix_vector_num() == 2) {
+        return true;
+    } else {
+        return false;
+    }
 #else
     return false;
 #endif

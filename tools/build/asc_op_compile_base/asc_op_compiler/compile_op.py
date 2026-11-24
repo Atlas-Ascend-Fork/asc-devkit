@@ -366,7 +366,10 @@ def gen_kernel_fun(
         gen_func_attributes = gen_func_align_attribute(align_size)
         gen_func_attributes += " __sk__"
     else:
-        gen_func_attributes += " [aicore]"
+        if global_var_storage.get_variable("ascendc_op_compatibility_mode") is True:
+            gen_func_attributes += " __mix__(1,2)"
+        else:
+            gen_func_attributes += " [aicore]"
 
     kernel_func_dec = f'extern "C" {gen_func_attributes} void {auto_gen_kernel_func}('
     compile_info.global_kernel_attribute = gen_func_attributes
