@@ -20,7 +20,7 @@
 
 #include "impl/c_api/reg_base_impl/utils_impl.h"
 
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rn)
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rna)
 __simd_callee__ inline void asc_muls_v2(vector_half& dst, vector_float src, float value, vector_bool mask)
 {
     if ASC_IS_AIV {

@@ -188,7 +188,7 @@ Reg数据搬出接口用于将矢量数据寄存器、掩码寄存器或非对�
 | [asc_fma](reg_fused/asc_fma.md) | 逐元素乘加运算。 | `c_api/reg_compute/compute/reg_fused.h` |
 | [asc_leakyrelu](reg_fused/asc_leakyrelu.md) | 按元素执行Leaky ReLU（Leaky Rectified Linear Unit）操作。 | `c_api/reg_compute/compute/reg_fused.h` |
 | [asc_madd](reg_fused/asc_madd.md) | madd（multiply-add），对源操作数执行逐元素乘法和加法。 | `c_api/reg_compute/compute/reg_fused.h` |
-| [asc_mul_scalar_float2half_rn](reg_fused/asc_mul_scalar_float2half_rn.md) | 将`float`类型源操作数逐元素乘以标量后，按照RINT舍入模式转换为`half`类型。 | `c_api/reg_compute/compute/reg_fused.h` |
+| [asc_mul_scalar_float2half_rna](reg_fused/asc_mul_scalar_float2half_rna.md) | 将`float`类型源操作数逐元素乘以标量后，按照ROUND舍入模式转换为`half`类型。 | `c_api/reg_compute/compute/reg_fused.h` |
 | [asc_mula](reg_fused/asc_mula.md) | 根据掩码将两个源寄存器按元素相乘，并与目的寄存器累加。 | `c_api/reg_compute/compute/reg_fused.h` |
 | [asc_prelu](reg_fused/asc_prelu.md) | 源操作数`src0`大于等于0的情况下直接将`src0`写入目的操作数`dst`，否则将`src0` * `src1`的结果写入`dst`。 | `c_api/reg_compute/compute/reg_fused.h` |
 | [asc_relu](reg_fused/asc_relu.md) | 逐元素执行ReLU运算。 | `c_api/reg_compute/compute/reg_fused.h` |

@@ -62,7 +62,7 @@ Ascend 950PR&950DT系列产品
 | 复合指令 | `asc_axpy` | 结果等效于：乘累加采用高精度计算，同比Fma(x, y, z) | - |
 | 复合指令 | `asc_madd` | 结果等效于：乘累加采用高精度计算，同比Fma(x, y, z) | - |
 | 复合指令 | `asc_mula` | 结果等效于：乘累加采用高精度计算，同比Fma(x, y, z) | - |
-| 复合指令 | `asc_mul_scalar_float2half_rn` | float×float转half，固定采用RN舍入；结果为 `cast_to_f16_rn(x * y)` | - |
+| 复合指令 | `asc_mul_scalar_float2half_rna` | float×float转half，固定采用ROUND舍入；结果为 `cast_to_f16_rna(x * y)` | - |
 | 归约计算 | `asc_reduce_sum` | half/float: 0ulp, 采用二叉树结构的成对累加策略 | - |
 | 归约计算 | `asc_reduce_sum_datablock` | half/float: 0ulp, 采用二叉树结构的成对累加策略 | - |
 | 归约计算 | `asc_pair_reduce_sum` | half/float: 0ulp | - |

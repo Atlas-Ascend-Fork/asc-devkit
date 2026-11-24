@@ -7,7 +7,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/deprecated_interface/asc_muls_deprecated.md
     kind: related
     condition: "调用示例用本宏标记该接口声明"
-  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rn.md
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rna.md
     kind: related
     condition: "示例中作为被标记接口的推荐替代接口"
 version: ">=9.2.0"
@@ -55,17 +55,19 @@ Deprecated since <version>, Will be removed after <removal_date>, Use <replaceme
 
 ## 调用示例
 
-以下代码使用本宏标记[asc_muls](../../deprecated_interface/asc_muls_deprecated.md)接口声明，并推荐使用[asc_mul_scalar_float2half_rn](../../reg_compute/reg_fused/asc_mul_scalar_float2half_rn.md)接口替代。
+以下示例适用于 CANN 9.3.0 及以后版本。
+
+以下代码使用本宏标记[asc_muls](../../deprecated_interface/asc_muls_deprecated.md)接口声明，并推荐使用[asc_mul_scalar_float2half_rna](../../reg_compute/reg_fused/asc_mul_scalar_float2half_rna.md)接口替代。
 
 ```cpp
 #include "c_api/defs/macro.h"
 
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rn)
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rna)
 __simd_callee__ inline void asc_muls(vector_half& dst, vector_float src, float value, vector_bool mask);
 ```
 
 调用`asc_muls`时，编译器生成的告警信息如下：
 
 ```text
-Deprecated since 9.2.0, Will be removed after 2027/09/07, Use asc_mul_scalar_float2half_rn instead.
+Deprecated since 9.2.0, Will be removed after 2027/09/07, Use asc_mul_scalar_float2half_rna instead.
 ```

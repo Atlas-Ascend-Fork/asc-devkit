@@ -15,10 +15,10 @@ dependencies:
   - path: docs/zh/guide/programming_guide/language_extension/simd_builtin_keywords.md
     kind: related
     condition: "产品型号与NPU架构映射说明"
-version: ">=9.2.0"
+version: ">=9.3.0"
 version_changes: []
 ---
-# asc_mul_scalar_float2half_rn
+# asc_mul_scalar_float2half_rna
 
 ## 产品支持情况
 
@@ -48,6 +48,8 @@ version_changes: []
 
 头文件路径为：`"c_api/reg_compute/compute/reg_fused.h"`。
 
+`_rna`后缀表示ROUND舍入模式。此命名与实际舍入行为保持一致；乘法、类型转换、掩码和奇偶位置语义不变。
+
 根据`mask`将源操作数`src`（float类型）按元素与标量`value`相乘后，按照ROUND舍入模式转换为half类型，得到计算结果。计算公式如下：
 
 $$
@@ -60,28 +62,28 @@ $$
 
 ## 函数原型
 
-```c
+```cpp
 // 通过函数返回值返回结果，数据写入索引为偶数的位置
-__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(vector_float src,
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rna(vector_float src,
                                                                 float value,
                                                                 vector_bool mask,
                                                                 std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos)
 
 // 通过函数返回值返回结果，数据写入索引为奇数的位置
-__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(vector_float src,
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rna(vector_float src,
                                                                 float value,
                                                                 vector_bool mask,
                                                                 std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos)
 
 // 通过引用参数输出结果，数据写入索引为偶数的位置
-__simd_callee__ inline void asc_mul_scalar_float2half_rn(vector_half& dst,
+__simd_callee__ inline void asc_mul_scalar_float2half_rna(vector_half& dst,
                                                          vector_float src,
                                                          float value,
                                                          vector_bool mask,
                                                          std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos)
 
 // 通过引用参数输出结果，数据写入索引为奇数的位置
-__simd_callee__ inline void asc_mul_scalar_float2half_rn(vector_half& dst,
+__simd_callee__ inline void asc_mul_scalar_float2half_rna(vector_half& dst,
                                                          vector_float src,
                                                          float value,
                                                          vector_bool mask,
@@ -172,12 +174,12 @@ __simd_vf__ inline void compute(__ubuf__ half* dst, __ubuf__ float* src, uint32_
         vector_float src_reg;
         vector_bool mask = asc_update_mask_b32(remaining_length);
         asc_loadalign(src_reg, src + offset);
-        asc_mul_scalar_float2half_rn(dst_reg, src_reg, SCALAR_VALUE, mask, ASC_POSITION_EVEN);
+        asc_mul_scalar_float2half_rna(dst_reg, src_reg, SCALAR_VALUE, mask, ASC_POSITION_EVEN);
         asc_storealign(dst + offset * 2, dst_reg, mask_b16_all);
     }
 }
 
-__global__ __vector__ void asc_mul_scalar_float2half_rn_kernel(__gm__ half* dst, __gm__ float* src)
+__global__ __vector__ void asc_mul_scalar_float2half_rna_kernel(__gm__ half* dst, __gm__ float* src)
 {
     asc_init();
     __ubuf__ half dst_local[PADDED_ELEMENT_COUNT * 2];
@@ -220,7 +222,7 @@ int main()
         ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMemcpy(src_device, src.size() * sizeof(float), src.data(), src.size() * sizeof(float),
         ACL_MEMCPY_HOST_TO_DEVICE);
-    asc_mul_scalar_float2half_rn_kernel<<<1, 0>>>(dst_device, src_device);
+    asc_mul_scalar_float2half_rna_kernel<<<1, 0>>>(dst_device, src_device);
     aclrtSynchronizeDevice();
     aclrtMemcpy(output.data(), output.size() * sizeof(half), dst_device, output.size() * sizeof(half),
         ACL_MEMCPY_DEVICE_TO_HOST);
@@ -228,7 +230,7 @@ int main()
     for (uint32_t i = 0; i < TOTAL_LENGTH * 2; ++i) {
         passed = passed && compare_data(std::vector<half>{output[i]}, std::vector<half>{golden[i]}, 1e-3);
     }
-    std::cout << (passed ? "[Success] asc_mul_scalar_float2half_rn passed." : "[Failed] asc_mul_scalar_float2half_rn failed.") << std::endl;
+    std::cout << (passed ? "[Success] asc_mul_scalar_float2half_rna passed." : "[Failed] asc_mul_scalar_float2half_rna failed.") << std::endl;
     aclrtFree(dst_device);
     aclrtFree(src_device);
     aclrtResetDevice(0);

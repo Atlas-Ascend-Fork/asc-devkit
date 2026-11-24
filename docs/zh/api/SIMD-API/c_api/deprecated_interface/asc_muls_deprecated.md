@@ -1,20 +1,24 @@
 ---
 okftype: reference.api
-description: "已废弃的 Reg 乘标量接口，把 float 源矢量与标量 value 相乘后按 ROUND 舍入转为 half 写入目的寄存器，含无后缀与 _v2 两个隐式位置重载，替代方案为 asc_mul_scalar_float2half_rn。"
+description: "已废弃的 Reg 乘标量接口，把 float 源矢量与标量 value 相乘后按 ROUND 舍入转为 half 写入目的寄存器，含无后缀与 _v2 两个隐式位置重载。CANN 9.2.0 使用 asc_mul_scalar_float2half_rn 替代，CANN 9.3.0 起推荐使用 asc_mul_scalar_float2half_rna。"
 tag:
   - roles: [compute]
   - operations: [conversion, multiply]
   - traits: [rounding_mode, scalar_operand]
 dependencies:
-  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rn.md
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rna.md
     kind: replaced_by
+    condition: "CANN 9.3.0 及以后版本"
+  - path: docs/zh/api/SIMD-API/c_api/deprecated_interface/asc_mul_scalar_float2half_rn_deprecated.md
+    kind: replaced_by
+    condition: "CANN 9.2.0 的历史替代接口；该替代接口自 CANN 9.3.0 起废弃"
 version: ">=9.0.0"
 version_changes:
   - since: "9.2.0"
     kind: deprecated
     scope: "page"
     scope_basis: kind_default
-    note: "asc_muls 与 asc_muls_v2 废弃，改用 asc_mul_scalar_float2half_rn；include/c_api/reg_compute/compute/reg_fused.h:581 起的两个声明均带 ASC_DEPRECATED(9.2.0)，CANN_9_2_0 废弃表第 126 行列有该条目。"
+    note: "asc_muls 与 asc_muls_v2 自 CANN 9.2.0 起废弃，当时使用 asc_mul_scalar_float2half_rn 替代，并分别通过 ASC_POSITION_EVEN 和 ASC_POSITION_ODD 显式指定输出位置。"
 ---
 # asc_muls（废弃）
 
@@ -44,7 +48,7 @@ version_changes:
 
 ## 功能说明
 
-> 该接口已废弃，请使用[asc_mul_scalar_float2half_rn](../reg_compute/reg_fused/asc_mul_scalar_float2half_rn.md)替代。
+> 该接口自 CANN 9.2.0 起废弃。CANN 9.2.0 使用[asc_mul_scalar_float2half_rn](asc_mul_scalar_float2half_rn_deprecated.md)替代；CANN 9.3.0 及以后版本请直接使用[asc_mul_scalar_float2half_rna](../reg_compute/reg_fused/asc_mul_scalar_float2half_rna.md)替代。
 
 头文件路径为：`"c_api/reg_compute/compute/reg_fused.h"`。
 

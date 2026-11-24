@@ -89,7 +89,7 @@ __simd_callee__ inline vector_half asc_leakyrelu(vector_half src, half alpha, ve
     return dst;
 }
 
-__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+__simd_callee__ inline void asc_mul_scalar_float2half_rna(
     vector_half& dst, vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos)
 {
@@ -98,7 +98,7 @@ __simd_callee__ inline void asc_mul_scalar_float2half_rn(
     }
 }
 
-__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+__simd_callee__ inline void asc_mul_scalar_float2half_rna(
     vector_half& dst, vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos)
 {
@@ -256,29 +256,21 @@ __simd_callee__ inline void asc_axpy(vector_float& dst, vector_float src, float 
     }
 }
 
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rn)
-__simd_callee__ inline void asc_muls(vector_half& dst, vector_float src, float value, vector_bool mask)
-{
-    if ASC_IS_AIV {
-        vmulscvt(dst, src, value, mask, PART_EVEN);
-    }
-}
-
-__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rna(
     vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos)
 {
     vector_half dst;
-    asc_mul_scalar_float2half_rn(dst, src, value, mask, dst_pos);
+    asc_mul_scalar_float2half_rna(dst, src, value, mask, dst_pos);
     return dst;
 }
 
-__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rna(
     vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos)
 {
     vector_half dst;
-    asc_mul_scalar_float2half_rn(dst, src, value, mask, dst_pos);
+    asc_mul_scalar_float2half_rna(dst, src, value, mask, dst_pos);
     return dst;
 }
 
@@ -330,6 +322,46 @@ __simd_callee__ inline void asc_mula(vector_float& dst, vector_float src0, vecto
     if ASC_IS_AIV {
         vmula(dst, src0, src1, mask, MODE_ZEROING);
     }
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rna)
+__simd_callee__ inline void asc_muls(vector_half& dst, vector_float src, float value, vector_bool mask)
+{
+    if ASC_IS_AIV {
+        vmulscvt(dst, src, value, mask, PART_EVEN);
+    }
+}
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+    vector_half& dst, vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos)
+{
+    asc_mul_scalar_float2half_rna(dst, src, value, mask, dst_pos);
+}
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+    vector_half& dst, vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos)
+{
+    asc_mul_scalar_float2half_rna(dst, src, value, mask, dst_pos);
+}
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+    vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos)
+{
+    return asc_mul_scalar_float2half_rna(src, value, mask, dst_pos);
+}
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+    vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos)
+{
+    return asc_mul_scalar_float2half_rna(src, value, mask, dst_pos);
 }
 
 #endif

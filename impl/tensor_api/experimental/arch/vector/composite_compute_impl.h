@@ -106,9 +106,9 @@ __simd_callee__ inline reg_tensor<T> muls_cast(const reg_tensor<U>& src, const U
         "muls_cast layout supports cast_layout::zero and cast_layout::one");
     reg_tensor<T> dst(src.mask);
     if constexpr (Layout == cast_layout::zero) {
-        dst.reg = asc_mul_scalar_float2half_rn(src.reg, scalar, src.mask, ASC_POSITION_EVEN);
+        dst.reg = asc_mul_scalar_float2half_rna(src.reg, scalar, src.mask, ASC_POSITION_EVEN);
     } else {
-        dst.reg = asc_mul_scalar_float2half_rn(src.reg, scalar, src.mask, ASC_POSITION_ODD);
+        dst.reg = asc_mul_scalar_float2half_rna(src.reg, scalar, src.mask, ASC_POSITION_ODD);
     }
     return dst;
 }

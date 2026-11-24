@@ -419,7 +419,11 @@
 
 - [asc_muls](../SIMD-API/c_api/deprecated_interface/asc_muls_deprecated.md)接口
 
-    该接口已废弃，请使用[asc_mul_scalar_float2half_rn](../SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rn.md)的显式位置参数重载替代。
+    该接口已废弃，请使用[asc_mul_scalar_float2half_rna](../SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rna.md)的显式位置参数重载替代。
+
+- [asc_mul_scalar_float2half_rn（废弃）](../SIMD-API/c_api/deprecated_interface/asc_mul_scalar_float2half_rn_deprecated.md)接口
+
+    自CANN 9.3.0起废弃全部四个重载，计划在2027/11/02后移除。请使用[asc_mul_scalar_float2half_rna](../SIMD-API/c_api/reg_compute/reg_fused/asc_mul_scalar_float2half_rna.md)替代；计算行为保持不变，仍采用ROUND舍入。
 
 - [asc_exp_sub](../SIMD-API/c_api/deprecated_interface/asc_exp_sub_deprecated.md)接口
 

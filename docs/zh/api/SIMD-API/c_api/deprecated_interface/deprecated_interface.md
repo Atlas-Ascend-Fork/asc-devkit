@@ -235,6 +235,7 @@ okftype: reference.index
 ### 复合计算
 
 - **[asc_exp_sub（废弃）](asc_exp_sub_deprecated.md)**
+- **[asc_mul_scalar_float2half_rn（废弃）](asc_mul_scalar_float2half_rn_deprecated.md)**
 - **[asc_muls（废弃）](asc_muls_deprecated.md)**
 
 ### 逻辑计算

@@ -204,7 +204,7 @@ __simd_callee__ inline void asc_axpy(vector_float& dst, vector_float src, float 
  * @brief Multiplies the float elements of src by the scalar value, converts them to half and writes them into the even
  * positions of dst, leaving the odd positions zero and dropping elements whose mask bit is 0.
  *
- * @override_id asc_mul_scalar_float2half_rn__Rvf16_vf32_f32_vb_icposeven
+ * @override_id asc_mul_scalar_float2half_rna__Rvf16_vf32_f32_vb_icposeven
  * @archs 3510
  * @param [out] dst Destination vector_half register whose even-index positions receive the 64 converted half results
  * (positions 2*i plus the 0 offset of the tag); the odd-index positions are set to zero.
@@ -215,7 +215,7 @@ __simd_callee__ inline void asc_axpy(vector_float& dst, vector_float src, float 
  * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::EVEN: results are written to even indices
  * and the odd indices are forced to 0; it only selects the overload.
  */
-__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+__simd_callee__ inline void asc_mul_scalar_float2half_rna(
     vector_half& dst, vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos);
 
@@ -224,7 +224,7 @@ __simd_callee__ inline void asc_mul_scalar_float2half_rn(
  * @brief Multiplies the float elements of src by the scalar value, converts them to half and writes them into the odd
  * positions of dst, leaving the even positions zero and dropping elements whose mask bit is 0.
  *
- * @override_id asc_mul_scalar_float2half_rn__Rvf16_vf32_f32_vb_icposodd
+ * @override_id asc_mul_scalar_float2half_rna__Rvf16_vf32_f32_vb_icposodd
  * @archs 3510
  * @param [out] dst Destination vector_half register whose odd-index positions receive the 64 converted half results
  * (positions 2*i plus the 1 offset of the tag); the even-index positions are set to zero.
@@ -235,7 +235,7 @@ __simd_callee__ inline void asc_mul_scalar_float2half_rn(
  * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::ODD: results are written to odd indices and
  * the even indices are forced to 0; it only selects the overload.
  */
-__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+__simd_callee__ inline void asc_mul_scalar_float2half_rna(
     vector_half& dst, vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos);
 
@@ -244,7 +244,7 @@ __simd_callee__ inline void asc_mul_scalar_float2half_rn(
  * @brief Multiplies the float elements of src by the scalar value, converts them to half and returns them in the even
  * positions of a vector_half, leaving the odd positions zero and dropping elements whose mask bit is 0.
  *
- * @override_id asc_mul_scalar_float2half_rn__vf32_f32_vb_icposeven
+ * @override_id asc_mul_scalar_float2half_rna__vf32_f32_vb_icposeven
  * @archs 3510
  * @param [in] src Source vector_float register holding the 32-bit values to scale; read only.
  * @param [in] value Scalar float multiplier applied element-wise before the narrowing conversion; no unit, read only.
@@ -253,7 +253,7 @@ __simd_callee__ inline void asc_mul_scalar_float2half_rn(
  * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::EVEN: results are written to even indices
  * and the odd indices are forced to 0; it only selects the overload.
  */
-__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rna(
     vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos);
 
@@ -262,7 +262,7 @@ __simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
  * @brief Multiplies the float elements of src by the scalar value, converts them to half and returns them in the odd
  * positions of a vector_half, leaving the even positions zero and dropping elements whose mask bit is 0.
  *
- * @override_id asc_mul_scalar_float2half_rn__vf32_f32_vb_icposodd
+ * @override_id asc_mul_scalar_float2half_rna__vf32_f32_vb_icposodd
  * @archs 3510
  * @param [in] src Source vector_float register holding the 32-bit values to scale; read only.
  * @param [in] value Scalar float multiplier applied element-wise before the narrowing conversion; no unit, read only.
@@ -271,7 +271,7 @@ __simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
  * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::ODD: results are written to odd indices and
  * the even indices are forced to 0; it only selects the overload.
  */
-__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rna(
     vector_float src, float value, vector_bool mask,
     std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos);
 
@@ -683,7 +683,87 @@ __simd_callee__ inline vector_bfloat16_t asc_fnms(
 __simd_callee__ inline vector_float asc_fnms(vector_float src0, vector_float src1, vector_float src2, vector_bool mask);
 #endif
 
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rn)
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+/**
+ * @ingroup simd_c_api.deprecated_interface
+ * @brief Multiplies the float elements of src by the scalar value, converts them to half and writes them into the even
+ * positions of dst, leaving the odd positions zero and dropping elements whose mask bit is 0.
+ *
+ * @override_id asc_mul_scalar_float2half_rn__Rvf16_vf32_f32_vb_icposeven
+ * @archs 3510
+ * @param [out] dst Destination vector_half register whose even-index positions receive the 64 converted half results
+ * (positions 2*i plus the 0 offset of the tag); the odd-index positions are set to zero.
+ * @param [in] src Source vector_float register holding the 32-bit values to scale; read only.
+ * @param [in] value Scalar float multiplier applied element-wise before the narrowing conversion; no unit, read only.
+ * @param [in] mask vector_bool mask register controlling which elements take part: a bit of 1 converts and stores that
+ * element, a bit of 0 writes zero to the corresponding result position.
+ * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::EVEN: results are written to even indices
+ * and the odd indices are forced to 0; it only selects the overload.
+ */
+__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+    vector_half& dst, vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos);
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+/**
+ * @ingroup simd_c_api.deprecated_interface
+ * @brief Multiplies the float elements of src by the scalar value, converts them to half and writes them into the odd
+ * positions of dst, leaving the even positions zero and dropping elements whose mask bit is 0.
+ *
+ * @override_id asc_mul_scalar_float2half_rn__Rvf16_vf32_f32_vb_icposodd
+ * @archs 3510
+ * @param [out] dst Destination vector_half register whose odd-index positions receive the 64 converted half results
+ * (positions 2*i plus the 1 offset of the tag); the even-index positions are set to zero.
+ * @param [in] src Source vector_float register holding the 32-bit values to scale; read only.
+ * @param [in] value Scalar float multiplier applied element-wise before the narrowing conversion; no unit, read only.
+ * @param [in] mask vector_bool mask register controlling which elements take part: a bit of 1 converts and stores that
+ * element, a bit of 0 writes zero to the corresponding result position.
+ * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::ODD: results are written to odd indices and
+ * the even indices are forced to 0; it only selects the overload.
+ */
+__simd_callee__ inline void asc_mul_scalar_float2half_rn(
+    vector_half& dst, vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos);
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+/**
+ * @ingroup simd_c_api.deprecated_interface
+ * @brief Multiplies the float elements of src by the scalar value, converts them to half and returns them in the even
+ * positions of a vector_half, leaving the odd positions zero and dropping elements whose mask bit is 0.
+ *
+ * @override_id asc_mul_scalar_float2half_rn__vf32_f32_vb_icposeven
+ * @archs 3510
+ * @param [in] src Source vector_float register holding the 32-bit values to scale; read only.
+ * @param [in] value Scalar float multiplier applied element-wise before the narrowing conversion; no unit, read only.
+ * @param [in] mask vector_bool mask register controlling which elements take part: a bit of 1 converts and stores that
+ * element, a bit of 0 writes zero to the corresponding result position.
+ * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::EVEN: results are written to even indices
+ * and the odd indices are forced to 0; it only selects the overload.
+ */
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+    vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::EVEN> dst_pos);
+
+ASC_DEPRECATED(9.3.0, "2027/11/02", asc_mul_scalar_float2half_rna)
+/**
+ * @ingroup simd_c_api.deprecated_interface
+ * @brief Multiplies the float elements of src by the scalar value, converts them to half and returns them in the odd
+ * positions of a vector_half, leaving the even positions zero and dropping elements whose mask bit is 0.
+ *
+ * @override_id asc_mul_scalar_float2half_rn__vf32_f32_vb_icposodd
+ * @archs 3510
+ * @param [in] src Source vector_float register holding the 32-bit values to scale; read only.
+ * @param [in] value Scalar float multiplier applied element-wise before the narrowing conversion; no unit, read only.
+ * @param [in] mask vector_bool mask register controlling which elements take part: a bit of 1 converts and stores that
+ * element, a bit of 0 writes zero to the corresponding result position.
+ * @param [in] dst_pos Compile-time position tag fixed to asc_position_mode::ODD: results are written to odd indices and
+ * the even indices are forced to 0; it only selects the overload.
+ */
+__simd_callee__ inline vector_half asc_mul_scalar_float2half_rn(
+    vector_float src, float value, vector_bool mask,
+    std::integral_constant<asc_position_mode, asc_position_mode::ODD> dst_pos);
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rna)
 /**
  * @ingroup simd_c_api.deprecated_interface
  * @brief Multiplies every element of float vector src by scalar value and rounds the product to half, writing the
@@ -699,7 +779,7 @@ ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rn)
  */
 __simd_callee__ inline void asc_muls(vector_half& dst, vector_float src, float value, vector_bool mask);
 
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rn)
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mul_scalar_float2half_rna)
 /**
  * @ingroup simd_c_api.deprecated_interface
  * @brief Multiplies every element of float vector src by scalar value and rounds the product to half, writing the
