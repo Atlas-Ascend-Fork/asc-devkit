@@ -405,7 +405,31 @@ __aicore__ inline void Extract(
             (__ubuf__ uint32_t*)dstIndex.GetPhyAddr(), (__ubuf__ uint32_t*)sorted.GetPhyAddr(), gatherMaskPattern2,
             false, static_cast<uint32_t>(0), {1, static_cast<uint16_t>(repeatTime), 8, 0}, rsvdCnt);
     }
-
+#elif defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3103)
+    constexpr uint16_t vlBlocks = GetVecLen() / ONE_BLOCK_SIZE;
+    constexpr uint16_t vlScale = ONE_REPEAT_BYTE_SIZE / GetVecLen();
+    uint64_t rsvdCnt;
+    if constexpr (Std::is_same<PrimType, half>::value) {
+        constexpr uint8_t gatherMaskPattern3 = 3;
+        constexpr uint8_t gatherMaskPattern2 = 2;
+        GatherMaskCal(
+            (__ubuf__ PrimType*)dstValue.GetPhyAddr(), (__ubuf__ PrimType*)sorted.GetPhyAddr(), gatherMaskPattern3,
+            false, static_cast<uint32_t>(0), {1, static_cast<uint16_t>(repeatTime * vlScale), vlBlocks, 0}, rsvdCnt);
+        PipeBarrier<PIPE_V>();
+        GatherMaskCal(
+            (__ubuf__ uint32_t*)dstIndex.GetPhyAddr(), (__ubuf__ uint32_t*)sorted.GetPhyAddr(), gatherMaskPattern2,
+            false, static_cast<uint32_t>(0), {1, static_cast<uint16_t>(repeatTime * vlScale), vlBlocks, 0}, rsvdCnt);
+    } else {
+        constexpr uint8_t gatherMaskPattern1 = 1;
+        constexpr uint8_t gatherMaskPattern2 = 2;
+        GatherMaskCal(
+            (__ubuf__ PrimType*)dstValue.GetPhyAddr(), (__ubuf__ PrimType*)sorted.GetPhyAddr(), gatherMaskPattern1,
+            false, static_cast<uint32_t>(0), {1, static_cast<uint16_t>(repeatTime * vlScale), vlBlocks, 0}, rsvdCnt);
+        PipeBarrier<PIPE_V>();
+        GatherMaskCal(
+            (__ubuf__ uint32_t*)dstIndex.GetPhyAddr(), (__ubuf__ uint32_t*)sorted.GetPhyAddr(), gatherMaskPattern2,
+            false, static_cast<uint32_t>(0), {1, static_cast<uint16_t>(repeatTime * vlScale), vlBlocks, 0}, rsvdCnt);
+    }
 #elif (__NPU_ARCH__ == 1001) || (__NPU_ARCH__ == 2002)
     ProposalExtract(dstValue, sorted, repeatTime, REGION_PROPOSAL_SCORE_POSITION);
     if (dstIndex.GetSize() != 0) {
