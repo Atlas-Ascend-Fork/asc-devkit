@@ -55,7 +55,7 @@ __aicore__ constexpr inline int32_t CeilDivision(int32_t num1, int32_t num2)
 
 ## 调用示例
 
-本示例中使用CeilDivision计算迭代次数repeatTimes，通过对数据量count与单次处理数据量进行向上取整除法，确保所有数据（包括尾块）均被完整处理。
+本示例中使用CeilDivision计算迭代次数repeatTime，通过对数据量count与单次处理数据量进行向上取整除法，确保所有数据（包括尾块）均被完整处理。
 
 ```cpp
 template <typename T>
