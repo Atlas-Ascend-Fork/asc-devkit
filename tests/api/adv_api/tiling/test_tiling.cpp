@@ -37,6 +37,178 @@ protected:
 extern void platfrom_stub_set_chip_version(const char* num);
 extern void platfrom_stub_set_npuarch(const char* num);
 
+TEST_F(TestTiling, TestMathTilingInvalidParametersPreserveOutputs)
+{
+    using MaxMinFunc =
+        void (*)(const platform_ascendc::PlatformAscendC&, const TensorShape&, uint32_t, bool, uint32_t&, uint32_t&);
+    using FactorFunc = void (*)(const platform_ascendc::PlatformAscendC&, uint32_t, uint32_t&, uint32_t&);
+    struct TilingFunctions {
+        const char* name;
+        MaxMinFunc maxMin;
+        FactorFunc factor;
+    };
+    const TilingFunctions functions[] = {
+        {"BitwiseAnd", GetBitwiseAndMaxMinTmpSize, GetBitwiseAndTmpBufferFactorSize},
+        {"BitwiseNot", GetBitwiseNotMaxMinTmpSize, GetBitwiseNotTmpBufferFactorSize},
+        {"BitwiseOr", GetBitwiseOrMaxMinTmpSize, GetBitwiseOrTmpBufferFactorSize},
+        {"BitwiseXor", GetBitwiseXorMaxMinTmpSize, GetBitwiseXorTmpBufferFactorSize},
+        {"Fma", GetFmaMaxMinTmpSize, GetFmaTmpBufferFactorSize},
+        {"IsInf", GetIsInfMaxMinTmpSize, GetIsInfTmpBufferFactorSize},
+        {"IsNan", GetIsNanMaxMinTmpSize, GetIsNanTmpBufferFactorSize},
+        {"LogicalAnd", GetLogicalAndMaxMinTmpSize, GetLogicalAndTmpBufferFactorSize},
+        {"LogicalAnds", GetLogicalAndsMaxMinTmpSize, GetLogicalAndsTmpBufferFactorSize},
+        {"LogicalNot", GetLogicalNotMaxMinTmpSize, GetLogicalNotTmpBufferFactorSize},
+        {"LogicalOr", GetLogicalOrMaxMinTmpSize, GetLogicalOrTmpBufferFactorSize},
+        {"LogicalOrs", GetLogicalOrsMaxMinTmpSize, GetLogicalOrsTmpBufferFactorSize},
+        {"LogicalXor", GetLogicalXorMaxMinTmpSize, GetLogicalXorTmpBufferFactorSize},
+        {"Rint", GetRintMaxMinTmpSize, GetRintTmpBufferFactorSize},
+        {"SinCos", GetSinCosMaxMinTmpSize, GetSinCosTmpBufferFactorSize},
+        {"Where", GetWhereMaxMinTmpSize, GetWhereTmpBufferFactorSize},
+    };
+    fe::PlatFormInfos platformInfo;
+    const auto platform = platform_ascendc::PlatformAscendC(&platformInfo);
+    static std::string previousNpuArch;
+    ASSERT_TRUE(platformInfo.GetPlatformResWithLock("version", "NpuArch", previousNpuArch));
+    platfrom_stub_set_npuarch("3510");
+    const TensorShape emptyShape({0, 32});
+    const TensorShape validShape({2, 32});
+    uint32_t validMax = 123;
+    uint32_t validMin = 456;
+    GetBitwiseNotMaxMinTmpSize(platform, validShape, 2, false, validMax, validMin);
+    EXPECT_EQ(validMax, 0U);
+    EXPECT_EQ(validMin, 0U);
+    for (const auto& function : functions) {
+        SCOPED_TRACE(function.name);
+        uint32_t first = 123;
+        uint32_t second = 456;
+        function.maxMin(platform, emptyShape, 4, false, first, second);
+        EXPECT_EQ(first, 123U);
+        EXPECT_EQ(second, 456U);
+        function.maxMin(platform, validShape, 3, false, first, second);
+        EXPECT_EQ(first, 123U);
+        EXPECT_EQ(second, 456U);
+        function.factor(platform, 3, first, second);
+        EXPECT_EQ(first, 123U);
+        EXPECT_EQ(second, 456U);
+    }
+    platfrom_stub_set_npuarch(previousNpuArch.c_str());
+}
+
+TEST_F(TestTiling, TestActivationTilingInvalidParametersPreserveOutputs)
+{
+    using MaxMinFunc = void (*)(const TensorShape&, uint32_t, bool, uint32_t&, uint32_t&);
+    const MaxMinFunc functions[] = {GetGeGLUMaxMinTmpSize, GetReGluMaxMinTmpSize, GetSigmoidMaxMinTmpSize};
+    const TensorShape emptyShape({0, 32});
+    const TensorShape validShape({2, 32});
+    for (const auto function : functions) {
+        uint32_t maxValue = 123;
+        uint32_t minValue = 456;
+        function(emptyShape, 4, false, maxValue, minValue);
+        EXPECT_EQ(maxValue, 123U);
+        EXPECT_EQ(minValue, 456U);
+        function(validShape, 3, false, maxValue, minValue);
+        EXPECT_EQ(maxValue, 123U);
+        EXPECT_EQ(minValue, 456U);
+    }
+    for (const auto& shape : {emptyShape, validShape}) {
+        const uint32_t typeSize = shape.GetShapeSize() == 0 ? 4 : 3;
+        uint32_t maxValue = 123;
+        uint32_t minValue = 456;
+        EXPECT_EQ(GetGeluMaxTmpSize(shape, typeSize), 0U);
+        EXPECT_EQ(GetGeluMinTmpSize(shape, typeSize), 0U);
+        GetGeluMaxMinTmpSize(shape, typeSize, maxValue, minValue);
+        EXPECT_EQ(maxValue, 123U);
+        EXPECT_EQ(minValue, 456U);
+        GetSwiGLUMaxMinTmpSize(shape, typeSize, maxValue, minValue, false);
+        EXPECT_EQ(maxValue, 123U);
+        EXPECT_EQ(minValue, 456U);
+    }
+    uint32_t first = 123;
+    uint32_t second = 456;
+    GetGeGLUTmpBufferFactorSize(3, first, second);
+    EXPECT_EQ(first, 123U);
+    EXPECT_EQ(second, 456U);
+    GetSwiGLUTmpBufferFactorSize(3, first, second);
+    EXPECT_EQ(first, 123U);
+    EXPECT_EQ(second, 456U);
+}
+
+TEST_F(TestTiling, TestSoftMaxInvalidParametersFailFast)
+{
+    const TensorShape validShape({2, 32});
+    optiling::SoftMaxTiling validTiling;
+    validTiling.set_srcM(123);
+    SoftMaxTilingFunc(validShape, 2, 4096, validTiling);
+    EXPECT_EQ(validTiling.get_srcM(), 2U);
+    uint32_t maxValue = 123;
+    uint32_t minValue = 456;
+    GetSoftMaxFlashV3MaxMinTmpSize(validShape, 4, 4, maxValue, minValue, false, false);
+    EXPECT_EQ(maxValue, 123U);
+    EXPECT_EQ(minValue, 456U);
+    validTiling.set_srcM(123);
+    SoftMaxFlashV3TilingFunc(validShape, 4, 4, 4096, validTiling, false, false);
+    EXPECT_EQ(validTiling.get_srcM(), 123U);
+    struct InvalidInput {
+        TensorShape shape;
+        uint32_t typeSize;
+        uint32_t secondTypeSize;
+        uint32_t workspace;
+    };
+    const InvalidInput inputs[] = {
+        {TensorShape({0, 32}), 2, 4, 4096}, {TensorShape({2, 15}), 2, 4, 4096}, {TensorShape({2, 32}), 8, 4, 4096},
+        {TensorShape({2, 32}), 2, 3, 4096}, {TensorShape({2, 32}), 2, 4, 0},
+    };
+    for (const auto& input : inputs) {
+        SCOPED_TRACE(
+            testing::Message() << "type=" << input.typeSize << " second=" << input.secondTypeSize
+                               << " workspace=" << input.workspace << " size=" << input.shape.GetShapeSize());
+        if (input.secondTypeSize == 4 && input.workspace != 0) {
+            EXPECT_EQ(GetSoftMaxMaxTmpSize(input.shape, input.typeSize, false), 0U);
+            EXPECT_EQ(GetSoftMaxMinTmpSize(input.shape, input.typeSize, false), 0U);
+            EXPECT_EQ(GetSoftMaxFlashMaxTmpSize(input.shape, input.typeSize, false, false), 0U);
+            EXPECT_EQ(GetSoftMaxFlashMinTmpSize(input.shape, input.typeSize, false, false), 0U);
+            EXPECT_EQ(GetSoftMaxGradMaxTmpSize(input.shape, input.typeSize, false, false), 0U);
+            EXPECT_EQ(GetSoftMaxGradMinTmpSize(input.shape, input.typeSize, false, false), 0U);
+            EXPECT_EQ(GetLogSoftMaxMaxTmpSize(input.shape, input.typeSize, false), 0U);
+            EXPECT_EQ(GetLogSoftMaxMinTmpSize(input.shape, input.typeSize, false), 0U);
+        }
+        if (input.workspace != 0) {
+            EXPECT_EQ(
+                GetSoftMaxFlashV2MaxTmpSize(input.shape, input.typeSize, input.secondTypeSize, false, false, false),
+                0U);
+            EXPECT_EQ(
+                GetSoftMaxFlashV2MinTmpSize(input.shape, input.typeSize, input.secondTypeSize, false, false, false),
+                0U);
+            uint32_t maxValue = 123;
+            uint32_t minValue = 456;
+            GetSoftMaxFlashV3MaxMinTmpSize(
+                input.shape, input.typeSize, input.secondTypeSize, maxValue, minValue, false, false);
+            EXPECT_EQ(maxValue, 123U);
+            EXPECT_EQ(minValue, 456U);
+        }
+        optiling::SoftMaxTiling tilingData;
+        tilingData.set_srcM(123);
+        if (input.secondTypeSize == 4) {
+            SoftMaxTilingFunc(input.shape, input.typeSize, input.workspace, tilingData);
+            EXPECT_EQ(tilingData.get_srcM(), 123U);
+            SoftMaxFlashTilingFunc(input.shape, input.typeSize, input.workspace, tilingData, false);
+            EXPECT_EQ(tilingData.get_srcM(), 123U);
+            SoftMaxGradTilingFunc(input.shape, input.typeSize, input.workspace, tilingData, false);
+            EXPECT_EQ(tilingData.get_srcM(), 123U);
+            optiling::LogSoftMaxTiling logTilingData;
+            logTilingData.set_srcM(123);
+            LogSoftMaxTilingFunc(input.shape, input.typeSize, input.workspace, logTilingData);
+            EXPECT_EQ(logTilingData.get_srcM(), 123U);
+        }
+        SoftMaxFlashV2TilingFunc(
+            input.shape, input.typeSize, input.secondTypeSize, input.workspace, tilingData, false, false, false);
+        EXPECT_EQ(tilingData.get_srcM(), 123U);
+        SoftMaxFlashV3TilingFunc(
+            input.shape, input.typeSize, input.secondTypeSize, input.workspace, tilingData, false, false);
+        EXPECT_EQ(tilingData.get_srcM(), 123U);
+    }
+}
+
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510 || __NPU_ARCH__ == 5102)
 TEST_F(TestTiling, testTransDataTilingUnalignedHw)
 {

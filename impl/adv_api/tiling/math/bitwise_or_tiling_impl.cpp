@@ -51,8 +51,12 @@ void GetBitwiseOrMaxMinTmpSize(
         (npuArch == NpuArch::DAV_3510 || npuArch == NpuArch::DAV_9201), return,
         "Unsupported NpuArch of BitwiseOr API.");
 
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<BITWISE_OR_GET_MAX_MIN>(inputSize, typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_OR_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<BITWISE_OR_GET_MAX_MIN>(inputSize, typeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_OR_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<BITWISE_OR_GET_MAX_MIN>(isReuseSource);
 
     maxValue = GetBitwiseOrMaxTmpSize(npuArch, inputSize, typeSize);
@@ -67,7 +71,9 @@ void GetBitwiseOrTmpBufferFactorSize(
     ASCENDC_HOST_ASSERT(
         (npuArch == NpuArch::DAV_3510 || npuArch == NpuArch::DAV_9201), return,
         "Unsupported NpuArch of BitwiseOr API.");
-    HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_OR_GET_TMP_BUFFER>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_OR_GET_TMP_BUFFER>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
 
     extraBuf = 0u;
     maxLivedNodeCount = 0u;

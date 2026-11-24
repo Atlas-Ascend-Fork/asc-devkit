@@ -91,10 +91,16 @@ inline void AdjustToBasicBlockBaseM(uint32_t& baseM, const uint32_t srcM, const 
 uint32_t GetSoftMaxMaxTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GET_MAX>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GET_MAX>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GET_MAX>(srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GET_MAX>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SOFTMAX_GET_MAX>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
@@ -126,10 +132,16 @@ uint32_t GetSoftMaxMaxTmpSize(
 uint32_t GetSoftMaxMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GET_MIN>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GET_MIN>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GET_MIN>(srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GET_MIN>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SOFTMAX_GET_MIN>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
@@ -162,11 +174,19 @@ void SoftMaxTilingFunc(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const uint32_t localWorkSpaceSize,
     optiling::SoftMaxTiling& softmaxTiling)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_TILING>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_TILING>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_TILING>(dataTypeSize, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_TILING>(localWorkSpaceSize);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_TILING>(srcShape.GetShapeSize(), dataTypeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_TILING>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_TILING>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_TILING>(localWorkSpaceSize)) {
+        return;
+    }
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return, "input srcShape size must be greater than 0.");
     ASCENDC_HOST_ASSERT(
@@ -225,10 +245,17 @@ uint32_t GetSoftMaxFlashMaxTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const bool isUpdate,
     UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SOFTMAX_FLASH_GET_MAX>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
@@ -269,10 +296,17 @@ uint32_t GetSoftMaxFlashMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const bool isUpdate,
     UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SOFTMAX_FLASH_GET_MIN>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
@@ -312,11 +346,20 @@ void SoftMaxFlashTilingFunc(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const uint32_t localWorkSpaceSize,
     optiling::SoftMaxTiling& softmaxFlashTiling, const bool isUpdate)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_TILING>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_TILING>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_TILING>(dataTypeSize, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_FLASH_TILING>(localWorkSpaceSize);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_TILING>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_TILING>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_TILING>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_FLASH_TILING>(localWorkSpaceSize)) {
+        return;
+    }
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return, "input srcShape size must be greater than 0.");
     ASCENDC_HOST_ASSERT(
@@ -378,10 +421,17 @@ uint32_t GetSoftMaxGradMaxTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const bool isFront,
     UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SOFTMAX_GRAD_GET_MAX>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
@@ -408,10 +458,17 @@ uint32_t GetSoftMaxGradMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const bool isFront,
     UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SOFTMAX_GRAD_GET_MIN>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
@@ -451,11 +508,20 @@ void SoftMaxGradTilingFunc(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize, const uint32_t localWorkSpaceSize,
     optiling::SoftMaxTiling& softmaxGradTiling, const bool isFront)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GRAD_TILING>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GRAD_TILING>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GRAD_TILING>(dataTypeSize, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_GRAD_TILING>(localWorkSpaceSize);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_GRAD_TILING>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_GRAD_TILING>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_GRAD_TILING>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_GRAD_TILING>(localWorkSpaceSize)) {
+        return;
+    }
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return, "input srcShape size must be greater than 0.");
     ASCENDC_HOST_ASSERT(
@@ -547,12 +613,20 @@ uint32_t GetSoftMaxFlashV2MaxTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize1, const uint32_t dataTypeSize2,
     const bool isUpdate, const bool isBasicBlock, UNUSED const bool isFlashOutputBrc)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(
-        srcShape.GetShapeSize(), dataTypeSize1);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(
-        srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(dataTypeSize1, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(dataTypeSize2, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(
+            srcShape.GetShapeSize(), dataTypeSize1)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(
+            srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(dataTypeSize1, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MAX>(dataTypeSize2, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
     ASCENDC_HOST_ASSERT(
@@ -641,12 +715,20 @@ uint32_t GetSoftMaxFlashV2MinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize1, const uint32_t dataTypeSize2,
     const bool isUpdate, const bool isBasicBlock, const bool isFlashOutputBrc)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(
-        srcShape.GetShapeSize(), dataTypeSize1);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(
-        srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(dataTypeSize1, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(dataTypeSize2, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(
+            srcShape.GetShapeSize(), dataTypeSize1)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(
+            srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(dataTypeSize1, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_GET_MIN>(dataTypeSize2, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return 0, "input srcShape size must be greater than 0.");
     ASCENDC_HOST_ASSERT(
@@ -728,12 +810,23 @@ void SoftMaxFlashV2TilingFunc(
     const uint32_t localWorkSpaceSize, optiling::SoftMaxTiling& softmaxFlashTiling, UNUSED const bool isUpdate,
     const bool isBasicBlock, const bool isFlashOutputBrc)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(srcShape.GetShapeSize(), dataTypeSize1);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(
-        srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(dataTypeSize1, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(dataTypeSize2, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(localWorkSpaceSize);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(
+            srcShape.GetShapeSize(), dataTypeSize1)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(
+            srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(dataTypeSize1, SUPPORT_TYPESIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(dataTypeSize2, SUPPORT_TYPESIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_FLASH_V2_TILING>(localWorkSpaceSize)) {
+        return;
+    }
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return, "input srcShape size must be greater than 0.");
     ASCENDC_HOST_ASSERT(
@@ -828,14 +921,22 @@ void GetSoftMaxFlashV3MaxMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t dataTypeSize1, const uint32_t dataTypeSize2,
     uint32_t& maxValue, uint32_t& minValue, const bool isUpdate, UNUSED const bool isBasicBlock)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
-        srcShape.GetShapeSize(), dataTypeSize1);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
-        srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
-        dataTypeSize1, std::set<uint32_t>{SOFTMAX_HALF_SIZE});
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
-        dataTypeSize2, std::set<uint32_t>{SOFTMAX_FLOAT_SIZE});
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
+            srcShape.GetShapeSize(), dataTypeSize1)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
+            srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
+            dataTypeSize1, std::set<uint32_t>{SOFTMAX_HALF_SIZE})) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_GET_MAX_MIN>(
+            dataTypeSize2, std::set<uint32_t>{SOFTMAX_FLOAT_SIZE})) {
+        return;
+    }
     ASCENDC_HOST_ASSERT(dataTypeSize1 == SOFTMAX_HALF_SIZE, return, "dataTypeSize1 must be sizeof(half).");
     ASCENDC_HOST_ASSERT(dataTypeSize2 > 0, return, "dataTypeSize2 must be greater than 0.");
     std::vector<uint32_t> retVec = GetLastAxisShapeND(srcShape);
@@ -871,14 +972,25 @@ void SoftMaxFlashV3TilingFunc(
     const uint32_t localWorkSpaceSize, optiling::SoftMaxTiling& softmaxFlashV3Tiling, UNUSED const bool isUpdate,
     UNUSED const bool isBasicBlock)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(srcShape.GetShapeSize(), dataTypeSize1);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
-        srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
-        dataTypeSize1, std::set<uint32_t>{SOFTMAX_HALF_SIZE});
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
-        dataTypeSize2, std::set<uint32_t>{SOFTMAX_FLOAT_SIZE});
-    HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(localWorkSpaceSize);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
+            srcShape.GetShapeSize(), dataTypeSize1)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
+            srcShape, dataTypeSize1, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
+            dataTypeSize1, std::set<uint32_t>{SOFTMAX_HALF_SIZE})) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(
+            dataTypeSize2, std::set<uint32_t>{SOFTMAX_FLOAT_SIZE})) {
+        return;
+    }
+    if (!HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<SOFTMAX_FLASH_V3_TILING>(localWorkSpaceSize)) {
+        return;
+    }
     ASCENDC_HOST_ASSERT(dataTypeSize1 == SOFTMAX_HALF_SIZE, return, "dataTypeSize1 must be sizeof(half).");
     ASCENDC_HOST_ASSERT(dataTypeSize2 > 0, return, "dataTypeSize2 must be greater than 0.");
 

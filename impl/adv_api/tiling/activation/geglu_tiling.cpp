@@ -48,8 +48,12 @@ void GetGeGLUMaxMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t typeSize, const bool isReuseSource, uint32_t& maxValue,
     uint32_t& minValue)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GE_GELU_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<GE_GELU_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GE_GELU_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<GE_GELU_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<GE_GELU_GET_MAX_MIN>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return, "Input Shape size must be greater than 0.");
@@ -60,7 +64,9 @@ void GetGeGLUMaxMinTmpSize(
 
 void GetGeGLUTmpBufferFactorSize(const uint32_t typeSize, uint32_t& maxLiveNodeCount, uint32_t& extraBuf)
 {
-    HighLevelApiCheck::TypeSizeVerifyingParameters<GE_GELU_GET_TMP_BUFFER>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<GE_GELU_GET_TMP_BUFFER>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     extraBuf = 0;
     maxLiveNodeCount = (typeSize == sizeof(float)) ? GEGLU_FLOAT_CALC_FAC : GEGLU_HALF_CALC_FAC;
 }

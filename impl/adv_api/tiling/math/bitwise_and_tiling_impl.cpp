@@ -35,8 +35,13 @@ void GetBitwiseAndMaxMinTmpSize(
     const platform_ascendc::PlatformAscendC& ascendcPlatform, const AscendC::TensorShape& srcShape,
     const uint32_t typeSize, const bool isReuseSource, uint32_t& maxValue, uint32_t& minValue)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<BITWISE_AND_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_AND_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<BITWISE_AND_GET_MAX_MIN>(
+            srcShape.GetShapeSize(), typeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_AND_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<BITWISE_AND_GET_MAX_MIN>(isReuseSource);
     auto npuArch = ascendcPlatform.GetCurNpuArch();
 
@@ -51,7 +56,9 @@ void GetBitwiseAndTmpBufferFactorSize(
     const platform_ascendc::PlatformAscendC& ascendcPlatform, const uint32_t typeSize, uint32_t& maxLivedNodeCount,
     uint32_t& extraBuf)
 {
-    HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_AND_GET_TMP_BUFFER>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<BITWISE_AND_GET_TMP_BUFFER>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     auto npuArch = ascendcPlatform.GetCurNpuArch();
     ASCENDC_HOST_ASSERT(
         (npuArch == NpuArch::DAV_3510 || npuArch == NpuArch::DAV_9201), return,

@@ -26,40 +26,46 @@
 namespace AscendC {
 namespace HighLevelApiCheck {
 template <const char* func>
-inline void SrcShapeSizeVerifyingParameters(const size_t shapeSize, const uint32_t typeSize)
+inline bool SrcShapeSizeVerifyingParameters(const size_t shapeSize, const uint32_t typeSize)
 {
     (void)typeSize;
-    ASCENDC_HOST_ASSERT(shapeSize > 0u, return, "[%s] Input shape size should be greater than 0!", func);
+    ASCENDC_HOST_ASSERT(shapeSize > 0u, return false, "[%s] Input shape size should be greater than 0!", func);
+    return true;
 }
 
 template <const char* func>
-inline void ShapeLastAxisAlignVerifyingParameters(
+inline bool ShapeLastAxisAlignVerifyingParameters(
     const AscendC::TensorShape& shape, const uint32_t dataTypeSize, const uint32_t blockSize)
 {
     std::vector<int64_t> shapeDims = shape.GetDims();
     auto lastAxisDataLength = shapeDims.back() * dataTypeSize;
-    ASCENDC_HOST_ASSERT((shapeDims.back() > 0u), , "[%s] The shape LastAxis size should be greater than 0!", func);
     ASCENDC_HOST_ASSERT(
-        (lastAxisDataLength % blockSize == 0u), , "[%s] The shape LastAxis data size must be 32-byte aligned!", func);
+        (shapeDims.back() > 0u), return false, "[%s] The shape LastAxis size should be greater than 0!", func);
+    ASCENDC_HOST_ASSERT(
+        (lastAxisDataLength % blockSize == 0u), return false,
+        "[%s] The shape LastAxis data size must be 32-byte aligned!", func);
+    return true;
 }
 
 template <const char* func>
-inline void LocalWorkSpaceSizeVerifyingParameters(const uint32_t localWorkSpaceSize)
+inline bool LocalWorkSpaceSizeVerifyingParameters(const uint32_t localWorkSpaceSize)
 {
     ASCENDC_HOST_ASSERT(
-        (localWorkSpaceSize > 0u), return, "[%s] The localWorkSpaceSize should be greater than 0!", func);
+        (localWorkSpaceSize > 0u), return false, "[%s] The localWorkSpaceSize should be greater than 0!", func);
+    return true;
 }
 
 template <const char* func>
-inline void TypeSizeVerifyingParameters(const uint32_t typeSize, const std::set<uint32_t>& supportTypeSize)
+inline bool TypeSizeVerifyingParameters(const uint32_t typeSize, const std::set<uint32_t>& supportTypeSize)
 {
     std::string supportTypeSizeStr = "";
     for (const uint32_t& size : supportTypeSize) {
         supportTypeSizeStr.append(" " + std::to_string(size));
     }
     ASCENDC_HOST_ASSERT(
-        (supportTypeSize.find(typeSize) != supportTypeSize.end()), ,
+        (supportTypeSize.find(typeSize) != supportTypeSize.end()), return false,
         "[%s] Type size %u is unsupported! Support typesize is %s.", func, typeSize, supportTypeSizeStr.c_str());
+    return true;
 }
 
 template <const char* func>

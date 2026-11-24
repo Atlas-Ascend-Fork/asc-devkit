@@ -37,8 +37,12 @@ void GetSigmoidMaxMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t typeSize, bool isReuseSource, uint32_t& maxValue,
     uint32_t& minValue)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SIGMOID_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<SIGMOID_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<SIGMOID_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<SIGMOID_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<SIGMOID_GET_MAX_MIN>(isReuseSource);
     const uint32_t inputSize = srcShape.GetShapeSize();
     ASCENDC_HOST_ASSERT(inputSize > 0, return, "Input Shape size must be greater than 0.");

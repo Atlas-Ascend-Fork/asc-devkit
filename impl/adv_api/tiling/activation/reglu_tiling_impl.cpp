@@ -56,8 +56,12 @@ void GetReGluMaxMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t typeSize, const bool isReuseSource, uint32_t& maxValue,
     uint32_t& minValue)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<RE_GELU_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<RE_GELU_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<RE_GELU_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<RE_GELU_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<RE_GELU_GET_MAX_MIN>(isReuseSource);
     ASCENDC_HOST_ASSERT(isReuseSource == false, return, "multiplexing of input memory is not supported.");
     uint32_t max = GetReGluMaxTmpSize(srcShape, typeSize);

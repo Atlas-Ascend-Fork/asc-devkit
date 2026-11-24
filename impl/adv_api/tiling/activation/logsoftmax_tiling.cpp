@@ -72,10 +72,17 @@ inline void AdjustToBasicBlockBaseM(uint32_t& baseM, const uint32_t srcM, const 
 uint32_t GetLogSoftMaxMaxTmpSize(
     const AscendC::TensorShape srcShape, const uint32_t dataTypeSize, UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<LOG_SOFTMAX_GET_MAX>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<LOG_SOFTMAX_GET_MAX>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<LOG_SOFTMAX_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<LOG_SOFTMAX_GET_MAX>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<LOG_SOFTMAX_GET_MAX>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<LOG_SOFTMAX_GET_MAX>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<LOG_SOFTMAX_GET_MAX>(isReuseSource);
     std::vector<uint32_t> retVec = GetLastAxisShapeND(srcShape);
     // the softmax shape size must be 2
@@ -106,10 +113,17 @@ uint32_t GetLogSoftMaxMaxTmpSize(
 uint32_t GetLogSoftMaxMinTmpSize(
     const AscendC::TensorShape srcShape, const uint32_t dataTypeSize, UNUSED const bool isReuseSource)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<LOG_SOFTMAX_GET_MIN>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<LOG_SOFTMAX_GET_MIN>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<LOG_SOFTMAX_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<LOG_SOFTMAX_GET_MIN>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<LOG_SOFTMAX_GET_MIN>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<LOG_SOFTMAX_GET_MIN>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     HighLevelApiCheck::IsReuseSourceVerifyingParameters<LOG_SOFTMAX_GET_MIN>(isReuseSource);
     std::vector<uint32_t> retVec = GetLastAxisShapeND(srcShape);
     // the softmax shape size must be 2
@@ -141,11 +155,20 @@ void LogSoftMaxTilingFunc(
     const AscendC::TensorShape srcShape, const uint32_t dataTypeSize, const uint32_t localWorkSpaceSize,
     optiling::LogSoftMaxTiling& softmaxTiling)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<LOG_SOFTMAX_TILING>(srcShape.GetShapeSize(), dataTypeSize);
-    HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<LOG_SOFTMAX_TILING>(
-        srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<LOG_SOFTMAX_TILING>(dataTypeSize, SUPPORT_TYPESIZE);
-    HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<LOG_SOFTMAX_TILING>(localWorkSpaceSize);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<LOG_SOFTMAX_TILING>(
+            srcShape.GetShapeSize(), dataTypeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::ShapeLastAxisAlignVerifyingParameters<LOG_SOFTMAX_TILING>(
+            srcShape, dataTypeSize, SOFTMAX_DEFAULT_BLK_SIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<LOG_SOFTMAX_TILING>(dataTypeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
+    if (!HighLevelApiCheck::LocalWorkSpaceSizeVerifyingParameters<LOG_SOFTMAX_TILING>(localWorkSpaceSize)) {
+        return;
+    }
     std::vector<uint32_t> retVec = GetLastAxisShapeND(srcShape);
     if (retVec.size() <= 1 || dataTypeSize == 0) {
         return;

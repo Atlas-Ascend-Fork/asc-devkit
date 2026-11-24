@@ -33,15 +33,23 @@ static constexpr const char GELU_GET_MAX_MIN[] = "GetGeluMaxMinTmpSize";
 
 uint32_t GetGeluMinTmpSize(const AscendC::TensorShape& srcShape, const uint32_t typeSize)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GELU_GET_MIN>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<GELU_GET_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GELU_GET_MIN>(srcShape.GetShapeSize(), typeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<GELU_GET_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     return GELU_THREE_TIMES * GELU_ONE_REPEAT_BYTE_SIZE;
 }
 
 uint32_t GetGeluMaxTmpSize(const AscendC::TensorShape& srcShape, const uint32_t typeSize)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GELU_GET_MAX>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<GELU_GET_MAX>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GELU_GET_MAX>(srcShape.GetShapeSize(), typeSize)) {
+        return 0;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<GELU_GET_MAX>(typeSize, SUPPORT_TYPESIZE)) {
+        return 0;
+    }
     uint32_t minValue = GetGeluMinTmpSize(srcShape, typeSize);
     std::vector<int64_t> shapeDims = srcShape.GetDims();
     uint32_t calculateSize = 1;
@@ -57,8 +65,12 @@ uint32_t GetGeluMaxTmpSize(const AscendC::TensorShape& srcShape, const uint32_t 
 void GetGeluMaxMinTmpSize(
     const AscendC::TensorShape& srcShape, const uint32_t typeSize, uint32_t& maxValue, uint32_t& minValue)
 {
-    HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GELU_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize);
-    HighLevelApiCheck::TypeSizeVerifyingParameters<GELU_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE);
+    if (!HighLevelApiCheck::SrcShapeSizeVerifyingParameters<GELU_GET_MAX_MIN>(srcShape.GetShapeSize(), typeSize)) {
+        return;
+    }
+    if (!HighLevelApiCheck::TypeSizeVerifyingParameters<GELU_GET_MAX_MIN>(typeSize, SUPPORT_TYPESIZE)) {
+        return;
+    }
     maxValue = GetGeluMaxTmpSize(srcShape, typeSize);
     minValue = GetGeluMinTmpSize(srcShape, typeSize);
 }
