@@ -73,7 +73,7 @@ __aicore__ inline void MulCastCalc(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed "
-            "to check dtype in MulCast, current api support dtype combination is src: half, dst: int8_t / uint8_t");
+            "to check dtype in MulCast, current api supports dtype combination is src: half, dst: int8_t / uint8_t");
     });
     BinaryRepeatParams repeatParams;
     repeatParams.dstRepStride = HALF_DEFAULT_REPEAT_STRIDE;
