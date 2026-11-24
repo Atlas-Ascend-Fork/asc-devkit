@@ -47,7 +47,10 @@ version_changes: []
 将源操作数中的元素选取偶数位bit(bool)、低8位（b16）、低16位（b32）写入目的操作数的低半部分。
 当源操作数为vector_bool时，其按bit位进行压缩，每2bit将其中的低位bit存储至目的操作数的低半部分。
 
-![](../../../../figures/pack_low_draft.png)
+> [!NOTE]说明
+> 目的操作数的高半部分的行为未定义。
+
+![asc_pack_to_low功能示意图](../../../../figures/svg/asc_pack_to_low.svg)
 
 本接口为Reg矢量计算接口，仅在AIV上生效。
 
