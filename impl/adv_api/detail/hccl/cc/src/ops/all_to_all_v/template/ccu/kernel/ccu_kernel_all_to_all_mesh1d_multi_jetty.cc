@@ -43,7 +43,8 @@ CcuResult InitResource(AllToAllMesh1DMultiJettyContext& ctx)
 {
     if (ctx.channelCount == 0U || ctx.rankSize == 0U || ctx.rankId >= ctx.rankSize || ctx.jettyNum == 0U) {
         HCCL_ERROR(
-            "[CcuAllToAllMultiJetty] invalid resource, channelCount[%u], rankSize[%u], rankId[%u], jetty[%u]",
+            "[CcuAllToAllMultiJetty] invalid resource, channelCount[%u] (must > 0), rankSize[%u] (must > 0), "
+            "rankId[%u] (must < rankSize), jettyNum[%u] (must > 0).",
             ctx.channelCount, ctx.rankSize, ctx.rankId, ctx.jettyNum);
         return CCU_E_INTERNAL;
     }

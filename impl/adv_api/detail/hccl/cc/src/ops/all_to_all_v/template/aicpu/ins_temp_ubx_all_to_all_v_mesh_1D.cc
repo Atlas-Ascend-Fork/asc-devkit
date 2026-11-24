@@ -22,11 +22,19 @@ HcclResult CalcUserSliceOffset(u64 displacement, u64 dataTypeSize, u64 splitOffs
 {
     CHK_PRT_RET(
         MultiplyOverflows(displacement, dataTypeSize),
-        HCCL_ERROR("[InsTempUBXAllToAllVMesh1D] user buffer displacement overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempUBXAllToAllVMesh1D] user buffer displacement overflows, displacement[%llu], dataTypeSize[%llu], "
+            "product must not exceed u64 max.",
+            displacement, dataTypeSize),
+        HCCL_E_PARA);
     const u64 displacementBytes = displacement * dataTypeSize;
     CHK_PRT_RET(
         AddOverflows(displacementBytes, splitOffset),
-        HCCL_ERROR("[InsTempUBXAllToAllVMesh1D] user buffer offset overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempUBXAllToAllVMesh1D] user buffer offset overflows, displacementBytes[%llu], splitOffset[%llu], "
+            "sum must not exceed u64 max.",
+            displacementBytes, splitOffset),
+        HCCL_E_PARA);
     byteOffset = displacementBytes + splitOffset;
     return HCCL_SUCCESS;
 }
@@ -38,7 +46,11 @@ HcclResult CalcCclSliceOffset(u32 bufferIndex, u64 sliceStride, u64 splitOffset,
         HCCL_ERROR("[InsTempUBXAllToAllVMesh1D] CCL buffer stride overflows."), HCCL_E_PARA);
     const u64 bufferOffset = static_cast<u64>(bufferIndex) * sliceStride;
     CHK_PRT_RET(
-        AddOverflows(bufferOffset, splitOffset), HCCL_ERROR("[InsTempUBXAllToAllVMesh1D] CCL buffer offset overflows."),
+        AddOverflows(bufferOffset, splitOffset),
+        HCCL_ERROR(
+            "[InsTempUBXAllToAllVMesh1D] CCL buffer offset overflows, bufferOffset[%llu], splitOffset[%llu], sum "
+            "must not exceed u64 max.",
+            bufferOffset, splitOffset),
         HCCL_E_PARA);
     byteOffset = bufferOffset + splitOffset;
     return HCCL_SUCCESS;
@@ -47,7 +59,11 @@ HcclResult CalcCclSliceOffset(u32 bufferIndex, u64 sliceStride, u64 splitOffset,
 HcclResult CalcDataSize(u64 count, u64 dataTypeSize, u64& dataSize)
 {
     CHK_PRT_RET(
-        MultiplyOverflows(count, dataTypeSize), HCCL_ERROR("[InsTempUBXAllToAllVMesh1D] data size overflows."),
+        MultiplyOverflows(count, dataTypeSize),
+        HCCL_ERROR(
+            "[InsTempUBXAllToAllVMesh1D] data size overflows, count[%llu], dataTypeSize[%llu], product must not "
+            "exceed u64 max.",
+            count, dataTypeSize),
         HCCL_E_PARA);
     dataSize = count * dataTypeSize;
     return HCCL_SUCCESS;
@@ -118,7 +134,10 @@ HcclResult InsTempUBXAllToAllVMesh1D::GetBoardSendRecvMatrix(u32 n, std::vector<
 {
     // n必须是
     if (n < UBX_BOARD_PAIR_SIZE || n % UBX_BOARD_PAIR_SIZE != 0) {
-        HCCL_ERROR("n is [%u]", n);
+        HCCL_ERROR(
+            "[InsTempUBXAllToAllVMesh1D][GetBoardSendRecvMatrix] invalid matrix size, n[%u], expected: n >= "
+            "UBX_BOARD_PAIR_SIZE[%u] and n %% UBX_BOARD_PAIR_SIZE == 0.",
+            n, static_cast<u32>(UBX_BOARD_PAIR_SIZE));
         return HcclResult::HCCL_E_NOT_SUPPORT;
     }
 
@@ -207,7 +226,9 @@ HcclResult InsTempUBXAllToAllVMesh1D::GetRankNumPerBoard(const TemplateResource&
         }
         u32 linkNumSendRecv = channels.at(rank).size();
         if (linkNumSendRecv == 1) { // 说明是fullmesh内
-            HCCL_INFO("myRank[%u] and curRank[%u] is fullMesh link", myAlgRank_, rank);
+            HCCL_DEBUG(
+                "[InsTempUBXAllToAllVMesh1D][GetRankNumPerBoard] myRank[%u] and curRank[%u] is fullMesh link",
+                myAlgRank_, rank);
             fullMeshRankNum++;
         }
     }
@@ -408,7 +429,11 @@ HcclResult InsTempUBXAllToAllVMesh1D::RunPairwiseChannel(
     CHK_RET(CalcCclSliceOffset(targetRank, scratchBufferSizePerRank_, innerRecvOffsetBytes, rxDestinationOffset));
     CHK_PRT_RET(
         AddOverflows(innerSendOffset, innerCurrSendDataCount) || AddOverflows(innerRecvOffset, innerCurrRecvDataCount),
-        HCCL_ERROR("[InsTempUBXAllToAllVMesh1D] pairwise data offset overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempUBXAllToAllVMesh1D] pairwise data offset overflows, sendOffset[%llu] + sendCount[%llu], "
+            "recvOffset[%llu] + recvCount[%llu], each sum must not exceed u64 max.",
+            innerSendOffset, innerCurrSendDataCount, innerRecvOffset, innerCurrRecvDataCount),
+        HCCL_E_PARA);
     const u32 queId = channelIndex + 1; // 主流用来后同步了
     DataSlice txSrcSlice(
         tempAlgParams.buffInfo.inputPtr, txSourceOffset, innerCurrSendDataSize, innerCurrSendDataCount);
@@ -493,7 +518,7 @@ HcclResult InsTempUBXAllToAllVMesh1D::RunPairwise(
 
         CHK_RET(RunPairwiseStep(threads));
         u32 linkNumSendRecv = channels.at(targetRank).size();
-        HCCL_INFO(
+        HCCL_DEBUG(
             "[InsTempUBXAllToAllVMesh1D] myRank is [%u], targetRank is [%u], currBoard is [%u], "
             "targetBoard is [%u], linkNumSendRecv is[%u]",
             myAlgRank_, targetRank, currBoard_, targetBoard, linkNumSendRecv);

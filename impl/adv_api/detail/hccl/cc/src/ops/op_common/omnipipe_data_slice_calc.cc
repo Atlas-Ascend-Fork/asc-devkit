@@ -106,7 +106,7 @@ void CalAllgather2DOffset(
         yAGOffset[stepNum - 1] = yAGOffset[stepNum - 1] + xAGDataSize[stepNum - 1];
     }
     for (u64 i = 0; i < stepNum; i++) {
-        HCCL_INFO(
+        HCCL_DEBUG(
             "[CalAllgather2DOffset] xAGOffset[%llu]=[%llu],yAGOffset[%llu]=[%llu]", i, xAGOffset[i], i, yAGOffset[i]);
     }
     HCCL_INFO("[CalAllgather2DOffset] end");
@@ -147,7 +147,7 @@ void CalReducescatter2DOffset(
         }
         xRSOffset[stepNum - finStepMark] = xRSOffset[stepNum - 1] + xRSDataSize[stepNum - 1];
         for (u64 i = 0; i < stepNum; i++) {
-            HCCL_INFO(
+            HCCL_DEBUG(
                 "[CalReducescatter2DOffset] xRSOffset[%llu]=[%llu],yRSOffset[%llu]=[%llu]", i, xRSOffset[i], i,
                 yRSOffset[i]);
         }
@@ -231,7 +231,7 @@ u64 CalAllgatherDataSizeRatio2D(
     }
     HCCL_INFO("[CalAllgatherDataSizeRatio2D] step=[%llu]", step);
     for (u64 i = 0; i < step; i++) {
-        HCCL_INFO(
+        HCCL_DEBUG(
             "[CalAllgatherDataSizeRatio2D] "
             "xStepP2pDataSize[%llu]=[%f],yStepP2pDataSize[%llu]=[%f],",
             i, xStepP2pDataSize[i], i, yStepP2pDataSize[i]);
@@ -329,7 +329,7 @@ u64 CalAllgatherDataSize2D(
     }
     HCCL_INFO("[CalAllgatherDataSize2D] step=[%llu]", step);
     for (u64 i = 0; i < step; i++) {
-        HCCL_INFO(
+        HCCL_DEBUG(
             "[CalAllgatherDataSize2D] "
             "xStepP2pDataSize[%llu]=[%llu],yStepP2pDataSize[%llu]=[%llu],",
             i, xStepP2pDataSize[i], i, yStepP2pDataSize[i]);
@@ -453,7 +453,7 @@ u64 CalReducescatterDataSize2D(
     }
     HCCL_INFO("[CalReducescatterDataSize2D] step=[%llu]", step);
     for (u64 i = 0; i < step; i++) {
-        HCCL_INFO(
+        HCCL_DEBUG(
             "[CalReducescatterDataSize2D] "
             "xStepP2pDataSize[%llu]=[%llu],yStepP2pDataSize[%llu]=[%llu],",
             i, xStepP2pDataSize[i], i, yStepP2pDataSize[i]);

@@ -29,11 +29,19 @@ HcclResult CalcUserSliceOffset(u64 displacement, u64 dataTypeSize, u64 splitOffs
 {
     CHK_PRT_RET(
         MultiplyOverflows(displacement, dataTypeSize),
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] user buffer displacement overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] user buffer displacement overflows, displacement[%llu], dataTypeSize[%llu], "
+            "product must not exceed u64 max.",
+            displacement, dataTypeSize),
+        HCCL_E_PARA);
     const u64 displacementBytes = displacement * dataTypeSize;
     CHK_PRT_RET(
         AddOverflows(displacementBytes, splitOffset),
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] user buffer offset overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] user buffer offset overflows, displacementBytes[%llu], splitOffset[%llu], "
+            "sum must not exceed u64 max.",
+            displacementBytes, splitOffset),
+        HCCL_E_PARA);
     byteOffset = displacementBytes + splitOffset;
     return HCCL_SUCCESS;
 }
@@ -42,7 +50,11 @@ HcclResult CalcCclSliceOffset(u32 bufferIndex, u64 sliceStride, u64 baseOffset, 
 {
     CHK_PRT_RET(
         MultiplyOverflows(bufferIndex, sliceStride),
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] CCL buffer stride overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] CCL buffer stride overflows, bufferIndex[%u], sliceStride[%llu], product must "
+            "not exceed u64 max.",
+            bufferIndex, sliceStride),
+        HCCL_E_PARA);
     const u64 bufferOffset = static_cast<u64>(bufferIndex) * sliceStride;
     CHK_PRT_RET(
         AddOverflows(bufferOffset, baseOffset) || AddOverflows(bufferOffset + baseOffset, splitOffset),
@@ -54,7 +66,11 @@ HcclResult CalcCclSliceOffset(u32 bufferIndex, u64 sliceStride, u64 baseOffset, 
 HcclResult CalcDataSize(u64 count, u64 dataTypeSize, u64& dataSize)
 {
     CHK_PRT_RET(
-        MultiplyOverflows(count, dataTypeSize), HCCL_ERROR("[InsTempAlltoAllVMesh1D] data size overflows."),
+        MultiplyOverflows(count, dataTypeSize),
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] data size overflows, count[%llu], dataTypeSize[%llu], product must not exceed "
+            "u64 max.",
+            count, dataTypeSize),
         HCCL_E_PARA);
     dataSize = count * dataTypeSize;
     return HCCL_SUCCESS;
@@ -116,7 +132,8 @@ HcclResult InsTempAlltoAllVMesh1D::CalcRes(
     CHK_PRT_RET(
         topoInfo->level0Topo != Level0Shape::MESH_1D && topoInfo->level0Topo != Level0Shape::CLOS && !isPcieMixMeshClos,
         HCCL_ERROR(
-            "[InsTempAlltoAllVMesh1D][CalcRes] unsupported level0Topo[%u], level0PcieMix[%d].",
+            "[InsTempAlltoAllVMesh1D][CalcRes] unsupported level0Topo[%u], level0PcieMix[%d], supported: MESH_1D/CLOS "
+            "or MESH_1D_CLOS with pcieMix.",
             static_cast<u32>(topoInfo->level0Topo), static_cast<int>(topoInfo->level0PcieMix)),
         HCCL_E_NOT_SUPPORT);
     CHK_PRT_RET(
@@ -150,7 +167,11 @@ HcclResult InsTempAlltoAllVMesh1D::CalcResByChannelDescs(
     const u32 concurrentRankNum = std::min(ALLTOALLV_DIRECT_FULLMESH_CONCURRENT_SIZE, remoteRankNum);
     CHK_PRT_RET(
         concurrentRankNum > 0U && channelsPerRank_ > std::numeric_limits<u32>::max() / concurrentRankNum,
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D][CalcResByChannelDescs] slave thread number overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D][CalcResByChannelDescs] slave thread number overflows, channelsPerRank[%u], "
+            "concurrentRankNum[%u], max[%u].",
+            channelsPerRank_, concurrentRankNum, std::numeric_limits<u32>::max()),
+        HCCL_E_PARA);
     resourceRequest.slaveThreadNum = concurrentRankNum * channelsPerRank_;
     resourceRequest.notifyNumPerThread.assign(resourceRequest.slaveThreadNum, channelsPerRank_);
     resourceRequest.notifyNumOnMainThread = resourceRequest.slaveThreadNum;
@@ -220,11 +241,16 @@ HcclResult InsTempAlltoAllVMesh1D::SetRuntimeChannelsPerRank(
     }
     CHK_PRT_RET(
         algName != ALLTOALL_MULTI_CHANNEL_ALG,
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] unsupported algName[%s].", param.algName), HCCL_E_NOT_SUPPORT);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] unsupported algName[%s], expected[%s].", param.algName,
+            ALLTOALL_MULTI_CHANNEL_ALG),
+        HCCL_E_NOT_SUPPORT);
     CHK_PTR_NULL(param.all2AllVDataDes.sendCounts);
     CHK_PRT_RET(
         param.all2AllVDataDes.sendType >= HCCL_DATA_TYPE_RESERVED,
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] invalid sendType[%u].", static_cast<u32>(param.all2AllVDataDes.sendType)),
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] invalid sendType[%u], valid range [0, %u).",
+            static_cast<u32>(param.all2AllVDataDes.sendType), static_cast<u32>(HCCL_DATA_TYPE_RESERVED)),
         HCCL_E_PARA);
     const u64 dataTypeSize = DATATYPE_SIZE_TABLE[param.all2AllVDataDes.sendType];
     CHK_PRT_RET(
@@ -252,14 +278,23 @@ HcclResult InsTempAlltoAllVMesh1D::ValidateKernelInput(
     CHK_PRT_RET(
         tempAlgParams.sendCounts.size() != templateRankSize_ || tempAlgParams.recvCounts.size() != templateRankSize_ ||
             tempAlgParams.sdispls.size() != templateRankSize_ || tempAlgParams.rdispls.size() != templateRankSize_,
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] count/displacement vector size mismatch."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] count/displacement vector size mismatch, sendCountsSize[%zu], "
+            "recvCountsSize[%zu], sdisplsSize[%zu], rdisplsSize[%zu], expected templateRankSize[%u].",
+            tempAlgParams.sendCounts.size(), tempAlgParams.recvCounts.size(), tempAlgParams.sdispls.size(),
+            tempAlgParams.rdispls.size(), templateRankSize_),
+        HCCL_E_PARA);
     const auto rankIter = std::find(subCommRanks_[0].begin(), subCommRanks_[0].end(), myRank_);
     CHK_PRT_RET(
         rankIter == subCommRanks_[0].end(), HCCL_ERROR("[InsTempAlltoAllVMesh1D] local rank is absent."), HCCL_E_PARA);
     const u32 myAlgRank = static_cast<u32>(std::distance(subCommRanks_[0].begin(), rankIter));
     CHK_PRT_RET(
         tempAlgParams.sendCounts[myAlgRank] != tempAlgParams.recvCounts[myAlgRank],
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] self send/recv counts differ."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] self send/recv counts differ, myAlgRank[%u], sendCount[%llu], recvCount[%llu].",
+            myAlgRank, static_cast<unsigned long long>(tempAlgParams.sendCounts[myAlgRank]),
+            static_cast<unsigned long long>(tempAlgParams.recvCounts[myAlgRank])),
+        HCCL_E_PARA);
     return HCCL_SUCCESS;
 }
 
@@ -269,7 +304,10 @@ HcclResult InsTempAlltoAllVMesh1D::KernelRun(
     CHK_RET(ValidateKernelInput(tempAlgParams, templateResource));
     CHK_PRT_RET(
         param.all2AllVDataDes.sendType >= HCCL_DATA_TYPE_RESERVED,
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] invalid datatype."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] invalid datatype, sendType[%u], valid range [0, %u).",
+            static_cast<u32>(param.all2AllVDataDes.sendType), static_cast<u32>(HCCL_DATA_TYPE_RESERVED)),
+        HCCL_E_PARA);
     threadNum_ = static_cast<u32>(templateResource.threads.size());
     dataType_ = param.all2AllVDataDes.sendType;
     dataTypeSize_ = DATATYPE_SIZE_TABLE[dataType_];
@@ -405,7 +443,11 @@ HcclResult InsTempAlltoAllVMesh1D::RunSendRecvForRank(
     CalcCclBuffIdx(remoteRank, myRankCclBuffIdx, remoteCclBuffIdx);
     CHK_PRT_RET(
         myRankCclBuffIdx > (std::numeric_limits<u32>::max() - 1U) / channelsPerRank_,
-        HCCL_ERROR("[InsTempAlltoAllVMesh1D] thread index overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsTempAlltoAllVMesh1D] thread index overflows, myRankCclBuffIdx[%u], channelsPerRank[%u], max "
+            "allowed[%u].",
+            myRankCclBuffIdx, channelsPerRank_, (std::numeric_limits<u32>::max() - 1U) / channelsPerRank_),
+        HCCL_E_PARA);
     const u32 baseQueIdx = myRankCclBuffIdx * channelsPerRank_ + 1U;
     CHK_PRT_RET(
         baseQueIdx >= threads.size() || curValidChannelsSize > threads.size() - baseQueIdx,
@@ -527,7 +569,11 @@ HcclResult InsTempAlltoAllVMesh1D::PreCopyByLoop(
         (void)remoteCclBuffIdx;
         CHK_PRT_RET(
             myRankCclBuffIdx > (std::numeric_limits<u32>::max() - 1U) / channelsPerRank_,
-            HCCL_ERROR("[InsTempAlltoAllVMesh1D][PreCopy] thread index overflows."), HCCL_E_PARA);
+            HCCL_ERROR(
+                "[InsTempAlltoAllVMesh1D][PreCopy] thread index overflows, myRankCclBuffIdx[%u], channelsPerRank[%u], "
+                "max allowed[%u].",
+                myRankCclBuffIdx, channelsPerRank_, (std::numeric_limits<u32>::max() - 1U) / channelsPerRank_),
+            HCCL_E_PARA);
         u32 queIdx = myRankCclBuffIdx * channelsPerRank_ + 1U;
         const auto channelIter = channels.find(remoteRank);
         CHK_PRT_RET(
@@ -537,7 +583,11 @@ HcclResult InsTempAlltoAllVMesh1D::PreCopyByLoop(
         const u32 curValidChannelsSize = std::min(static_cast<u32>(curChannels.size()), channelsPerRank_);
         CHK_PRT_RET(
             curValidChannelsSize == 0U || queIdx >= threads.size() || curValidChannelsSize > threads.size() - queIdx,
-            HCCL_ERROR("[InsTempAlltoAllVMesh1D][PreCopy] insufficient channels or threads."), HCCL_E_INTERNAL);
+            HCCL_ERROR(
+                "[InsTempAlltoAllVMesh1D][PreCopy] insufficient channels or threads, validChannels[%u], queIdx[%u], "
+                "threadsSize[%zu].",
+                curValidChannelsSize, queIdx, threads.size()),
+            HCCL_E_INTERNAL);
         CHK_RET(CalcDataSplitByPortGroupCommon(
             tempAlgParams.sendCounts[remoteRank], dataTypeSize_, curChannels, sendCountsSplit_, sendSizeSplit_,
             sendOffsetSplit_, curValidChannelsSize));

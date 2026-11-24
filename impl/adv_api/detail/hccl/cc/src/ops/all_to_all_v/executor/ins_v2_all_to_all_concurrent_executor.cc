@@ -304,7 +304,11 @@ HcclResult InsV2AllToAllConcurrentExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlg
 {
     CHK_PRT_RET(
         MultiplyOverflows(currentCount, dataTypeSize_) || MultiplyOverflows(maxDataCountPerLoop, dataTypeSize_),
-        HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] template byte size overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsV2AllToAllConcurrentExecutor] template byte size overflows, count[%llu], "
+            "maxDataCountPerLoop[%llu], dataTypeSize[%llu], product must not exceed u64 max.",
+            currentCount, maxDataCountPerLoop, dataTypeSize_),
+        HCCL_E_PARA);
     params.count = currentCount;
     params.dataType = dataType_;
     params.processedDataCount = processedCount;
@@ -320,33 +324,53 @@ HcclResult InsV2AllToAllConcurrentExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlg
     CHK_PRT_RET(
         MultiplyOverflows(splitData.sdispls[0] + processedCount, dataTypeSize_) ||
             MultiplyOverflows(splitData.rdispls[0] + processedCount, dataTypeSize_),
-        HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] base offset overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsV2AllToAllConcurrentExecutor] base offset overflows, sdispls[0][%llu], rdispls[0][%llu], "
+            "processedCount[%llu], dataTypeSize[%llu], product must not exceed u64 max.",
+            splitData.sdispls[0], splitData.rdispls[0], processedCount, dataTypeSize_),
+        HCCL_E_PARA);
     params.buffInfo.inBuffBaseOff = inBaseOff;
     params.buffInfo.outBuffBaseOff = outBaseOff;
     for (u32 rank = 0U; rank < rankSize_; ++rank) {
         if (splitData.sendCounts[rank] > processedCount) {
             CHK_PRT_RET(
                 AddOverflows(splitData.sdispls[rank], processedCount),
-                HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] send displacement overflows."), HCCL_E_PARA);
+                HCCL_ERROR(
+                    "[InsV2AllToAllConcurrentExecutor] send displacement overflows, rank[%u], sdispls[%llu], "
+                    "processedCount[%llu], sum must not exceed u64 max.",
+                    rank, splitData.sdispls[rank], processedCount),
+                HCCL_E_PARA);
             params.sendCounts[rank] = std::min(currentCount, splitData.sendCounts[rank] - processedCount);
             params.sdispls[rank] = splitData.sdispls[rank] + processedCount;
         } else {
             CHK_PRT_RET(
                 AddOverflows(splitData.sdispls[rank], splitData.sendCounts[rank]),
-                HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] final send displacement overflows."), HCCL_E_PARA);
+                HCCL_ERROR(
+                    "[InsV2AllToAllConcurrentExecutor] final send displacement overflows, rank[%u], sdispls[%llu], "
+                    "sendCounts[%llu], sum must not exceed u64 max.",
+                    rank, splitData.sdispls[rank], splitData.sendCounts[rank]),
+                HCCL_E_PARA);
             params.sendCounts[rank] = 0U;
             params.sdispls[rank] = splitData.sdispls[rank] + splitData.sendCounts[rank];
         }
         if (splitData.recvCounts[rank] > processedCount) {
             CHK_PRT_RET(
                 AddOverflows(splitData.rdispls[rank], processedCount),
-                HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] receive displacement overflows."), HCCL_E_PARA);
+                HCCL_ERROR(
+                    "[InsV2AllToAllConcurrentExecutor] receive displacement overflows, rank[%u], rdispls[%llu], "
+                    "processedCount[%llu], sum must not exceed u64 max.",
+                    rank, splitData.rdispls[rank], processedCount),
+                HCCL_E_PARA);
             params.recvCounts[rank] = std::min(currentCount, splitData.recvCounts[rank] - processedCount);
             params.rdispls[rank] = splitData.rdispls[rank] + processedCount;
         } else {
             CHK_PRT_RET(
                 AddOverflows(splitData.rdispls[rank], splitData.recvCounts[rank]),
-                HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] final receive displacement overflows."), HCCL_E_PARA);
+                HCCL_ERROR(
+                    "[InsV2AllToAllConcurrentExecutor] final receive displacement overflows, rank[%u], rdispls[%llu], "
+                    "recvCounts[%llu], sum must not exceed u64 max.",
+                    rank, splitData.rdispls[rank], splitData.recvCounts[rank]),
+                HCCL_E_PARA);
             params.recvCounts[rank] = 0U;
             params.rdispls[rank] = splitData.rdispls[rank] + splitData.recvCounts[rank];
         }
@@ -441,7 +465,11 @@ HcclResult InsV2AllToAllConcurrentExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlg
     CHK_PRT_RET(
         MultiplyOverflows(scratchMultipliers[0], maxDataCountPerLoop[0]) ||
             MultiplyOverflows(scratchMultipliers[0] * maxDataCountPerLoop[0], dataTypeSize_),
-        HCCL_ERROR("[InsV2AllToAllConcurrentExecutor] scratch offset overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsV2AllToAllConcurrentExecutor] scratch offset overflows, multiplier[%llu], "
+            "maxDataCountPerLoop[%llu], dataTypeSize[%llu], product must not exceed u64 max.",
+            scratchMultipliers[0], maxDataCountPerLoop[0], dataTypeSize_),
+        HCCL_E_PARA);
     params0.buffInfo.hcclBuffBaseOff = 0U;
     params1.buffInfo.hcclBuffBaseOff = scratchMultipliers[0] * maxDataCountPerLoop[0] * dataTypeSize_;
 

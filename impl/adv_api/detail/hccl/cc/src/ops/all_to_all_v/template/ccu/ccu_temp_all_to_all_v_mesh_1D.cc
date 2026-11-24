@@ -44,8 +44,9 @@ HcclResult CcuTempAlltoAllVMesh1D::CalcRes(
     CHK_PRT_RET(
         tempRankSize_ < 2U || tempRankSize_ > CCU_MAX_RANK_SIZE || mySubCommRank_ >= tempRankSize_,
         HCCL_ERROR(
-            "[CcuTempAlltoallVMesh1D::CalcRes] invalid rank metadata, rankSize[%u], rankId[%u].", tempRankSize_,
-            mySubCommRank_),
+            "[CcuTempAlltoAllVMesh1D::CalcRes] invalid rank metadata, rankSize[%u] (valid: [2, %llu]), "
+            "rankId[%u] (valid: [0, rankSize)).",
+            tempRankSize_, static_cast<unsigned long long>(CCU_MAX_RANK_SIZE), mySubCommRank_),
         HCCL_E_PARA);
 
     resourceRequest.notifyNumOnMainThread = 0;
@@ -76,15 +77,18 @@ HcclResult CcuTempAlltoAllVMesh1D::CalcRes(
         for (const auto& channel : channelDescs) {
             CHK_PRT_RET(
                 channel.channelProtocol != COMM_PROTOCOL_UBC_CTP,
-                HCCL_ERROR("[CcuTempAlltoAllVMesh1D::CalcRes] invalid channel protocol[%u].", channel.channelProtocol),
+                HCCL_ERROR(
+                    "[CcuTempAlltoAllVMesh1D::CalcRes] invalid channel protocol[%u], expect COMM_PROTOCOL_UBC_CTP[%u].",
+                    static_cast<u32>(channel.channelProtocol), static_cast<u32>(COMM_PROTOCOL_UBC_CTP)),
                 HCCL_E_INTERNAL);
         }
     }
     CHK_PRT_RET(
         channelDescs.size() + 1U != tempRankSize_,
         HCCL_ERROR(
-            "[CcuTempAlltoallVMesh1D::CalcRes] invalid channel count[%zu] for rankSize[%u].", channelDescs.size(),
-            tempRankSize_),
+            "[CcuTempAlltoAllVMesh1D::CalcRes] invalid channel count[%zu] for rankSize[%u], "
+            "expect channelCount == rankSize - 1[%u].",
+            channelDescs.size(), tempRankSize_, tempRankSize_ - 1U),
         HCCL_E_INTERNAL);
 
     auto kernelArg = std::make_shared<CcuKernelArgAlltoAllVMesh1D>();

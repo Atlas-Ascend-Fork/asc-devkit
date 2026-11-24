@@ -159,8 +159,9 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::ValidateAnd
     CHK_PRT_RET(
         param.varMemSize != ALL_TO_ALL_V_VECTOR_NUM * static_cast<u64>(rankSize_) * sizeof(u64),
         HCCL_ERROR(
-            "[InsV2AlltoAllVSoleExecutor] invalid varMemSize[%llu] for rankSize[%u].",
-            static_cast<unsigned long long>(param.varMemSize), rankSize_),
+            "[InsV2AlltoAllVSoleExecutor] invalid varMemSize[%llu bytes] for rankSize[%u], expected[%llu bytes].",
+            static_cast<unsigned long long>(param.varMemSize), rankSize_,
+            static_cast<unsigned long long>(ALL_TO_ALL_V_VECTOR_NUM * static_cast<u64>(rankSize_) * sizeof(u64))),
         HCCL_E_PARA);
     CHK_PTR_NULL(param.all2AllVDataDes.sendCounts);
     CHK_PTR_NULL(param.all2AllVDataDes.recvCounts);
@@ -245,7 +246,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
     CHK_PRT_RET(
         maxDataCountPerLoop == 0U,
         HCCL_ERROR(
-            "[InsV2AlltoAllVSoleExecutor] maxDataCountPerLoop is zero, scratch[%llu], multiplier[%llu].",
+            "[InsV2AlltoAllVSoleExecutor] maxDataCountPerLoop is zero, scratch[%llu bytes], multiplier[%llu].",
             static_cast<unsigned long long>(maxTmpMemSize_), static_cast<unsigned long long>(scratchMultiplier)),
         HCCL_E_INTERNAL);
 
@@ -262,7 +263,12 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
     CHK_PRT_RET(
         MultiplyOverflows(maxDataCountPerLoop, dataTypeSize_) ||
             MultiplyOverflows(maxSendOrRecvDataCount, dataTypeSize_),
-        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor] slice stride overflows."), HCCL_E_PARA);
+        HCCL_ERROR(
+            "[InsV2AlltoAllVSoleExecutor] slice stride overflows, maxDataCountPerLoop[%llu], "
+            "maxSendOrRecvDataCount[%llu], dataTypeSize[%llu], product must not exceed u64 max.",
+            static_cast<unsigned long long>(maxDataCountPerLoop),
+            static_cast<unsigned long long>(maxSendOrRecvDataCount), static_cast<unsigned long long>(dataTypeSize_)),
+        HCCL_E_PARA);
     tempAlgParams.inputSliceStride = maxDataCountPerLoop * dataTypeSize_;
     tempAlgParams.outputSliceStride = maxSendOrRecvDataCount * dataTypeSize_;
 
@@ -293,25 +299,45 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
             if (sendCounts[rank] > processedDataCount) {
                 CHK_PRT_RET(
                     AddOverflows(sendDispls[rank], processedDataCount),
-                    HCCL_ERROR("[InsV2AlltoAllVSoleExecutor] send displacement overflows."), HCCL_E_PARA);
+                    HCCL_ERROR(
+                        "[InsV2AlltoAllVSoleExecutor] send displacement overflows, rank[%u], sdispls[%llu], "
+                        "processedDataCount[%llu], sum must not exceed u64 max.",
+                        rank, static_cast<unsigned long long>(sendDispls[rank]),
+                        static_cast<unsigned long long>(processedDataCount)),
+                    HCCL_E_PARA);
                 tempAlgParams.sendCounts[rank] = std::min(currDataCount, sendCounts[rank] - processedDataCount);
                 tempAlgParams.sdispls[rank] = sendDispls[rank] + processedDataCount;
             } else {
                 CHK_PRT_RET(
                     AddOverflows(sendDispls[rank], sendCounts[rank]),
-                    HCCL_ERROR("[InsV2AlltoAllVSoleExecutor] final send displacement overflows."), HCCL_E_PARA);
+                    HCCL_ERROR(
+                        "[InsV2AlltoAllVSoleExecutor] final send displacement overflows, rank[%u], sdispls[%llu], "
+                        "sendCounts[%llu], sum must not exceed u64 max.",
+                        rank, static_cast<unsigned long long>(sendDispls[rank]),
+                        static_cast<unsigned long long>(sendCounts[rank])),
+                    HCCL_E_PARA);
                 tempAlgParams.sdispls[rank] = sendDispls[rank] + sendCounts[rank];
             }
             if (recvCounts[rank] > processedDataCount) {
                 CHK_PRT_RET(
                     AddOverflows(recvDispls[rank], processedDataCount),
-                    HCCL_ERROR("[InsV2AlltoAllVSoleExecutor] receive displacement overflows."), HCCL_E_PARA);
+                    HCCL_ERROR(
+                        "[InsV2AlltoAllVSoleExecutor] receive displacement overflows, rank[%u], rdispls[%llu], "
+                        "processedDataCount[%llu], sum must not exceed u64 max.",
+                        rank, static_cast<unsigned long long>(recvDispls[rank]),
+                        static_cast<unsigned long long>(processedDataCount)),
+                    HCCL_E_PARA);
                 tempAlgParams.recvCounts[rank] = std::min(currDataCount, recvCounts[rank] - processedDataCount);
                 tempAlgParams.rdispls[rank] = recvDispls[rank] + processedDataCount;
             } else {
                 CHK_PRT_RET(
                     AddOverflows(recvDispls[rank], recvCounts[rank]),
-                    HCCL_ERROR("[InsV2AlltoAllVSoleExecutor] final receive displacement overflows."), HCCL_E_PARA);
+                    HCCL_ERROR(
+                        "[InsV2AlltoAllVSoleExecutor] final receive displacement overflows, rank[%u], rdispls[%llu], "
+                        "recvCounts[%llu], sum must not exceed u64 max.",
+                        rank, static_cast<unsigned long long>(recvDispls[rank]),
+                        static_cast<unsigned long long>(recvCounts[rank])),
+                    HCCL_E_PARA);
                 tempAlgParams.rdispls[rank] = recvDispls[rank] + recvCounts[rank];
             }
         }

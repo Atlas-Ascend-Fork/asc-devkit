@@ -41,8 +41,9 @@ CcuResult InitResource(KfcAllToAllContext& ctx)
 {
     if (ctx.channelCount == 0U || ctx.rankSize == 0U || ctx.rankId >= ctx.rankSize) {
         HCCL_ERROR(
-            "[CcuKfcAllToAll] invalid resource, channelCount[%u], rankSize[%u], rankId[%u]", ctx.channelCount,
-            ctx.rankSize, ctx.rankId);
+            "[CcuKfcAllToAll] invalid resource, channelCount[%u] (must > 0), rankSize[%u] (must > 0), "
+            "rankId[%u] (must < rankSize).",
+            ctx.channelCount, ctx.rankSize, ctx.rankId);
         return CCU_E_INTERNAL;
     }
     ctx.peerOutput.resize(ctx.rankSize);

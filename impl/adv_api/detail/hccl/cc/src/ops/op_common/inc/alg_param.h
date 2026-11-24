@@ -316,8 +316,9 @@ struct TopoInfoWithNetLayerDetails : public TopoInfo { // 通信域拓扑ctx
         binaryStream >> physicalLevelNum;
         if (physicalLevelNum > PHYSICAL_LEVEL_NUM_LIMIT) {
             HCCL_WARNING(
-                "[TopoInfo][DeSerialize] implausible physicalLevelNum[%u], drop the whole physical level section",
-                physicalLevelNum);
+                "[TopoInfo][DeSerialize] implausible physicalLevelNum[%u], exceeds limit[%u], drop the whole "
+                "physical level section",
+                physicalLevelNum, static_cast<uint32_t>(PHYSICAL_LEVEL_NUM_LIMIT));
             physicalLevelNum = 0;
             return;
         }

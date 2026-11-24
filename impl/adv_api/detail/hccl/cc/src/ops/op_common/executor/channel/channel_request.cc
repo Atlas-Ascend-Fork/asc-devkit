@@ -48,8 +48,9 @@ HcclResult CalcMeshChannelConnect(u32 rank, u32 rankSize, u32 root, std::set<u32
             continue;
         }
         connectRanks.insert(dstRank);
-        HCCL_INFO("[CalcMeshChannelConnect]localRank[%u], rankDst[%u]", rank, dstRank);
     }
+    HCCL_INFO(
+        "[CalcMeshChannelConnect] localRank[%u], connectRankNum[%u].", rank, static_cast<u32>(connectRanks.size()));
     return HCCL_SUCCESS;
 }
 
@@ -94,7 +95,9 @@ HcclResult CalcNBChannelConnect(u32 rank, u32 rankSize, u32 root, std::set<u32>&
 HcclResult GetAlgRankChannel(u32 virtRank, const std::vector<u32>& tempVTopo, u32& algRank)
 {
     std::vector<u32>::const_iterator topoVecIter = std::find(tempVTopo.begin(), tempVTopo.end(), virtRank);
-    CHK_PRT_RET(topoVecIter == tempVTopo.end(), HCCL_ERROR("[GetAlgRankChannel] Invalid virtual Rank!"), HCCL_E_PARA);
+    CHK_PRT_RET(
+        topoVecIter == tempVTopo.end(), HCCL_ERROR("[GetAlgRankChannel] Invalid virtual Rank[%u]!", virtRank),
+        HCCL_E_PARA);
     algRank = distance(tempVTopo.begin(), topoVecIter);
     return HCCL_SUCCESS;
 }
