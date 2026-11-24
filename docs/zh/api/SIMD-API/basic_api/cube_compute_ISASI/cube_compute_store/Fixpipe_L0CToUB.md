@@ -23,15 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：仅支持包含FixpipeParamsM300参数的接口。
-<!-- end id8 -->
-<!-- npu="9020" id21 -->
-- Kirin9020处理器系列产品：仅支持包含FixpipeParamsM300参数的接口。
-<!-- end id21 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：仅支持包含FixpipeParamsM300参数的接口。
-<!-- end id9 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/cube_compute_store/Fixpipe_L0CToUB_res.md#id1 -->
 
 ## 功能说明<a name="zh-cn_topic_0000002549846732_section106841136114319"></a>

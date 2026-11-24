@@ -23,27 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id17 -->
-- KirinX90处理器系列产品：支持
-<!-- end id17 -->
-<!-- npu="9020" id12 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9030" id16 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id16 -->
-<!-- npu="9050" id8 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="kirin1" id9 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="kirin2" id10 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin3" id11 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/reduction_compute/Reduce_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -115,70 +94,6 @@ __simd_callee__ inline void Reduce(S& dstReg, V srcReg, MaskReg mask)
 | int64_t | int64_t |
 | uint64_t | uint64_t |
 <!-- end id19 -->
-
-
-<!-- npu="x90,9030" id13 -->
-**表7** KirinX90/Kirin9030处理器系列产品，版本ReduceType::SUM、ReduceType::MAX、ReduceType::MIN数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| half | half |
-| float | float |
-<!-- end id13 -->
-
-<!-- npu="9020" id14 -->
-**表8** Kirin9020处理器系列产品，ReduceType::SUM数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| int16_t | int8_t |
-| uint16_t | uint8_t |
-| half | half |
-| float | float |
-| int32_t | int16_t |
-| int32_t | int32_t |
-| uint32_t | uint16_t |
-| uint32_t | uint32_t |
-
-
-**表9** Kirin9020处理器系列产品，ReduceType::MAX或ReduceType::MIN数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| int8_t | int8_t |
-| uint8_t | uint8_t |
-| int16_t | int16_t |
-| uint16_t | uint16_t |
-| half | half |
-| int32_t | int32_t |
-| uint32_t | uint32_t |
-| float | float |
-<!-- end id14 -->
-
-<!-- npu="9050" id20 -->
-**表5** Kirin9050处理器系列产品，ReduceType::SUM数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| half | half |
-| float | float |
-| int32_t | int16_t |
-| int32_t | int32_t |
-| uint32_t | uint16_t |
-| uint32_t | uint32_t |
-
-
-**表6** Kirin9050处理器系列产品，ReduceType::MAX或ReduceType::MIN数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| int16_t | int16_t |
-| uint16_t | uint16_t |
-| half | half |
-| int32_t | int32_t |
-| uint32_t | uint32_t |
-| float | float |
-<!-- end id20 -->
 
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/reduction_compute/Reduce_res.md#id2 -->
 

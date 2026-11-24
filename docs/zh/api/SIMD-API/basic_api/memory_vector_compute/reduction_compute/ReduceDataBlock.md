@@ -23,15 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="9020" id30 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id30 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id9 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/reduction_compute/ReduceDataBlock_res.md#id1 -->
 
 ## 功能说明
@@ -109,12 +100,6 @@
 <!-- npu="910" id15 -->
 - Atlas训练系列产品，支持half。
 <!-- end id15 -->
-<!-- npu="x90" id16 -->
-- KirinX90处理器系列产品，支持half、float。
-<!-- end id16 -->
-<!-- npu="9030" id17 -->
-- Kirin9030处理器系列产品，支持half、float。
-<!-- end id17 -->
 
 目的操作数与源操作数的数据类型需要保持一致。
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/reduction_compute/ReduceDataBlock_res.md#id2 -->

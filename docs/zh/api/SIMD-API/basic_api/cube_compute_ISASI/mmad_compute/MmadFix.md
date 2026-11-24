@@ -25,18 +25,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：不支持
-<!-- end id8 -->
-<!-- npu="9020" id9 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id9 -->
-<!-- npu="9030" id10 -->
-- Kirin9030处理器系列产品：不支持
-<!-- end id10 -->
-<!-- npu="9050" id11 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/mmad_compute/MmadFix_res.md#id1 -->
 
 ### 传入bias的原型
@@ -62,18 +50,6 @@
 <!-- npu="910" id18 -->
 - Atlas训练系列产品：不支持
 <!-- end id18 -->
-<!-- npu="x90" id19 -->
-- KirinX90处理器系列产品：不支持
-<!-- end id19 -->
-<!-- npu="9020" id20 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id20 -->
-<!-- npu="9030" id21 -->
-- Kirin9030处理器系列产品：不支持
-<!-- end id21 -->
-<!-- npu="9050" id22 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id22 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/mmad_compute/MmadFix_res.md#id2 -->
 
 ## 功能说明
@@ -87,21 +63,6 @@ MmadFix接口实现矩阵乘计算能力，其数学表达式为：
 $$
 C = A \times B + Bias
 $$
-
-<!-- npu="9050" id23 -->
-针对Kirin9050处理器系列产品：
-
-**表1** 矩阵计算矩阵A、B、C解释说明
-
-| 矩阵计算逻辑 | 矩阵计算物理位置 | 维度 | 输入/输出数据格式 | 数据类型 |
-| --- | --- | --- | --- | --- |
-| A | L1 Buffer | M x K | Nz | <a href="#zh_cn_topic_mmadfix_section5">数据类型</a> |
-| B | L0B Buffer | K x N | Zn | <a href="#zh_cn_topic_mmadfix_section5">数据类型</a> |
-| C | L1 Buffer | M x N，可支持使用偏置矩阵Bias进行初始化 | Nz | <a href="#zh_cn_topic_mmadfix_section5">数据类型</a> |
-
-矩阵乘的M、K维度通过SetMatrixPara接口（MatrixParaParams参数）配置，N维度通过mmadFixParams参数的n字段传入。MmadFix接口的计算结果直接写入L1 Buffer，省去了传统矩阵乘从L0C Buffer搬出结果的过程。
-<!-- end id23 -->
-
 
 ## 函数原型
 

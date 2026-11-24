@@ -23,18 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：不支持
-<!-- end id8 -->
-<!-- npu="9020" id10 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id10 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：不支持
-<!-- end id9 -->
-<!-- npu="9050" id11 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/cube_compute_load/DataCopy_GMToL1_DN2NZ_res.md#id1 -->
 
 ## 功能说明<a id="section474617392321"></a>
@@ -131,10 +119,6 @@ __aicore__ inline void DataCopy(const LocalTensor<T>& dst, const GlobalTensor<T>
 ![](../../../../figures/gm2l1_dn2nz_smallc0.png "DN2NZ转换示意图（SmallC0模式）")
 
 ## 数据类型<a id="section4219135304818"></a>
-
-<!-- npu="9050" id12 -->
-Kirin9050处理器系列产品，支持数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、fp4x2。
-<!-- end id12 -->
 
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/cube_compute_load/DataCopy_GMToL1_DN2NZ_res.md#id2 -->
 

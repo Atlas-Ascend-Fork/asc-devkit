@@ -23,36 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="9050" id10 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin1" id11 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id11 -->
-<!-- npu="kirin2" id12 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="kirin3" id13 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id13 -->
-<!-- npu="x90" id20 -->
-- Kirinx90处理器系列产品：支持
-<!-- end id20 -->
-<!-- npu="9020" id22 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id22 -->
-<!-- npu="9030" id23 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id23 -->
-<!-- npu="9050" id24 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id24 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/data_move/DataCopy_UBToUB_highdim_split_res.md#id1 -->
 
 ## 功能说明<a name="section474617392321"></a>
@@ -164,51 +134,6 @@ __aicore__ inline void DataCopy(const LocalTensor<T>& dst, const LocalTensor<T>&
 - Atlas训练系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float、int64_t、uint64_t、double。
 
 <!-- end id14 -->
-
-
-<!-- npu="x90" id21 -->
-
-- KirinX90处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id21 -->
-
-<!-- npu="9020" id25 -->
-
-- Kirin9020处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id25 -->
-
-<!-- npu="9030" id26 -->
-
-- Kirin9030处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id26 -->
-
-<!-- npu="9050" id15 -->
-
-- Kirin9050处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id15 -->
-
-<!-- npu="kirin1" id16 -->
-
-- KirinDev0001处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id16 -->
-
-<!-- npu="kirin2" id17 -->
-
-- KirinDev0002处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id17 -->
-
-<!-- npu="kirin3" id18 -->
-
-- KirinDev0003处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-
-<!-- end id18 -->
-
-
 
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/data_move/DataCopy_UBToUB_highdim_split_res.md#id2 -->
 

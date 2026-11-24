@@ -23,27 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id15 -->
-- KirinX90处理器系列产品：支持
-<!-- end id15 -->
-<!-- npu="9020" id12 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9030" id14 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id14 -->
-<!-- npu="9050" id8 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="kirin1" id9 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="kirin2" id10 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin3" id11 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/composite_compute/MulAddDst_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -107,18 +86,6 @@ __simd_callee__ inline void MulAddDst(U& dstReg, U& srcReg0, U& srcReg1, MaskReg
 - 本接口支持寄存器重叠。
 - 本接口操作数为寄存器，不涉及地址对齐。
 - 本接口不修改全局寄存器的值。
-<!-- npu="x90" id17 -->
-- 针对KirinX90处理器系列产品，支持的数据类型为：int16_t、uint16_t、int32_t、uint32_t、half、float。
-<!-- end id17 -->
-<!-- npu="9020" id13 -->
-- 针对Kirin9020处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、int32_t、uint32_t、half、float。
-<!-- end id13 -->
-<!-- npu="9030" id16 -->
-- 针对Kirin9030处理器系列产品，支持的数据类型为：int16_t、uint16_t、int32_t、uint32_t、half、float。
-<!-- end id16 -->
-<!-- npu="9050" id18 -->
-- 针对Kirin9050处理器系列产品，支持的数据类型为：int16_t、uint16_t、int32_t、uint32_t、half、float、bfloat16_t。
-<!-- end id18 -->
 
 ## 关键特性说明
 

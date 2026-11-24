@@ -23,15 +23,6 @@
 <!-- npu="910" id17 -->
 - Atlas训练系列产品：不支持
 <!-- end id17 -->
-<!-- npu="x90" id18 -->
-- KirinX90处理器系列产品：不支持
-<!-- end id18 -->
-<!-- npu="9020" id2 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id2 -->
-<!-- npu="9030" id19 -->
-- Kirin9030处理器系列产品：不支持
-<!-- end id19 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/data_move/Copy_UBToUB_continuous_res.md#id1 -->
 
 ## 功能说明<a name="zh-cn_topic_0000002567699435_section106841136114319"></a>

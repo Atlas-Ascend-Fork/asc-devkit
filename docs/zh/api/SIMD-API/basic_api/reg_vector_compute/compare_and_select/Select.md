@@ -23,27 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id14 -->
-- KirinX90处理器系列产品：支持
-<!-- end id14 -->
-<!-- npu="9020" id12 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9030" id13 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id13 -->
-<!-- npu="9050" id8 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="kirin1" id9 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="kirin2" id10 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin3" id11 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/compare_and_select/Select_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -100,23 +79,6 @@ __simd_callee__ inline void Select(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& m
 | bfloat16_t | bfloat16_t |
 | uint64_t | uint64_t |
 | int64_t | int64_t |
-
-<!-- npu="x90" id18 -->
-KirinX90处理器系列产品，支持数据类型为：uint8、int8_t、uint16_t、int16_t、uint32_t、int32_t、half、float、bool。
-<!-- end id18 -->
-
-<!-- npu="9020" id15 -->
-Kirin9020处理器系列产品，支持数据类型为：uint8、int8_t、uint16_t、int16_t、uint32_t、int32_t、half、float、bool。
-<!-- end id15 -->
-
-<!-- npu="9030" id16 -->
-Kirin9030处理器系列产品，支持数据类型为：uint8、int8_t、uint16_t、int16_t、uint32_t、int32_t、half、float、bool。
-<!-- end id16 -->
-
-<!-- npu="9050" id17 -->
-Kirin9050处理器系列产品，支持数据类型为：uint8、int8_t、uint16_t、int16_t、uint32_t、int32_t、half、float、bool。
-<!-- end id17 -->
-
 
 ## 约束说明<a name="section633mcpsimp"></a>
 

@@ -23,13 +23,6 @@
 <!-- npu="910" id9 -->
 - Atlas训练系列产品：不支持
 <!-- end id9 -->
-<!-- npu="x90" id1 -->
-- KirinX90处理器系列产品：不支持
-<!-- end id1 -->
-<!-- npu="9030" id2 -->
-- Kirin9030处理器系列产品：不支持
-<!-- end id2 -->
-
 
 <!-- @ref: asc-devkit/res/docs/zh/api/Utils-API/SuperKernel/SK_BIND_res.md#id1 -->
 

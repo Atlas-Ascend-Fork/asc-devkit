@@ -23,12 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id9 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/debug_interface/onboard_print/DumpAccChkPoint_res.md#id1 -->
 
 ## 功能说明<a name="section259105813316"></a>
@@ -83,10 +77,6 @@ __aicore__ inline void DumpAccChkPoint(const GlobalTensor<T> &tensor, uint32_t i
 - Atlas A2系列产品，T支持的数据类型为：bool、int8_t、uint8_t、int16_t、uint16_t、half、bfloat16_t、int32_t、uint32_t、float、int64_t、uint64_t。<!-- end id103 -->
 <!-- npu="310p" id105 -->
 - Atlas推理系列产品AI Core，T支持的数据类型为：bool、int8_t、uint8_t、int16_t、uint16_t、half、bfloat16_t、int32_t、uint32_t、float、int64_t、uint64_t。<!-- end id105 -->
-<!-- npu="x90" id107 -->
-- KirinX90处理器系列产品，T支持的数据类型为：bool、int8_t、uint8_t、int16_t、uint16_t、half、bfloat16_t、int32_t、uint32_t、float、int64_t、uint64_t。<!-- end id107 -->
-<!-- npu="9030" id108 -->
-- Kirin9030处理器系列产品，T支持的数据类型为：bool、int8_t、uint8_t、int16_t、uint16_t、half、bfloat16_t、int32_t、uint32_t、float、int64_t、uint64_t。<!-- end id108 -->
 
 ## 返回值说明<a name="section640mcpsimp"></a>
 
@@ -116,17 +106,6 @@ __aicore__ inline void DumpAccChkPoint(const GlobalTensor<T> &tensor, uint32_t i
 
   SIMD场景下，NPU上板调试支持打印超大Tensor，即单次调用可打印数据量超过每核打印缓冲区大小的Tensor。数据分片传输由框架自动完成。超大Tensor数据量超过32KB时，仅打印前32KB数据对应的内容，超出部分以`...`表示，并输出告警。如需查看完整数据，可启用调测信息落盘，并使用[show_kernel_debug_data工具](../../../../../guide/programming_guide/appendix/show_kernel_debug_data_tool.md)解析。
 <!-- end id109 -->
-<!-- npu="x90,9030" id114 -->
-- 针对以下产品：
-  <!-- npu="x90" id115 -->
-  - KirinX90处理器系列产品
-  <!-- end id115 -->
-  <!-- npu="9030" id116 -->
-  - Kirin9030处理器系列产品
-  <!-- end id116 -->
-
-  单次调用DumpAccChkPoint打印的数据总量不可超过每核打印缓冲区大小，默认为32KB（还包括少量框架需要的头尾信息，通常可忽略）。使用时应注意，如果超出这个限制，则数据不会被打印。
-<!-- end id114 -->
 
 ## 调用示例<a name="section82241477610"></a>
 

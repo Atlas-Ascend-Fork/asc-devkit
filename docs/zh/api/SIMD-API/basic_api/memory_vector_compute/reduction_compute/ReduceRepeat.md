@@ -23,15 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="9020" id47 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id47 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id9 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/reduction_compute/ReduceRepeat_res.md#id1 -->
 
 ## 功能说明
@@ -110,12 +101,6 @@
 <!-- npu="910" id15 -->
 - Atlas训练系列产品，支持half。
 <!-- end id15 -->
-<!-- npu="x90" id16 -->
-- KirinX90处理器系列产品，支持half、float。
-<!-- end id16 -->
-<!-- npu="9030" id17 -->
-- Kirin9030处理器系列产品，支持half、float。
-<!-- end id17 -->
 
 <!-- npu="950" id18 -->
 **针对Ascend 950PR&950DT系列产品：**
@@ -132,7 +117,7 @@
 
 <!-- end id18 -->
 
-<!-- npu="A3,910b,910,310p,310b,x90,9030" id19 -->
+<!-- npu="A3,910b,910,310p,310b" id19 -->
 **针对如下型号，目的操作数与源操作数的数据类型需要保持一致。**
 
 <!-- npu="A3" id20 -->
@@ -150,12 +135,6 @@
 <!-- npu="910" id24 -->
 - Atlas训练系列产品
 <!-- end id24 -->
-<!-- npu="x90" id25 -->
-- KirinX90处理器系列产品
-<!-- end id25 -->
-<!-- npu="9030" id26 -->
-- Kirin9030处理器系列产品
-<!-- end id26 -->
 <!-- end id19 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/reduction_compute/ReduceRepeat_res.md#id2 -->
 
@@ -236,12 +215,6 @@
     <!-- npu="910" id38 -->
     - Atlas训练系列产品，支持`ORDER_VALUE_INDEX`。
     <!-- end id38 -->
-    <!-- npu="x90" id39 -->
-    - KirinX90处理器系列产品，支持`ORDER_VALUE_INDEX`、`ORDER_INDEX_VALUE`。
-    <!-- end id39 -->
-    <!-- npu="9030" id40 -->
-    - Kirin9030处理器系列产品，支持`ORDER_VALUE_INDEX`、`ORDER_INDEX_VALUE`。
-    <!-- end id40 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/reduction_compute/ReduceRepeat_res.md#id3 -->
 
 ## 关键特性说明

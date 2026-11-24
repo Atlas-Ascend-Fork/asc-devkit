@@ -26,12 +26,6 @@
 <!-- npu="910" id27 -->
 - Atlas训练系列产品：支持，仅保证编译兼容，实际功能不生效。
 <!-- end id27 -->
-<!-- npu="x90" id28 -->
-- KirinX90处理器系列产品：支持，仅保证编译兼容，实际功能不生效。
-<!-- end id28 -->
-<!-- npu="9030" id29 -->
-- Kirin9030处理器系列产品：支持，仅保证编译兼容，实际功能不生效。
-<!-- end id29 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/sync_control/inter_task_sync/SetNextTaskStart_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -51,7 +45,7 @@ SuperKernel是一种算子的二进制融合技术，与源码融合不同，它
 
 ## 函数原型<a name="section620mcpsimp"></a>
 
-<!-- npu="950,A3,910b,310b,x90,9030" id10 -->
+<!-- npu="950,A3,910b,310b" id10 -->
 - 该原型支持如下产品型号：
 
     <!-- npu="950" id1 -->
@@ -69,14 +63,6 @@ SuperKernel是一种算子的二进制融合技术，与源码融合不同，它
     <!-- npu="310b" id4 -->
     Atlas 200I/500 A2推理产品 
     <!-- end id4 -->
-
-    <!-- npu="x90" id5 -->
-    KirinX90处理器系列产品 
-    <!-- end id5 -->
-
-    <!-- npu="9030" id6 -->
-    Kirin9030处理器系列产品 
-    <!-- end id6 -->
 
     ```cpp
     template<pipe_t AIV_PIPE = PIPE_MTE3, pipe_t AIC_PIPE = PIPE_FIX, bool FORCE = false>
@@ -124,7 +110,7 @@ SuperKernel是一种算子的二进制融合技术，与源码融合不同，它
 
 ## 约束说明<a name="section633mcpsimp"></a>
 
-- 该接口适用于TorchAir图模式开发场景，且需在启用SuperKernel特性后方可生效。具体内容请参考[图内标定SuperKernel范围](https://gitcode.com/Ascend/torchair/blob/master/docs/zh/ascend_ir/features/advanced/super_kernel_scope.md)。
+- 该接口适用于TorchAir图模式开发场景，且需在启用SuperKernel特性后方可生效。具体内容请参考[图内标定SuperKernel范围](https://gitcode.com/Ascend/torchair/blob/26.2.0/docs/zh/ascend_ir/features/advanced/super_kernel_scope.md)。
 - 在算子运行过程中，需要保证此接口在每个核上都被调用，且每个核上仅被调用一次。
 - 若子核函数（Kernel）某个TilingKey分支调用了此接口，则开发者需要保证当前算子可能会运行的所有TilingKey均调用了此接口，否则会出现因同步指令数量不匹配而卡住的现象。
 - 本接口内部实现会占用核间同步flagId，若与CrossCoreSetFlag/CrossCoreWaitFlag同时使用需注意避免flagId冲突，详见[核间同步flagId占用说明](../inter_core_sync/key_features.md#inter_core_sync_flagid_usage)。
