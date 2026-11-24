@@ -1,3 +1,23 @@
+---
+okftype: reference.api
+description: "按掩码将half矢量中的偶数或奇数索引元素转换为float，由源位置标签指定读取位置，支持引用参数输出和函数返回值两种形式。"
+tag:
+  - roles: [compute]
+  - operations: [conversion]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_position_mode.md
+    kind: related
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "增加显式选择源奇偶位置的重载，并提供函数返回值形式。"
+---
 # asc_half2float
 
 ## 产品支持情况

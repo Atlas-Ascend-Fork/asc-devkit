@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总矩阵计算的数据搬入、搬出及辅助配置接口，按搬运方向列出接口用途和公共头文件。"
+---
 # 概述
 
 ## API列表

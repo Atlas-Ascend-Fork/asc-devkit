@@ -1,3 +1,18 @@
+---
+okftype: reference.api
+description: "设置饱和控制使用单指令或API配置，或使用全局饱和配置，默认为全局配置。该选择决定类型转换场景的CAST全局饱和开关是否生效。"
+tag:
+  - roles: [configuration]
+  - traits: [saturation_mode]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_override_strategy.md
+    kind: requires
+  - path: docs/zh/api/SIMD-API/c_api/spr/asc_set_saturation_flag.md
+    kind: configures
+    condition: "影响CAST全局开关是否生效"
+version: ">=9.2.0"
+version_changes: []
+---
 # asc_set_saturation_strategy
 
 ## 产品支持情况

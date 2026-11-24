@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "介绍试验接口的启用方式和兼容性约束，汇总可用的试验接口及相关类型。"
+---
 # 概述
 
 ## 试验接口概述

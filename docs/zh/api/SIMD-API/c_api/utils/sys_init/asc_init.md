@@ -5,7 +5,12 @@ tag:
   - roles: [control]
 dependencies: []
 version: ">=8.5.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: behavior_fixed
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "3510架构补齐CTRL、Mask、搬运循环、Padding和数据搬运原子操作类型的复位。"
 ---
 # asc_init
 

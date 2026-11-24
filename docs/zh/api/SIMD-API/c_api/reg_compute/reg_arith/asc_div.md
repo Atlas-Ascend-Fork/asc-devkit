@@ -1,3 +1,25 @@
+---
+okftype: reference.api
+description: "按掩码对两个矢量寄存器逐元素求商，支持half、float及16位和32位有符号或无符号整数，结果写入引用参数或作为函数返回值，掩码未选中的位置置零。"
+tag:
+  - roles: [compute]
+  - operations: [divide]
+  - traits: [elementwise]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+  - path: docs/zh/api/appendix/reg_vector_compute_interface_boundary_value_summary.md
+    kind: constrained_by
+    condition: "查看除零和其他特殊输入的计算结果"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "新增int16_t、uint16_t、int32_t和uint32_t除法重载，并补充函数返回值形式。"
+---
 # asc_div
 
 ## 产品支持情况

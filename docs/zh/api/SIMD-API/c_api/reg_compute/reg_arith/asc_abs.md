@@ -1,11 +1,41 @@
 ---
 okftype: reference.api
-description: "根据mask对源操作数矢量数据寄存器按元素取绝对值，结果写入目的操作数或通过函数返回值返回；输入为有符号整数类型最小负值时结果保留原值不变。"
+description: "按掩码对int8_t、int16_t、half、int32_t或float矢量逐元素取绝对值，结果写入引用参数或作为函数返回值。掩码未选中的元素置零，有符号整数的最小负值保持原值。"
 tag:
   - roles: [compute]
   - operations: [absolute]
-dependencies: []
-version: ">=9.2.0"
+  - traits: [elementwise]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "overload:asc_abs__vi8_vb@3510"
+    scope_basis: resolved
+    note: "增加通过函数返回int8_t矢量绝对值的重载。"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "overload:asc_abs__vi16_vb@3510"
+    scope_basis: resolved
+    note: "增加通过函数返回int16_t矢量绝对值的重载。"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "overload:asc_abs__vi32_vb@3510"
+    scope_basis: resolved
+    note: "增加通过函数返回int32_t矢量绝对值的重载。"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "overload:asc_abs__vf16_vb@3510"
+    scope_basis: resolved
+    note: "增加通过函数返回half矢量绝对值的重载。"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "overload:asc_abs__vf32_vb@3510"
+    scope_basis: resolved
+    note: "增加通过函数返回float矢量绝对值的重载。"
 ---
 # asc_abs
 

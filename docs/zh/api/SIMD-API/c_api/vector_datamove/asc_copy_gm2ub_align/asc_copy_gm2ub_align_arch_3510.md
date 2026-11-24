@@ -1,3 +1,37 @@
+---
+okftype: reference.api
+description: "从GM向UB搬运长度可非32字节对齐的数据，支持连续和高维切分模式。自动填充使用数据块首元素值，高维切分还可配置常量填充和L2 Cache策略。"
+tag:
+  - roles: [data_movement]
+  - operations: [copy]
+  - traits: [high_dimensional, padding, unaligned_transfer]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_load_l2_cache_mode.md
+    kind: related
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
+    kind: constrained_by
+    condition: "与其他指令存在数据依赖时需插入同步指令"
+  - path: docs/zh/api/SIMD-API/c_api/vector_datamove/asc_set_copy_pad_val.md
+    kind: requires
+    condition: "高维切分并开启常量填充时预先配置填充值"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.1.0"
+    kind: overload_added
+    scope: "section:连续数据搬运"
+    scope_basis: resolved
+    note: "增加仅传入dst、src和size的连续搬运重载。"
+  - since: "9.2.0"
+    kind: parameter_changed
+    scope: "param:burst_count"
+    scope_basis: resolved
+    note: "高维切分的块个数参数由uint16_t扩展为uint32_t。"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:高维切分数据搬运"
+    scope_basis: resolved
+    note: "新增以asc_load_l2_cache_mode枚举配置L2 Cache策略的重载。"
+---
 # asc_copy_gm2ub_align（NPU架构版本3510）
 
 ## 产品支持情况

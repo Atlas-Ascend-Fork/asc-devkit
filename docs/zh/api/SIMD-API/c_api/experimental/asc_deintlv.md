@@ -1,3 +1,19 @@
+---
+okftype: reference.api
+description: "对两个矢量数据寄存器或掩码寄存器执行解交织。返回结构体的两个成员分别保存偶数和奇数位置的元素或比特分组，掩码分组粒度由接口后缀指定。使用时需启用试验接口。"
+tag:
+  - roles: [compute]
+  - operations: [deinterleave]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/experimental/pair.md
+    kind: requires
+    condition: "返回值使用公共双返回值结构体"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+version: ">=9.3.0"
+version_changes: []
+---
 # asc_deintlv
 
 ## 产品支持情况

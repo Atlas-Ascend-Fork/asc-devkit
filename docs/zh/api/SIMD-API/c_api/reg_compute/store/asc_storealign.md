@@ -1,3 +1,30 @@
+---
+okftype: reference.api
+description: "将矢量数据寄存器或掩码寄存器的数据对齐搬出到UB，支持连续、立即数偏移和非连续方式，矢量数据还支持地址寄存器偏移。矢量掩码未选中的元素保留UB中原有数据。"
+tag:
+  - roles: [data_movement]
+  - operations: [store]
+  - traits: [aligned_transfer, datablock_granularity]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_addr_reg/asc_update_addr_reg.md
+    kind: requires
+    condition: "使用地址寄存器偏移模式时"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.1.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "为对齐搬出新增int4b_t及vector_bool相关重载。"
+  - since: "9.2.0"
+    kind: parameter_changed
+    scope: "param:offset"
+    scope_basis: resolved
+    note: "地址寄存器偏移重载的offset参数由iter_reg改为addr_reg。"
+---
 # asc_storealign
 
 ## 产品支持情况

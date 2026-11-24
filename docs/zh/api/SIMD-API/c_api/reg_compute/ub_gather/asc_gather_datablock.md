@@ -19,6 +19,11 @@ version_changes:
     scope: "overload:asc_gather_datablock__Rvi4x2_PUi4x2_vu32_vb@3510"
     scope_basis: resolved
     note: "Release Notes 9.1.0 记录新增 int4b_t 重载与无需传入掩码参数的 uint64_t 重载（对应 asc_gather_datablock__Rvu64_PUu64_vu32）；本事件定位到 int4b_t 掩码形式，同批新增的无掩码形式见无掩码原型表"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "增加按数据类型直接返回矢量数据寄存器的收集重载。"
 ---
 # asc_gather_datablock
 

@@ -12,7 +12,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/spr/asc_set_saturation_flag.md
     kind: requires
     condition: "饱和/非饱和模式通过该接口配置"
-version: ">=9.0.0"
+version: ">=9.2.0"
 version_changes: []
 ---
 # asc_float2half

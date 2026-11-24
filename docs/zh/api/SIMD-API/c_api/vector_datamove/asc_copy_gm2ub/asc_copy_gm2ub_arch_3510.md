@@ -1,3 +1,17 @@
+---
+okftype: reference.api
+description: "将GM数据连续或按高维切分方式搬入UB。有效长度未按32字节对齐时，硬件在UB侧补齐写入，调用者须为实际写入范围预留空间。"
+tag:
+  - roles: [data_movement]
+  - operations: [copy]
+  - traits: [high_dimensional, padding]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
+    kind: constrained_by
+    condition: "与其他指令存在数据依赖时需插入同步指令"
+version: ">=9.1.0"
+version_changes: []
+---
 # asc_copy_gm2ub（NPU架构版本3510）
 
 ## 产品支持情况

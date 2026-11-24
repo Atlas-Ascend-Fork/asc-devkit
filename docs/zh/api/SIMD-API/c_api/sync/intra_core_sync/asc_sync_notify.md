@@ -1,3 +1,19 @@
+---
+okftype: reference.api
+description: "在源流水前序指令完成读写后置位指定事件标志，供同一AI Core内的目的流水等待。源流水可继续执行，源和目的流水组合须符合对应产品的核内同步约束。"
+tag:
+  - roles: [control]
+  - operations: [synchronization]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/sync/intra_core_sync/asc_sync_wait.md
+    kind: requires
+    condition: "由目的流水配对等待事件"
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
+    kind: constrained_by
+    condition: "遵循核内同步支持的流水组合"
+version: ">=8.5.0"
+version_changes: []
+---
 # asc_sync_notify
 
 ## 产品支持情况

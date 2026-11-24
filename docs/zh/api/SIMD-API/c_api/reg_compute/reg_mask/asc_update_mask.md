@@ -1,3 +1,20 @@
+---
+okftype: reference.api
+description: "按剩余元素个数生成掩码并通过引用参数更新剩余个数。支持b8、b16、b32模式，单次分别对应256、128、64个元素。"
+tag:
+  - roles: [configuration]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.1.0"
+    kind: parameter_changed
+    scope: "param:value"
+    scope_basis: resolved
+    note: "三个掩码更新接口统一将计数参数由scalar更名为value。"
+---
 # asc_update_mask
 
 ## 产品支持情况

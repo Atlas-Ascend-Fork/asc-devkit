@@ -15,7 +15,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/general_description_and_constraints.md
     kind: constrained_by
     condition: "存储单元空间大小与对齐要求"
-  - path: docs/zh/api/SIMD-API/c_api/sync/system_sync_overview.md
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
     kind: requires
     condition: "与其他指令存在数据依赖时需插入同步指令"
 version: ">=9.0.0"

@@ -12,7 +12,12 @@ dependencies:
     kind: related
     condition: "对性能有要求时改用非对齐搬入接口"
 version: ">=9.0.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "增加直接返回矢量数据寄存器的搬入重载。"
 ---
 # asc_load
 

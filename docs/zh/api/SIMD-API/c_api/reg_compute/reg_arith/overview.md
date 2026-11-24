@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总基于矢量数据寄存器的基础算术接口，列出各接口的计算功能和公共头文件。"
+---
 # 概述
 
 ## API列表

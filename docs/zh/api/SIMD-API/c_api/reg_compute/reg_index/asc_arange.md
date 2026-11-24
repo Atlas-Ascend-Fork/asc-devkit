@@ -17,6 +17,11 @@ version_changes:
     scope: "param:value"
     scope_basis: resolved
     note: "公开头声明中的标量参数名由 index 统一为 value（9.0.0 的 include/c_api/reg_compute/reg_vector.h 使用 index，9.1.0 起使用 value），签名的类型与语义不变；CANN_9_1_0 Bug修复节记录该改名。"
+  - since: "9.1.0"
+    kind: parameter_changed
+    scope: "param:value"
+    scope_basis: resolved
+    note: "asc_arange和asc_arange_descend将参数名从index统一为value。"
   - since: "9.2.0"
     kind: overload_added
     scope: "section:函数原型"

@@ -1,3 +1,29 @@
+---
+okftype: reference.api
+description: "按掩码将float矢量转换为fp8_e4m3fn_t，按最近邻偶数舍入，支持饱和与非饱和模式。位置标签选择目的寄存器中每隔4个元素写入的一组位置，其他位置置零。"
+tag:
+  - roles: [compute]
+  - operations: [conversion]
+  - traits: [rounding_mode, saturation_mode]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_position_quarter_mode.md
+    kind: related
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_convert/rounding_mode.md
+    kind: constrained_by
+  - path: docs/zh/api/SIMD-API/c_api/spr/asc_set_saturation_flag.md
+    kind: requires
+    condition: "使用饱和或非饱和模式时配置"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "增加通过dst_quarter_pos指定目标四分之一位置的重载，并提供函数返回值形式。"
+---
 # asc_float2e4m3
 
 ## 产品支持情况

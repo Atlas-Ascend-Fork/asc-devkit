@@ -5,7 +5,17 @@ tag:
   - roles: [query]
 dependencies: []
 version: ">=9.0.0"
-version_changes: []
+version_changes:
+  - since: "9.1.0"
+    kind: parameter_changed
+    scope: "param:core_version"
+    scope_basis: resolved
+    note: "参数名由coreVersion统一为core_version。"
+  - since: "9.2.0"
+    kind: return_value_changed
+    scope: "param:core_version"
+    scope_basis: resolved
+    note: "输出由芯片内部版本字段改为公开的NPU架构版本号，2201架构输出2201，3510架构输出3510。"
 ---
 # asc_get_arch_ver
 

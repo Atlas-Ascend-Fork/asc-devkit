@@ -4,13 +4,22 @@ description: "针对PIPE_V执行同步的易用性接口，保证PIPE_V前序指
 tag:
   - roles: [control]
   - operations: [synchronization]
-  - traits: [inter_core_synchronization]
 dependencies:
   - path: docs/zh/api/SIMD-API/c_api/sync/intra_core_sync/asc_sync.md
     kind: replaced_by
     condition: "页面声明无入参原型 asc_sync_vec() 改用 asc_sync"
 version: ">=8.5.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: behavior_fixed
+    scope: "overload:asc_sync_vec__i@3510"
+    scope_basis: resolved
+    note: "移除有ID原型中冗余的Vector流水屏障。"
+  - since: "9.2.0"
+    kind: deprecated
+    scope: "overload:asc_sync_vec__z"
+    scope_basis: resolved
+    note: "无入参原型废弃，使用asc_sync执行全流水同步。"
 ---
 # asc_sync_vec
 

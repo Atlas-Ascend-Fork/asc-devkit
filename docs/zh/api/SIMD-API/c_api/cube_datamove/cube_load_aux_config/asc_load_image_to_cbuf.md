@@ -6,7 +6,7 @@ tag:
   - operations: [load]
   - traits: [padding]
 dependencies:
-  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview/cube_compute_flow.md
+  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview.md
     kind: related
   - path: docs/zh/api/SIMD-API/c_api/cube_datamove/cube_compute_load/asc_copy_l12l0a_arch_2201.md
     kind: related

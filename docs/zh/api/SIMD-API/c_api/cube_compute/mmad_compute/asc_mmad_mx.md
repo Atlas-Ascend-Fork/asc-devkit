@@ -24,7 +24,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/cube_compute/mmad_compute_key_features/UnitFlag.md
     kind: related
     condition: "UnitFlag同步机制与迭代场景"
-  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview/cube_compute_flow.md
+  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview.md
     kind: related
     condition: "数据准备、矩阵计算与结果搬出的衔接流程"
   - path: docs/zh/api/SIMD-API/c_api/cube_datamove/cube_compute_load/asc_copy_l12bt_arch_3510.md

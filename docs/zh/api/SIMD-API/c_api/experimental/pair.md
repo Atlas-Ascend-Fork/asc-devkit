@@ -1,3 +1,14 @@
+---
+okftype: reference.api
+description: "定义试验接口共用的双返回值结构体，以first和second成员承载两个数据寄存器或掩码寄存器结果。成员类型由结构体类型名指定，成员语义由调用接口定义。"
+tag:
+  - roles: [configuration]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/type/data_type_definition.md
+    kind: related
+version: ">=9.3.0"
+version_changes: []
+---
 # 双返回值结构体
 
 ## 产品支持情况

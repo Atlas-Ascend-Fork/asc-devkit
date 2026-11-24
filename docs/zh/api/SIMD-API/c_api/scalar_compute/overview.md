@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总标量位运算、类型转换、数据搬入和数据搬出接口，列出各接口用途及其公共头文件。"
+---
 # 概述
 
 ## API列表

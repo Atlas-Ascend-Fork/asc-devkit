@@ -1,3 +1,16 @@
+---
+okftype: reference.api
+description: "配置GM到UB非对齐搬运时数据块两侧的常量填充值，供asc_copy_gm2ub_align使用。部分低位宽浮点类型的填充值须转换为int8_t后再传入。"
+tag:
+  - roles: [data_movement_configuration]
+  - traits: [padding]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/vector_datamove/asc_copy_gm2ub_align/asc_copy_gm2ub_align_arch_3510.md
+    kind: configures
+    condition: "搬运接口开启常量填充时生效"
+version: ">=9.1.0"
+version_changes: []
+---
 # asc_set_copy_pad_val
 
 ## 产品支持情况

@@ -25,7 +25,12 @@ dependencies:
     kind: related
     condition: "用于读取 AR 寄存器累计的已搬出字节数"
 version: ">=9.2.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: behavior_fixed
+    scope: "param:dst"
+    scope_basis: resolved
+    note: "目的矢量数据寄存器由按值传递改为按引用传递，确保压缩结果能够回写。"
 ---
 # asc_squeeze_and_storeunalign
 

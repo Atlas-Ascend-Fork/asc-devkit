@@ -9,7 +9,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/sync/inter_core_sync/asc_sync_intra_arrive.md
     kind: requires
     condition: "必须与该到达侧按跨核ID映射配对使用，否则出现未定义行为"
-  - path: docs/zh/api/SIMD-API/c_api/sync/system_sync_overview.md
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
     kind: related
     condition: "四种核间同步模式与模式4的总体说明"
 version: ">=9.1.0"

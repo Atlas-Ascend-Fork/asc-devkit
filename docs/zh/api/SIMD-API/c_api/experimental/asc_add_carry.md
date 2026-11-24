@@ -1,3 +1,20 @@
+---
+okftype: reference.api
+description: "按掩码计算32位有符号或无符号矢量的逐元素加法，支持带或不带输入进位，返回和值低32位和逐元素进位标志。使用时需启用试验接口。"
+tag:
+  - roles: [compute]
+  - operations: [add]
+  - traits: [carry_input, elementwise, supports_carry_output]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/experimental/pair.md
+    kind: requires
+    condition: "返回值使用公共双返回值结构体"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+version: ">=9.3.0"
+version_changes: []
+---
 # asc_add_carry
 
 ## 产品支持情况

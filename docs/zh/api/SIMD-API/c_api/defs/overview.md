@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总C API的联合体、枚举、寄存器类型、宏和常量，列出各项用途及其公共头文件。"
+---
 # 概述
 
 ## API列表

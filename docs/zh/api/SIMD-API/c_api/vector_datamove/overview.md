@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总矢量计算相关的数据搬运及其辅助配置接口，按搬运方向列出接口用途和公共头文件。"
+---
 # 概述
 
 ## API列表

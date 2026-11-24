@@ -6,6 +6,9 @@ tag:
   - operations: [copy]
   - traits: [high_dimensional, padding]
 dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_load_l2_cache_mode.md
+    kind: related
+    condition: "配置l2_cache_mode时参见枚举取值"
   - path: docs/zh/api/SIMD-API/c_api/vector_datamove/asc_ndim_copy_dci.md
     kind: requires
     condition: "多核可能读取同一GM地址时需先刷新NDDMA DataCache"
@@ -19,7 +22,12 @@ dependencies:
     kind: requires
     condition: "常数填充需预先设置填充值"
 version: ">=9.0.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "新增使用asc_load_l2_cache_mode枚举配置L2 Cache策略的重载。"
 ---
 # asc_ndim_copy_gm2ub
 

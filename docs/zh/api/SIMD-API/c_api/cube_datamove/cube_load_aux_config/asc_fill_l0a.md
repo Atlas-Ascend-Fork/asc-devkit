@@ -5,7 +5,7 @@ tag:
   - roles: [data_initialization]
   - operations: [fill]
 dependencies:
-  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview/cube_compute_flow.md
+  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview.md
     kind: related
   - path: docs/zh/api/SIMD-API/c_api/cube_datamove/cube_compute_load/L1_L0A_B_memory_structure_intro.md
     kind: related

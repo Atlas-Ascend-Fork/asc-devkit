@@ -6,7 +6,7 @@ tag:
   - operations: [fill]
   - traits: [datablock_granularity]
 dependencies:
-  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview/cube_compute_flow.md
+  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview.md
     kind: related
   - path: docs/zh/api/SIMD-API/c_api/cube_datamove/cube_compute_load/L1_L0A_B_memory_structure_intro.md
     kind: related
@@ -16,7 +16,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/general_description_and_constraints.md
     kind: constrained_by
     condition: "L1 Buffer 512KB 容量、32 字节起始对齐与通用地址重叠约束"
-  - path: docs/zh/api/SIMD-API/c_api/sync/system_sync_overview.md
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
     kind: requires
     condition: "本指令与其它指令存在数据依赖时需插入同步指令串行化"
 version: ">=9.0.0"

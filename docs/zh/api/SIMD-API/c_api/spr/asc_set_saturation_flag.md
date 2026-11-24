@@ -1,3 +1,18 @@
+---
+okftype: reference.api
+description: "设置浮点、FP8、整数计算或类型转换的饱和开关。整数和转换场景关闭时采用截断，CAST场景的全局开关仅在USE_GLOBAL策略下生效。"
+tag:
+  - roles: [configuration]
+  - traits: [saturation_mode]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_saturation_mode.md
+    kind: requires
+  - path: docs/zh/api/SIMD-API/c_api/spr/asc_set_saturation_strategy.md
+    kind: constrained_by
+    condition: "CAST全局饱和开关仅在USE_GLOBAL策略下生效"
+version: ">=9.2.0"
+version_changes: []
+---
 # asc_set_saturation_flag
 
 ## 产品支持情况

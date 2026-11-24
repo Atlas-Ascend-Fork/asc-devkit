@@ -15,7 +15,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/spr/asc_set_saturation_flag.md
     kind: requires
     condition: "使用饱和或非饱和模式前需通过asc_set_saturation_flag接口配置"
-version: ">=9.2.0"
+version: ">=9.0.0"
 version_changes:
   - since: "9.2.0"
     kind: parameter_added
@@ -26,7 +26,7 @@ version_changes:
     kind: overload_added
     scope: "section:函数原型"
     scope_basis: resolved
-    note: "新增通过函数返回值输出结果的重载（返回 vector_hifloat8_t，参数为 src、mask、dst_quarter_pos）；9.2.0 起两形式合计 32 条声明（rna/rna_sat/rh/rh_sat 四种模式 × 4 个离散位置 × 2 种结果形式），此前只有 4 条三参引用输出声明。"
+    note: "新增通过函数返回值输出结果的重载（返回 vector_hifloat8_t，参数为 src、mask、dst_quarter_pos）；9.2.0 起两形式合计 32 条声明（rna/rna_sat/rh/rh_sat 四种模式 × 4 个离散位置 × 2 种结果形式）。早期版本通过隐式位置的引用输出原型及位置后缀选择位置。"
 ---
 # asc_float2hif8
 

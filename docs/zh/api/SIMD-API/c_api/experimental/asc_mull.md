@@ -1,3 +1,23 @@
+---
+okftype: reference.api
+description: "按掩码逐元素计算32位整数的64位乘积，将低32位和高32位分别存入双返回值结构体的两个成员，掩码未选中的位置置零。使用时需启用试验接口。"
+tag:
+  - roles: [compute]
+  - operations: [multiply]
+  - traits: [elementwise, split_high_low, widening_result]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/experimental/pair.md
+    kind: requires
+    condition: "返回值使用公共双返回值结构体"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_arith/asc_mull.md
+    kind: related
+    condition: "提供引用参数输出形式"
+version: ">=9.3.0"
+version_changes: []
+---
 # asc_mull
 
 ## 产品支持情况

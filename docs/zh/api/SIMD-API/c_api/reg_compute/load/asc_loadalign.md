@@ -1,3 +1,39 @@
+---
+okftype: reference.api
+description: "从32字节对齐的UB地址向矢量数据寄存器或掩码寄存器搬入数据，支持连续、立即数偏移、地址寄存器偏移和非连续对齐搬入，可通过引用参数或适用的返回值重载输出。"
+tag:
+  - roles: [data_movement]
+  - operations: [load]
+  - traits: [aligned_transfer, datablock_granularity]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/load/asc_loadalign_datablock_strided.md
+    kind: related
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/load/asc_loadalign_mask.md
+    kind: related
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_addr_reg/asc_update_addr_reg.md
+    kind: requires
+    condition: "使用地址寄存器偏移模式时"
+version: ">=9.0.0"
+version_changes:
+  - since: "9.1.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "新增int4b_t数据重载及vector_bool重载。"
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "为部分矢量数据搬入原型增加函数返回值形式。"
+  - since: "9.2.0"
+    kind: parameter_changed
+    scope: "param:offset"
+    scope_basis: resolved
+    note: "地址寄存器偏移重载的offset参数由iter_reg改为addr_reg，配合地址寄存器更新接口完成循环寻址。"
+---
 # asc_loadalign
 
 ## 产品支持情况

@@ -15,7 +15,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_convert/rounding_mode.md
     kind: related
     condition: "舍入模式说明"
-version: ">=9.2.0"
+version: ">=9.0.0"
 version_changes:
   - since: "9.2.0"
     kind: parameter_added
@@ -26,7 +26,7 @@ version_changes:
     kind: overload_added
     scope: "section:函数原型"
     scope_basis: resolved
-    note: "新增通过函数返回值输出结果的重载（返回 vector_fp4x2_e2m1_t，参数为 src、mask、dst_quarter_pos）；9.2.0 起两形式合计 40 条声明（5 种舍入 × 4 个离散位置 × 2 种结果形式），此前 9.0.0/9.1.0 只有 5 条三参引用输出声明。"
+    note: "新增通过函数返回值输出结果的重载（返回 vector_fp4x2_e2m1_t，参数为 src、mask、dst_quarter_pos）；9.2.0 起两形式合计 40 条声明（5 种舍入 × 4 个离散位置 × 2 种结果形式）。早期版本通过隐式位置的引用输出原型及位置后缀选择位置。"
 ---
 # asc_bfloat162e2m1x2
 

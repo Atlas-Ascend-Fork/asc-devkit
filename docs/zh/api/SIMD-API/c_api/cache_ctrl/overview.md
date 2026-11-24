@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "介绍AI Core缓存类型、缓存操作及其使用场景，以及缓存写策略和一致性问题，并汇总缓存控制接口。"
+---
 # 概述
 
 ## 缓存控制概述

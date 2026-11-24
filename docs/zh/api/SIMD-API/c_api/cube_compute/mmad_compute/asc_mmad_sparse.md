@@ -9,7 +9,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/cube_compute/cube_compute_fractal_intro/aux_cube_fractal_format_details.md
     kind: related
     condition: "稀疏权重及索引矩阵的排布格式"
-  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview/cube_compute_flow.md
+  - path: docs/zh/api/SIMD-API/c_api/cube_compute/overview.md
     kind: related
     condition: "稀疏场景下从稀疏数据准备到矩阵乘加的流程"
   - path: docs/zh/api/SIMD-API/c_api/cube_datamove/cube_compute_load/asc_copy_l12l0b_sparse.md

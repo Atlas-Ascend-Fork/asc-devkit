@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总系统初始化、系统操作以及系统资源和变量查询接口，列出各接口用途及其公共头文件。"
+---
 # 概述
 
 ## API列表

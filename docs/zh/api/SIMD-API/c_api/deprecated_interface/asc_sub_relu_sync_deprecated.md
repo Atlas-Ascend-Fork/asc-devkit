@@ -22,6 +22,11 @@ version_changes:
     scope: "page"
     scope_basis: kind_default
     note: "include 头在 asc_sub_relu_sync 声明前标注 ASC_DEPRECATED(9.2.0)，Release Notes 9.2.0 把 _sync 复合接口整体列为废弃；接口未移除。"
+  - since: "9.2.0"
+    kind: behavior_fixed
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "修复2201架构部分同步重载错误调用非同步实现的问题。"
 ---
 # asc_sub_relu_sync（废弃）
 

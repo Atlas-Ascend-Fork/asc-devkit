@@ -15,8 +15,13 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_convert/rounding_mode.md
     kind: related
     condition: "舍入模式说明"
-version: ">=9.2.0"
+version: ">=9.0.0"
 version_changes:
+  - since: "9.1.0"
+    kind: parameter_changed
+    scope: "param:dst"
+    scope_basis: resolved
+    note: "引用输出原型的目的寄存器类型名称由vector_f4e1m2x2修正为vector_fp4x2_e1m2_t。"
   - since: "9.2.0"
     kind: parameter_added
     scope: "param:dst_quarter_pos"

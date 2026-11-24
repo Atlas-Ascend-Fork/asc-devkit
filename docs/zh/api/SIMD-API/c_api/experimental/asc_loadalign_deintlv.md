@@ -1,3 +1,26 @@
+---
+okftype: reference.api
+description: "从32字节对齐的UB地址连续读取两倍矢量长度的数据，将偶数和奇数下标的元素分别存入双返回值结构体。int4b_t输入对应vector_int4x2_t返回成员。使用时需启用试验接口。"
+tag:
+  - roles: [data_movement]
+  - operations: [deinterleave, load]
+  - traits: [aligned_transfer]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/experimental/pair.md
+    kind: requires
+    condition: "返回值使用公共双返回值结构体"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/load/asc_loadalign_deintlv.md
+    kind: related
+    condition: "提供引用参数输出形式"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/overview.md
+    kind: constrained_by
+    condition: "遵循Reg矢量计算C API的通用约束"
+  - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_sync/asc_mem_bar.md
+    kind: requires
+    condition: "指令间存在需要同步的UB地址重叠时"
+version: ">=9.3.0"
+version_changes: []
+---
 # asc_loadalign_deintlv
 
 ## 产品支持情况

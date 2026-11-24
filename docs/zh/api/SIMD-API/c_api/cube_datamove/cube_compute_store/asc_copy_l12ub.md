@@ -6,7 +6,7 @@ tag:
   - operations: [copy]
   - traits: [aligned_transfer]
 dependencies:
-  - path: docs/zh/api/SIMD-API/c_api/sync/system_sync_overview.md
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
     kind: requires
     condition: "与其它指令存在数据依赖时需插入同步指令串行化"
 version: ">=9.1.0"

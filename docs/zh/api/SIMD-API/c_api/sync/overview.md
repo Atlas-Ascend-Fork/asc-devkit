@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "介绍AI Core核内流水同步和核间同步的原理、适用场景与支持组合，并汇总同步控制接口。"
+---
 # 概述
 
 ## 同步控制概述

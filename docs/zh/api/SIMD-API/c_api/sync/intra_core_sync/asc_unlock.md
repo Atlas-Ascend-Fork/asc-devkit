@@ -10,7 +10,12 @@ dependencies:
     kind: requires
     condition: "必须与 asc_lock 严格成对使用"
 version: ">=9.1.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "overload:asc_unlock__pipe_u8_mutexmode"
+    scope_basis: resolved
+    note: "增加使用asc_mutex_execute_mode强类型参数选择阻塞模式的重载。"
 ---
 # asc_unlock
 

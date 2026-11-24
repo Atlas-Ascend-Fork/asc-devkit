@@ -1,3 +1,19 @@
+---
+okftype: reference.api
+description: "等待同一AI Core内源流水置位指定事件。事件未置位时阻塞目的流水，事件已置位时清零并放行目的流水的后续指令。源和目的流水组合须符合对应产品的核内同步约束。"
+tag:
+  - roles: [control]
+  - operations: [synchronization]
+dependencies:
+  - path: docs/zh/api/SIMD-API/c_api/sync/intra_core_sync/asc_sync_notify.md
+    kind: requires
+    condition: "源流水需配对置位事件"
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
+    kind: constrained_by
+    condition: "遵循核内同步支持的流水组合"
+version: ">=8.5.0"
+version_changes: []
+---
 # asc_sync_wait
 
 ## 产品支持情况

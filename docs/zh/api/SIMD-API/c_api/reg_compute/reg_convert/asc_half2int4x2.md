@@ -1,6 +1,6 @@
 ---
 okftype: reference.api
-description: "按掩码将矢量数据寄存器中的half元素转换为int4x2_t元素，两个连续 half 打包进同一 int4x2_t 存储单元（1Byte），mas。"
+description: "按掩码将half元素转换为4位有符号整数，将相邻两个结果打包至一个int4x2_t存储单元。通过位置标签选择四分之一写入位置，未选中的掩码位置和目标位置置零。"
 tag:
   - roles: [compute]
   - operations: [conversion]
@@ -9,6 +9,9 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/reg_compute/reg_convert/rounding_mode.md
     kind: related
     condition: "舍入与饱和模式说明"
+  - path: docs/zh/api/SIMD-API/c_api/spr/asc_set_saturation_flag.md
+    kind: requires
+    condition: "按接口约束配置类型转换饱和模式"
 version: ">=9.0.0"
 version_changes:
   - since: "9.2.0"

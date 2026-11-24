@@ -8,7 +8,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/general_description_and_constraints.md
     kind: related
     condition: "正文据此引用存储单元说明"
-  - path: docs/zh/api/SIMD-API/c_api/sync/system_sync_overview.md
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
     kind: related
     condition: "有数据依赖时按该页插入同步指令"
 version: ">=8.5.0"

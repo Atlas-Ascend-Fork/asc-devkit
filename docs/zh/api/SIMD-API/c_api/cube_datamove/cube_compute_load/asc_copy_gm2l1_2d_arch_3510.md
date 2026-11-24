@@ -15,7 +15,7 @@ dependencies:
   - path: docs/zh/api/SIMD-API/c_api/defs/enum/asc_load_l2_cache_mode.md
     kind: requires
     condition: "l2_cache_mode参数取值与语义"
-  - path: docs/zh/api/SIMD-API/c_api/sync/system_sync_overview.md
+  - path: docs/zh/api/SIMD-API/c_api/sync/overview.md
     kind: requires
     condition: "与其他指令存在数据依赖时需插入同步指令"
 version: ">=9.2.0"

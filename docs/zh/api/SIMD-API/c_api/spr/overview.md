@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "汇总特殊寄存器控制和查询接口，涵盖控制寄存器、饱和开关和策略等配置。"
+---
 # 概述
 
 ## API列表

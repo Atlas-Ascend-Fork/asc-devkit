@@ -22,6 +22,11 @@ version_changes:
     scope: "section:函数原型"
     scope_basis: resolved
     note: "9.1.0 新增 12 个不带 mask 的引用输出重载（例如 void asc_duplicate_scalar(vector_uint8_t& dst, uint8_t value)），9.0.0 的 11 个重载均要求传入 vector_bool mask；该组重载把 value 写入 dst 的全部元素位置。"
+  - since: "9.1.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "增加无需传入掩码参数的标量广播重载。"
   - since: "9.2.0"
     kind: overload_added
     scope: "section:函数原型"

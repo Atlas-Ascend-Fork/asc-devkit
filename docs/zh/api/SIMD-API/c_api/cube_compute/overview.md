@@ -1,3 +1,7 @@
+---
+okftype: reference.concept
+description: "介绍Cube计算单元、关联存储和矩阵乘加流程，覆盖普通矩阵、Mx矩阵、4选2稀疏矩阵与Conv2D前向计算。"
+---
 # 概述
 
 ## 矩阵计算概述

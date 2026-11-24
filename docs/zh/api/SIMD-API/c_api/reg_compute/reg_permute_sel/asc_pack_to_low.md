@@ -12,7 +12,12 @@ dependencies:
     kind: constrained_by
     condition: "Reg 矢量计算 C API 通用约束"
 version: ">=9.2.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: overload_added
+    scope: "section:函数原型"
+    scope_basis: resolved
+    note: "增加函数返回值形式，将选出的内容写入结果的低半部分。"
 ---
 # asc_pack_to_low
 

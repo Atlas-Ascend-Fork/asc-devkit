@@ -10,7 +10,12 @@ dependencies:
     kind: related
     condition: "PIPE_ALL 时功能等价"
 version: ">=9.0.0"
-version_changes: []
+version_changes:
+  - since: "9.2.0"
+    kind: behavior_fixed
+    scope: "overload:asc_sync_pipe__pipe@2201"
+    scope_basis: resolved
+    note: "补齐Vector Core的PIPE_V单流水同步。"
 ---
 # asc_sync_pipe
 
