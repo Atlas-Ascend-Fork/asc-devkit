@@ -74,7 +74,7 @@ __aicore__ inline HcclHandle AllGather(GM_ADDR sendBuf, GM_ADDR recvBuf, uint64_
 <!-- end id8 -->
 <!-- npu="950" id9 -->
 -   对于Ascend 950PR&950DT系列产品，一个通信域内，所有Prepare接口的总调用次数不能超过63。
--   对于Ascend 950PR&950DT系列产品，通信服务端为CCU时，默认仅支持FullMesh算法，并且单次最大通信数据量不能超过256M。
+-   对于Ascend 950PR&950DT系列产品，在通信服务端为CCU的场景下，单次通信任务中任意两卡之间的最大通信数据量不能超过256M。
 <!-- end id9 -->
 
 ## 调用示例
