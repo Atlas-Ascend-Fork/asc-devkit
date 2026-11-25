@@ -211,7 +211,9 @@ def normalize_version_changes(rel: str, value: Any, errors: list[str]) -> list[d
     return events
 
 
-def load_documents(root: Path, scope: Scope, errors: list[str]) -> tuple[dict[str, dict[str, Any]], list[str]]:
+def load_documents(
+    root: Path, scope: Scope, errors: list[str], product_map: dict[str, Any] | None = None
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
     namespaces, tax_values = taxonomy(TAXONOMY_PATH)
     documents: dict[str, dict[str, Any]] = {}
     pending: list[str] = []
@@ -261,6 +263,11 @@ def load_documents(root: Path, scope: Scope, errors: list[str]) -> tuple[dict[st
             except ValueError as exc:
                 errors.append(f"{rel}: {exc}")
         stem = PurePosixPath(rel).stem
+        try:
+            product_support = docparse.doc_product_support(body, product_map)
+        except ValueError as exc:
+            errors.append(f"{rel}: {exc}")
+            product_support = {}
         documents[rel] = {
             "okftype": fm["okftype"],
             "description": fm.get("description", ""),
@@ -271,7 +278,7 @@ def load_documents(root: Path, scope: Scope, errors: list[str]) -> tuple[dict[st
             "version_changes": normalize_version_changes(rel, fm.get("version_changes"), errors),
             "title": docparse.doc_title(body, stem),
             "navigation": docparse.doc_navigation(body),
-            "product_support": docparse.doc_product_support(body),
+            "product_support": product_support,
             "body": body,
         }
     return documents, pending
@@ -680,7 +687,7 @@ def build(
     product_map = gate.load_product_map(product_map_path or PRODUCT_MAP_PATH)
     arch = gate.arch_label_to_number(arch_label, product_map)
 
-    documents, pending = load_documents(root, scope, errors)
+    documents, pending = load_documents(root, scope, errors, product_map)
     classify_documents(documents, scope)
     include_db = build_include_db(root / "include" / "c_api")
     # examples DB 覆盖整棵 examples/：marker 由建设侧按 canonical `override_id` 写入，

@@ -109,6 +109,34 @@ class ExternalSearchTests(unittest.TestCase):
         second = build_index.strip_informational(json.loads((out / "index.json").read_text()))
         self.assertEqual(first, second)
 
+    def test_markerless_chinese_support_controls_platform_search(self):
+        prefix = self.doc.read_text().split("## 产品支持情况")[0]
+        for verdict, count in (("支持", 1), ("不支持", 0)):
+            with self.subTest(verdict=verdict):
+                self.doc.write_text(
+                    prefix
+                    + "## 产品支持情况\n"
+                    + f"- Ascend 950PR&950DT系列产品：{verdict}\n"
+                    + "- Atlas A3系列产品：支持\n"
+                )
+                build_index.build(
+                    self.root, build_index.SCOPES["c_api"], self.index, "9.2.0", "3510", source_commit="a" * 40
+                )
+                result = search.search(self.args("--api", "asc_demo", "--version", "9.2.0"))
+                self.assertEqual(result["count"], count)
+                index = json.loads((self.index / "index.json").read_text())
+                record = index["documents"][self.doc.relative_to(self.root).as_posix()]
+                self.assertEqual(record["product_support"]["950"], verdict)
+
+    def test_product_marker_conflict_rejects_build_without_overwriting_index(self):
+        before = (self.index / "index.json").read_bytes()
+        self.doc.write_text(self.doc.read_text().replace("Ascend 950：支持", "Atlas A3系列产品：支持"))
+        with self.assertRaisesRegex(build_index.BuildError, r"asc_demo.md:.*product support conflict"):
+            build_index.build(
+                self.root, build_index.SCOPES["c_api"], self.index, "9.2.0", "3510", source_commit="a" * 40
+            )
+        self.assertEqual((self.index / "index.json").read_bytes(), before)
+
     def test_keywords_intersect_dimensions_and_platform(self):
         args = self.args("--operation", "add")
         args.keywords = ["加法", "隔离"]

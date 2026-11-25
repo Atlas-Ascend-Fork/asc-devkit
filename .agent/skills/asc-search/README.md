@@ -59,6 +59,10 @@ python3 -m pip install PyYAML
 
 `asc-search` 把三类头推导成一份持久索引，查询时只查索引、按需打开候选文档，不需要现场全文搜索。
 
+产品支持矩阵还读取正文的 `npu` 标记；标记缺失时，按 `config/product-map.yaml` 中的已知名称，
+识别“产品支持情况”列表的中文产品名称与支持结论。标记与已知名称冲突会拒绝构建，
+未知名称不猜测。具体边界见 [推导契约](references/index_derivation_contract.md#产品名称回退)。
+
 ![asc-search：三类知识标注与检索工具链](references/asc-search-knowledge-toolchain-9.2.0.svg)
 
 ### 1.3 两个工作流

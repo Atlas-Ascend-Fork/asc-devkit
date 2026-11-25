@@ -36,11 +36,25 @@ include 的 `@brief` 是面向开发者的英文重载摘要，当前解析器�
 | `enums/macros 目录` | `include/c_api/defs/*.h` | 枚举值、常量、宏、union、类型别名全量目录 |
 | `examples` | 样例成对 marker 的 ID 列表，展开为独立 `override_id` | 记录 `file/start_line/end_line`（行号不含 marker）；每个重载关联同一展示范围；支持 `.asc/.c/.cc/.cpp/.cxx/.h/.hpp`。扫描根为**整棵 `examples/`**：marker 由建设侧按 canonical `override_id` 写入，查表是「文档侧 include DB 的 `override_id` → examples DB」，没有 marker 的样例不可能被查到，因此放宽根目录不会把同名但不同家族的接口（如 SIMT）关联进来 |
 | `navigation` | 正文链接 | 仓内相对链接保序去重 |
-| `products` | 正文 `<!-- npu="X" -->` 标记 × `config/product-map.yaml` | 产品级支持/不支持矩阵 |
+| `products` | 正文 `<!-- npu="X" -->` 标记或“产品支持情况”中文列表 × `config/product-map.yaml` | 产品级支持/不支持矩阵；无标记时按已知完整名称回退，标记与名称冲突拒绝构建 |
 | `feature 视图` | dtype 家族 × roles/operations | 低精度（fp8_*/hifloat8/fp4x2_*）、int4 等特性族 |
 | `by_version 视图与版本查询` | 文档头 `version` 与生命周期事件 | 视图保留 `{首次支持字段原串: [文档]}`；`--version 9.2.0` 按范围及生命周期判断可用性，`>=9.0.0` 可命中，已废弃但未移除仍保留。查询目标必须与索引构建版本一致；无 version 的导航页不命中 |
 | `by_change_version 视图` | 文档头 `version_changes[].since` | `{since: [文档]}`：只收**非空**事件（`version_changes: []` 与无该字段的文档不入视图），`since` 为版本**点**（如 `9.2.0`）。该视图供 `--changed-in` 查询，首次支持范围及生命周期由版本可用性筛选消费。**索引内是降维副本**：只留 `since/kind/scope/note/scope_basis`；带 `evidence` 的旧头接受并忽略 |
 | `api_surfaces` | 文档路径 | `SIMD-API/<surface>/` 即层级 |
+
+### 产品名称回退
+
+- 保留显式 `npu` 标记解析。有标记的条目不重复计数；“产品支持情况”章节的已知名称与
+  当前标记不一致时，报出文档路径、行号及两侧产品 ID，拒绝生成或覆盖索引。
+- 无标记时，只识别“产品支持情况”标题下的 Markdown 列表，直到下一个同级或更高层级标题；
+  不读取代码块或其他章节。列表格式为 `- 产品名称：支持` / `- 产品名称：不支持`，
+  兼容其他列表符号、英文冒号和末尾句号。
+- 名称来自 `config/product-map.yaml` 的 `product_names`，忽略空白和大小写后完整匹配，
+  不凭局部关键字猜测。例如 `Ascend 950PR&950DT系列产品` → `950`，
+  `Atlas A2系列产品` → `910b`，`Atlas 200I/500 A2推理产品` → `310b`。
+- 未知名称或非明确的支持结论不推导。`不支持` 不进入 `by_product` 支持视图；
+  同一产品的支持与不支持并存时沿用 `mixed`，同样不进入支持视图。
+- 修改映射或解析脚本后，旧索引会被新鲜度检查判为 stale，须在准备阶段重新构建；查询不重建。
 
 ## 3. LLM 辅助边界（索引构建）
 
