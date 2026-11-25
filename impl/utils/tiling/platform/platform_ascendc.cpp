@@ -85,7 +85,7 @@ static inline SocVersion SocVersionStrMap(const char* socVersionStr)
     if (iter != convertMap.end()) {
         return iter->second;
     }
-    PF_LOGE("get platform failed, convertMap do not find soc %s version", socVersionStr);
+    PF_LOGE("Unsupported short SoC version [%s].", socVersionStr);
     return SocVersion::RESERVED_VERSION;
 }
 
@@ -95,25 +95,28 @@ uint32_t PlatformAscendC::GetVecRegLen(void) const
     bool ret = this->GetPlatFormInfo()->GetPlatformResWithLock("AICoreSpec", "vector_reg_width", sizeStr);
     if (!ret) {
         if (!this->GetPlatFormInfo()->GetPlatformResWithLock("AICoreSpec", "vec_calc_size", sizeStr)) {
-            PF_LOGE("platform do not support get vector_reg_width size !");
+            PF_LOGE("Failed to read either AICoreSpec.vector_reg_width or AICoreSpec.vec_calc_size.");
             return 0u;
         }
     }
+    const char* sizeKey = ret ? "vector_reg_width" : "vec_calc_size";
     bool isDecimalNumber = !sizeStr.empty() && std::all_of(sizeStr.begin(), sizeStr.end(), [](unsigned char ch) {
         return std::isdigit(ch);
     });
     if (isDecimalNumber) {
         uint64_t size = std::stoull(sizeStr);
         if (size > UINT32_MAX) {
-            PF_LOGE("The bit width exceeds the maximum value of uint32!");
+            PF_LOGE("AICoreSpec.%s value [%s] exceeds the maximum of %u.", sizeKey, sizeStr.c_str(), UINT32_MAX);
             return 0u;
         }
         if (size == 0) {
-            PF_LOGE("The bit width equals zero!");
+            PF_LOGE("AICoreSpec.%s value [%s] must be greater than zero.", sizeKey, sizeStr.c_str());
         }
         return ret ? static_cast<uint32_t>(size) : sizeof(uint16_t) * static_cast<uint32_t>(size);
     } else {
-        PF_LOGE("The sizeStr is invalid.");
+        PF_LOGE(
+            "Invalid AICoreSpec.%s value [%s]. Expected a non-empty string of decimal digits 0-9.", sizeKey,
+            sizeStr.c_str());
         return 0u;
     }
 }
@@ -186,7 +189,7 @@ void PlatformAscendC::GetCoreMemSize(const CoreMemType& memType, uint64_t& size)
         std::string sizeStr;
         bool ret = this->GetPlatFormInfo()->GetPlatformResWithLock("AICoreSpec", "fb0_size", sizeStr);
         if (!ret) {
-            PF_LOGE("platform do not support get CoreMemType::FB size !");
+            PF_LOGE("Failed to read AICoreSpec.fb0_size.");
             return;
         }
         size = sizeStr.empty() ? 0 : std::stoull(sizeStr);
@@ -196,7 +199,7 @@ void PlatformAscendC::GetCoreMemSize(const CoreMemType& memType, uint64_t& size)
         std::string sizeStr;
         bool ret = this->GetPlatFormInfo()->GetPlatformResWithLock("AICoreSpec", "bt_size", sizeStr);
         if (!ret) {
-            PF_LOGE("platform do not support get CoreMemType::BT size !");
+            PF_LOGE("Failed to read AICoreSpec.bt_size.");
             return;
         }
         size = sizeStr.empty() ? 0 : std::stoull(sizeStr);
@@ -223,7 +226,7 @@ SocVersion PlatformAscendC::GetSocVersion(void) const
     std::string socVerStr;
     bool ret = GetPlatFormInfo()->GetPlatformResWithLock(LABEL_VERSION, LABEL_SHORT_SOC_VERSION, socVerStr);
     if (!ret) {
-        PF_LOGE("platform do not support get socVersion!");
+        PF_LOGE("Failed to read platform resource %s.%s.", LABEL_VERSION.c_str(), LABEL_SHORT_SOC_VERSION.c_str());
         return SocVersion::RESERVED_VERSION;
     }
     return SocVersionStrMap(socVerStr.c_str());
@@ -234,7 +237,7 @@ NpuArch PlatformAscendC::GetCurNpuArch(void) const
     std::string npuArchStr;
     bool ret = GetPlatFormInfo()->GetPlatformResWithLock(LABEL_VERSION, NPU_ARCH, npuArchStr);
     if (!ret) {
-        PF_LOGE("platform do not support get npu arch!");
+        PF_LOGE("Failed to read platform resource %s.%s.", LABEL_VERSION.c_str(), NPU_ARCH.c_str());
         return NpuArch::DAV_RESV;
     }
     // atoi不会抛异常，非法输入返回0
@@ -254,7 +257,7 @@ void PlatformAscendC::GetCoreMemBw(const CoreMemType& memType, uint64_t& bwSize)
 
 fe::PlatFormInfos* PlatformAscendC::GetPlatFormInfo(void) const
 {
-    ASCENDC_ASSERT(this->platformInfo_ != nullptr, PF_LOGE("PlatformInfo cannot be initialized to nulltpr!!"));
+    ASCENDC_ASSERT(this->platformInfo_ != nullptr, PF_LOGE("PlatformInfo is nullptr."));
     return this->platformInfo_;
 }
 
@@ -308,7 +311,9 @@ uint32_t PlatformAscendC::GetResCubeGroupWorkSpaceSize(void) const
     if (socVersion == SocVersion::ASCEND910B) {
         return CUBE_GROUP_WORK_SPACE_SIZE_910B;
     } else {
-        PF_LOGE("get platform failed, socVersionStr is %d", socVersion);
+        std::string shortSocVersion;
+        (void)GetPlatFormInfo()->GetPlatformResWithLock(LABEL_VERSION, LABEL_SHORT_SOC_VERSION, shortSocVersion);
+        PF_LOGE("Unsupported short SoC version [%s]. Expected an Ascend910B-compatible SoC.", shortSocVersion.c_str());
         return -1;
     }
 }
@@ -319,7 +324,9 @@ uint32_t PlatformAscendC::GetResGroupBarrierWorkSpaceSize(void) const
     if (socVersion == SocVersion::ASCEND910B) {
         return GROUP_BARRIER_WORK_SPACE_SIZE_910B;
     } else {
-        PF_LOGE("get platform failed, socVersionStr is %d", socVersion);
+        std::string shortSocVersion;
+        (void)GetPlatFormInfo()->GetPlatformResWithLock(LABEL_VERSION, LABEL_SHORT_SOC_VERSION, shortSocVersion);
+        PF_LOGE("Unsupported short SoC version [%s]. Expected an Ascend910B-compatible SoC.", shortSocVersion.c_str());
         return -1;
     }
 }
@@ -574,11 +581,13 @@ fe::PlatFormInfos* PlatformAscendCManager::PlatformAscendCInit(const char* custo
     std::string socVersionStr;
     const auto ret = gPlatformInfo.GetPlatformResWithLock(LABEL_VERSION, LABEL_SHORT_SOC_VERSION, socVersionStr);
     if (!ret) {
-        PF_LOGE("get platform short version failed by fe, socVersion is %s", socVersion.c_str());
+        PF_LOGE(
+            "Failed to read platform resource %s.%s for SoC version [%s].", LABEL_VERSION.c_str(),
+            LABEL_SHORT_SOC_VERSION.c_str(), socVersion.c_str());
     }
     SocVersion version = SocVersionMap(socVersionStr.c_str());
     if (version == SocVersion::RESERVED_VERSION) {
-        PF_LOGE("Invalid SocVersion.");
+        PF_LOGE("Failed to initialize PlatformAscendC for SoC version [%s].", socVersion.c_str());
         return nullptr;
     } else if ((version == SocVersion::ASCEND310P) || (version == SocVersion::ASCEND910)) {
         gPlatformInfo.SetCoreNumByCoreType("AiCore");
