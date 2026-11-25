@@ -163,7 +163,7 @@ bool CompareRangeData(const std::vector<T>& actual, const std::vector<T>& expect
     for (size_t i = begin; i < begin + count; ++i) {
         if (actual[i] == expected[i]) continue;
         const double diff = static_cast<double>(actual[i]) - static_cast<double>(expected[i]);
-        if (diff > tolerance || diff < -tolerance) return false;
+        if (!(diff <= tolerance && diff >= -tolerance)) return false;
     }
     return true;
 }

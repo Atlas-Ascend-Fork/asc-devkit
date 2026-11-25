@@ -188,7 +188,7 @@ bool compare_data(const std::vector<T>& actual, const std::vector<T>& expected, 
     for (size_t i = 0; i < actual.size(); ++i) {
         if (actual[i] == expected[i]) continue;
         const double diff = static_cast<double>(actual[i]) - static_cast<double>(expected[i]);
-        if (diff > tolerance || diff < -tolerance) return false;
+        if (!(diff <= tolerance && diff >= -tolerance)) return false;
     }
     return true;
 }

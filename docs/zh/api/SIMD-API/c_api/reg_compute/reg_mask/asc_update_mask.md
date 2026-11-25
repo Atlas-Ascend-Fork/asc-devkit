@@ -87,6 +87,8 @@ vector_bool，掩码寄存器。
 
 ## 调用示例
 
+以下示例对385个`float`元素求绝对值。`asc_update_mask_b32`在每轮生成掩码并自动更新剩余元素数，最后一轮仅处理1个有效元素；补齐区域保留初始值并参与结果校验。
+
 将代码保存为`example.asc`后，可通过`bisheng`命令编译运行，其中`--npu-arch`参数需根据实际产品型号指定对应的NPU架构，具体产品与NPU架构的映射关系请参考[\_\_NPU\_ARCH\_\_](../../../../../guide/programming_guide/language_extension/simd_builtin_keywords.md#npu-arch)。
 
 <!-- npu="950" id8 -->
@@ -99,6 +101,7 @@ bisheng example.asc -o main --npu-arch=dav-3510 && ./main
 
 ```cpp
 #include <cstdint>
+#include <cmath>
 #include <iostream>
 #include <vector>
 #include "c_api/asc_simd.h"
@@ -126,71 +129,43 @@ bool compare_data(const std::vector<T>& actual, const std::vector<T>& expected, 
     for (size_t i = 0; i < actual.size(); ++i) {
         if (actual[i] == expected[i]) continue;
         const double diff = static_cast<double>(actual[i]) - static_cast<double>(expected[i]);
-        if (diff > tolerance || diff < -tolerance) return false;
+        if (!(diff <= tolerance && diff >= -tolerance)) return false;
     }
     return true;
 }
 
-template <typename T>
-bool compare_range_data(const std::vector<T>& actual, const std::vector<T>& expected,
-    size_t begin, size_t count, double tolerance = 0.0)
-{
-    if (begin + count > actual.size() || begin + count > expected.size()) return false;
-    for (size_t i = begin; i < begin + count; ++i) {
-        if (actual[i] == expected[i]) continue;
-        const double diff = static_cast<double>(actual[i]) - static_cast<double>(expected[i]);
-        if (diff > tolerance || diff < -tolerance) return false;
-    }
-    return true;
-}
+constexpr uint32_t ELEMENTS_PER_REGISTER = 64;
+constexpr uint32_t TOTAL_LENGTH = 385;
+constexpr uint32_t REPEAT_COUNT = (TOTAL_LENGTH + ELEMENTS_PER_REGISTER - 1) / ELEMENTS_PER_REGISTER;
+constexpr uint32_t BUFFER_ELEMENTS = REPEAT_COUNT * ELEMENTS_PER_REGISTER;
+constexpr uint32_t BUFFER_BYTES = BUFFER_ELEMENTS * sizeof(float);
 
-constexpr uint32_t CHUNK_BYTES = 768;
-constexpr uint32_t DATA_BYTES = 1540;
-// 按单轮处理能力向上取整，确保非整寄存器长度的尾块也被处理。
-constexpr uint32_t REPEAT_COUNT = (DATA_BYTES + CHUNK_BYTES - 1) / CHUNK_BYTES;
-constexpr uint32_t BUFFER_BYTES = CHUNK_BYTES * REPEAT_COUNT;
-
-// 统一记录实际处理长度，用于计算迭代次数并限制尾轮的有效范围。
-constexpr uint32_t TOTAL_LENGTH = DATA_BYTES / sizeof(uint8_t);
-__simd_vf__ inline void exercise(__ubuf__ uint8_t* output, __ubuf__ uint8_t* input, uint32_t one_repeat_size, uint16_t repeat_time)
+__simd_vf__ inline void exercise(__ubuf__ float* output, __ubuf__ float* input, uint32_t one_repeat_size, uint16_t repeat_time)
 {
-    vector_uint8_t value8;
-    vector_uint16_t value16;
-    vector_uint32_t value32;
-    uint32_t remaining = DATA_BYTES;
+    vector_float src_reg;
+    vector_float dst_reg;
+
+    uint32_t remaining_length = TOTAL_LENGTH;
     for (uint16_t i = 0; i < repeat_time; ++i) {
-        const uint32_t offset = i * CHUNK_BYTES;
-        const uint32_t valid_count = remaining > CHUNK_BYTES ? CHUNK_BYTES : remaining;
-        // 保留剩余有效元素数，供更新掩码处理尾块。
-        uint32_t remaining_length = valid_count > 256 ? 256 : valid_count;
-        uint32_t remaining_length_2 = valid_count > 256 ? (valid_count - 256) / sizeof(uint16_t) : 0;
-        if (remaining_length_2 > 128) remaining_length_2 = 128;
-        uint32_t remaining_length_3 = valid_count > 512 ? (valid_count - 512) / sizeof(uint32_t) : 0;
-        if (remaining_length_3 > 64) remaining_length_3 = 64;
-        vector_bool mask8 = asc_update_mask_b8(remaining_length);
-        vector_bool mask16 = asc_update_mask_b16(remaining_length_2);
-        vector_bool mask32 = asc_update_mask_b32(remaining_length_3);
-        asc_duplicate_scalar(value8, static_cast<uint8_t>(1), mask8);
-        asc_duplicate_scalar(value16, static_cast<uint16_t>(1), mask16);
-        asc_duplicate_scalar(value32, static_cast<uint32_t>(1), mask32);
-        asc_storealign(output + offset, value8, mask8);
-        asc_storealign(reinterpret_cast<__ubuf__ uint16_t*>(output + offset + 256), value16, mask16);
-        asc_storealign(reinterpret_cast<__ubuf__ uint32_t*>(output + offset + 512), value32, mask32);
-        remaining -= valid_count;
+        const uint32_t offset = i * one_repeat_size;
+        // 接口自动更新剩余元素数，并为尾块生成掩码。
+        vector_bool mask = asc_update_mask_b32(remaining_length);
+        asc_loadalign(src_reg, input + offset);
+        asc_abs(dst_reg, src_reg, mask);
+        asc_storealign(output + offset, dst_reg, mask);
     }
 }
 
-__global__ __vector__ void asc_update_mask_kernel(__gm__ uint8_t* output, __gm__ uint8_t* input)
+__global__ __vector__ void asc_update_mask_kernel(__gm__ float* output, __gm__ float* input)
 {
     asc_init();
-    __ubuf__ uint8_t output_local[BUFFER_BYTES];
-    __ubuf__ uint8_t input_local[BUFFER_BYTES];
+    __ubuf__ float output_local[BUFFER_ELEMENTS];
+    __ubuf__ float input_local[BUFFER_ELEMENTS];
     asc_lock(PIPE_MTE2, MUTEX_ID);
     asc_copy_gm2ub_align(input_local, input, BUFFER_BYTES);
-    asc_copy_gm2ub_align(output_local, input, BUFFER_BYTES);
     asc_unlock(PIPE_MTE2, MUTEX_ID);
 
-    uint16_t one_repeat_size = 3 * asc_get_vf_len() / sizeof(uint8_t);
+    uint16_t one_repeat_size = asc_get_vf_len() / sizeof(float);
     uint16_t repeat_time = static_cast<uint16_t>(AscendC::Std::ceil_div(TOTAL_LENGTH, one_repeat_size));
     asc_lock(PIPE_V, MUTEX_ID);
     asc_vf_call<exercise>(output_local, input_local, one_repeat_size, repeat_time);
@@ -205,34 +180,30 @@ __global__ __vector__ void asc_update_mask_kernel(__gm__ uint8_t* output, __gm__
 
 int main()
 {
-    std::vector<uint8_t> input(BUFFER_BYTES), output(BUFFER_BYTES, 0xff), golden(BUFFER_BYTES);
-    for (uint32_t i = 0; i < BUFFER_BYTES; ++i) input[i] = static_cast<uint8_t>(i % 251);
-    for (uint32_t repeat = 0; repeat < REPEAT_COUNT; ++repeat) {
-        const uint32_t offset = repeat * CHUNK_BYTES;
-        const uint32_t end = DATA_BYTES - offset > CHUNK_BYTES ? CHUNK_BYTES : DATA_BYTES - offset;
-        for (uint32_t i = 0; i < end && i < 256; ++i) golden[offset + i] = 1;
-        for (uint32_t i = 256; i < end && i < 512; i += sizeof(uint16_t)) golden[offset + i] = 1;
-        for (uint32_t i = 512; i < end; i += sizeof(uint32_t)) golden[offset + i] = 1;
+    constexpr float SENTINEL = -999.0f;
+    std::vector<float> input(BUFFER_ELEMENTS, 0.0f);
+    std::vector<float> output(BUFFER_ELEMENTS, SENTINEL);
+    std::vector<float> golden(BUFFER_ELEMENTS, SENTINEL);
+    for (uint32_t i = 0; i < TOTAL_LENGTH; ++i) {
+        input[i] = static_cast<float>(static_cast<int32_t>(i % 31) - 15);
+        golden[i] = std::fabs(input[i]);
     }
     aclInit(nullptr);
     aclrtSetDevice(0);
-    uint8_t* input_device = nullptr;
-    aclrtMalloc(reinterpret_cast<void**>(&input_device), (BUFFER_BYTES) * sizeof(uint8_t),
-        ACL_MEM_MALLOC_HUGE_FIRST);
-    uint8_t* output_device = nullptr;
-    aclrtMalloc(reinterpret_cast<void**>(&output_device), (BUFFER_BYTES) * sizeof(uint8_t),
-        ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMemcpy(input_device, input.size() * sizeof(uint8_t), input.data(), input.size() * sizeof(uint8_t),
-        ACL_MEMCPY_HOST_TO_DEVICE);
+    float* input_device = nullptr;
+    aclrtMalloc(reinterpret_cast<void**>(&input_device), BUFFER_BYTES, ACL_MEM_MALLOC_HUGE_FIRST);
+    float* output_device = nullptr;
+    aclrtMalloc(reinterpret_cast<void**>(&output_device), BUFFER_BYTES, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMemcpy(input_device, BUFFER_BYTES, input.data(), BUFFER_BYTES, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(output_device, BUFFER_BYTES, output.data(), BUFFER_BYTES, ACL_MEMCPY_HOST_TO_DEVICE);
     asc_update_mask_kernel<<<1, 0>>>(output_device, input_device);
     aclrtSynchronizeDevice();
-    aclrtMemcpy(output.data(), output.size() * sizeof(uint8_t), output_device, output.size() * sizeof(uint8_t),
-        ACL_MEMCPY_DEVICE_TO_HOST);
-    print_data("Input bytes", input);
-    print_data("Output bytes", output);
-    print_data("Golden bytes", golden);
-    const bool passed = compare_range_data(output, golden, 0, DATA_BYTES);
-    std::cout << (passed ? "[Success] asc_update_mask_b8/asc_update_mask_b16/asc_update_mask_b32 passed." : "[Failed] asc_update_mask_b8/asc_update_mask_b16/asc_update_mask_b32 failed.") << std::endl;
+    aclrtMemcpy(output.data(), BUFFER_BYTES, output_device, BUFFER_BYTES, ACL_MEMCPY_DEVICE_TO_HOST);
+    print_data("Input", input);
+    print_data("Output", output);
+    print_data("Expected", golden);
+    const bool passed = compare_data(output, golden);
+    std::cout << (passed ? "[Success] asc_update_mask_b32 passed." : "[Failed] asc_update_mask_b32 failed.") << std::endl;
     aclrtFree(input_device);
     aclrtFree(output_device);
     aclrtResetDevice(0);
