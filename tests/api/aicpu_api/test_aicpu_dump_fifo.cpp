@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h>
+#include <wchar.h>
 #include <mutex>
 #include <vector>
 
@@ -226,6 +228,13 @@ struct DfxInfoChain {
     AicpuDfxAttrInfo attr0;
 };
 
+/* Two-attr chain: a non-mem-info attr first, the mem-info attr second. */
+struct DfxInfoChainTwo {
+    AicpuDfxInfo info;
+    AicpuDfxAttrInfo attr0;
+    AicpuDfxAttrInfo attr1;
+};
+
 static DfxInfoChain g_dfxChain;
 
 static void ResetDfxChain()
@@ -297,6 +306,17 @@ static int32_t HookDfxInfoZeroMemAddr(uint64_t* infoAddr)
     ResetDfxChain();
     g_dfxChain.attr0.value.printfMemInfo.printfMemAddr = 0U;
     *infoAddr = reinterpret_cast<uint64_t>(reinterpret_cast<uintptr_t>(&g_dfxChain.info));
+    return 0;
+}
+
+/* Two-attr dfx chain: attr0 has a non-matching id, attr1 is the mem-info.
+ * The chain (including printfMemAddr) is prepared by the test before the
+ * hook is hit, so the hook only hands out the chain address. */
+static DfxInfoChainTwo g_dfxChainTwo;
+
+static int32_t HookDfxInfoMemInfoNotFirst(uint64_t* infoAddr)
+{
+    *infoAddr = reinterpret_cast<uint64_t>(reinterpret_cast<uintptr_t>(&g_dfxChainTwo.info));
     return 0;
 }
 
@@ -625,4 +645,122 @@ TEST_F(TEST_AICPU_DUMP_FIFO, FifoSplitStringWriteAndRollback)
     EXPECT_EQ(ReadU32(env.Ring() + 96), PRINT_TYPE_READY);
     EXPECT_EQ(memcmp(env.Ring() + 120, "hello 12", 8), 0);
     EXPECT_TRUE(g_utMallocFailOnSize); /* no malloc issued, flag still set */
+}
+
+/* ── Format failures (vsnprintf returns -1) ────────────────────────── */
+
+/*
+ * %ls with a wide character that is not representable in the "C" locale
+ * makes glibc vsnprintf fail with EILSEQ and return -1. This exercises:
+ *  - CalcFormattedLen(): "len > 0" false branch (strLen probe fails -> 0)
+ *  - FormatToString(): "len < 0" failure branch (empty string + return -1)
+ *  - WriteFormattedString() non-split path returning false
+ *  - RollbackWriteInfo(): entry advanced then rolled back
+ */
+TEST_F(TEST_AICPU_DUMP_FIFO, FifoRollbackOnFormatFailureNonSplit)
+{
+    FifoEnv env(1024, 0, 0);
+    UseFifoEnv(env);
+    (void)setlocale(LC_ALL, "C");
+
+    AscendC::printf("%ls", L"\u0100"); /* strLen 0 -> tlvLen 32, render fails */
+
+    EXPECT_EQ(env.WriteInfo()->bufOffset, 0U);
+    EXPECT_EQ(env.WriteInfo()->packIdx, 0U);
+    /* header was written (WRITING) but entry was NOT released */
+    EXPECT_EQ(ReadU32(env.Ring()), PRINT_TYPE_WRITING);
+}
+
+TEST_F(TEST_AICPU_DUMP_FIFO, FifoRollbackOnFormatFailureSplit)
+{
+    /* oriBufOff 100: header fits ([100..124) < 128), writingOff 124,
+     * tailSpace 4 < tlvLen - sizeof(PrintfInfo) (8) -> split path,
+     * whose FormatToString into the temp buffer fails -> rollback. */
+    FifoEnv env(128, 100, 96);
+    UseFifoEnv(env);
+    (void)setlocale(LC_ALL, "C");
+
+    AscendC::printf("%ls", L"\u0100");
+
+    EXPECT_EQ(env.WriteInfo()->bufOffset, 100U);
+    EXPECT_EQ(env.WriteInfo()->packIdx, 0U);
+    EXPECT_EQ(ReadU32(env.Ring() + 100), PRINT_TYPE_WRITING);
+    /* string area after the header stays untouched */
+    EXPECT_EQ(env.Ring()[124], 0U);
+    EXPECT_EQ(env.Ring()[125], 0U);
+    EXPECT_EQ(env.Ring()[126], 0U);
+    EXPECT_EQ(env.Ring()[127], 0U);
+}
+
+/* ── Legacy buffer: offset bookkeeping edge cases ───────────────────── */
+
+TEST_F(TEST_AICPU_DUMP_FIFO, LegacyEmptyStringDoesNotAdvanceOffset)
+{
+    PrepareLegacyBuffer();
+    g_utAicpuGetDfxInfoHook = HookDfxInfoFail;
+
+    AscendC::printf(""); /* FormatToString returns 0 -> "ret > 0" false */
+
+    EXPECT_EQ(*reinterpret_cast<size_t*>(g_legacyBuffer), sizeof(size_t));
+    EXPECT_EQ(g_legacyBuffer[sizeof(size_t)], '\0');
+}
+
+TEST_F(TEST_AICPU_DUMP_FIFO, LegacyFormatErrorDoesNotAdvanceOffset)
+{
+    PrepareLegacyBuffer();
+    g_utAicpuGetDfxInfoHook = HookDfxInfoFail;
+    (void)setlocale(LC_ALL, "C");
+
+    AscendC::printf("%ls", L"\u0100"); /* FormatToString returns -1 */
+
+    EXPECT_EQ(*reinterpret_cast<size_t*>(g_legacyBuffer), sizeof(size_t));
+    EXPECT_EQ(g_legacyBuffer[sizeof(size_t)], '\0');
+}
+
+TEST_F(TEST_AICPU_DUMP_FIFO, LegacyLongStringClampedToRemainingSpace)
+{
+    PrepareLegacyBuffer();
+    g_utAicpuGetDfxInfoHook = HookDfxInfoFail;
+
+    /* 400 chars into 248 bytes of remaining space: count == destMax == 248
+     * -> cap = 248, len (400) >= cap -> clamp to cap - 1 = 247 chars. */
+    std::vector<char> longStr(400U, 'A');
+    longStr.push_back('\0');
+    AscendC::printf("%s", longStr.data());
+
+    const size_t off = *reinterpret_cast<size_t*>(g_legacyBuffer);
+    /* clamped to destMax - 1 = 247 chars written after the offset slot */
+    EXPECT_EQ(off, sizeof(size_t) + 247U);
+    EXPECT_EQ(g_legacyBuffer[sizeof(size_t)], 'A');
+    EXPECT_EQ(g_legacyBuffer[sizeof(size_t) + 246U], 'A');
+    EXPECT_EQ(g_legacyBuffer[sizeof(size_t) + 247U], '\0');
+
+    /* One byte left: destMax == 1 -> cap == 1 -> returns 0, offset stays. */
+    AscendC::printf("tail");
+
+    EXPECT_EQ(*reinterpret_cast<size_t*>(g_legacyBuffer), off);
+}
+
+/* ── dfx-info attribute scanning ────────────────────────────────────── */
+
+TEST_F(TEST_AICPU_DUMP_FIFO, FifoMemInfoFoundAfterNonMatchingAttr)
+{
+    FifoEnv env(1024, 0, 0);
+    /* mem-info attr is the second entry; the loop must skip attr0. */
+    (void)memset(&g_dfxChainTwo, 0, sizeof(g_dfxChainTwo));
+    g_dfxChainTwo.info.attrs = reinterpret_cast<uint64_t>(reinterpret_cast<uintptr_t>(&g_dfxChainTwo.attr0));
+    g_dfxChainTwo.info.numAttrs = 2U;
+    g_dfxChainTwo.attr0.attrId = 2U; /* != ATTR_ID_MEM_INFO */
+    g_dfxChainTwo.attr1.attrId = ATTR_ID_MEM_INFO;
+    g_dfxChainTwo.attr1.value.printfMemInfo.printfMemAddr =
+        reinterpret_cast<uint64_t>(reinterpret_cast<uintptr_t>(env.Block()));
+    g_dfxChainTwo.attr1.value.printfMemInfo.printfMemSize = env.WriteInfo()->length;
+    g_utAicpuGetDfxInfoHook = HookDfxInfoMemInfoNotFirst;
+
+    AscendC::printf("hello %d", 42);
+
+    EXPECT_EQ(env.WriteInfo()->bufOffset, 40U); /* tlvLen 40 */
+    EXPECT_EQ(env.WriteInfo()->packIdx, 1U);
+    EXPECT_EQ(ReadU32(env.Ring()), PRINT_TYPE_READY);
+    EXPECT_STREQ(reinterpret_cast<char*>(env.Ring() + 24), "hello 42");
 }
