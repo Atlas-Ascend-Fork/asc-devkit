@@ -96,6 +96,7 @@ TEST_F(HcclSuiteAICPU, AllGather_repeat1_prepare1_commit1_wait1_success)
         HcclDataType::HCCL_DATA_TYPE_INT8, 0, 1);
     EXPECT_EQ(handleId, 0);
     hccl.Commit(handleId);
+    EXPECT_EQ(hcclMsgArea->commMsg.singleMsg.commitTurnCnt[0].valid, 0U);
     EXPECT_EQ(hccl.Wait(handleId), HCCL_SUCCESS);
 }
 

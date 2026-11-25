@@ -115,7 +115,7 @@ constexpr bool IsValidHcclMsgRankSize(uint64_t rankSize)
     return (rankSize > 0U) && (rankSize <= HCCL_MAX_RANK_NUM_V2);
 }
 
-struct HcclMsgExt {
+struct alignas(64) HcclMsgExt {
     // sendCounts[i] represents the data count sent to rank i by this rank.
     uint64_t sendCounts[HCCL_MAX_RANK_NUM_V2];
     // sendOffset[i] represents the offset count of the data sent to rank i by this rank relative to sendBuf.
@@ -128,6 +128,12 @@ struct HcclMsgExt {
     uint64_t valid;        // set by api, reset by server
     uint64_t xorCheck;     // set by api, checked by server to ensure msg integrity
 };
+
+// A5 compact layout for common small AllToAllV parameters. Each rank uses one
+// packed send word and one packed recv word, halving both writes and cacheline
+// publication compared with the legacy four-array layout.
+constexpr uint32_t HCCL_MSG_EXT_COMPACT_CTRL = 0xA5A5C0DEU;
+constexpr bool CanUseHcclMsgExtCompact(uint64_t count) { return count <= 0xFFFFFFFFULL; }
 
 struct AlltoAllVParamExt {
     uint64_t* sendCounts;
@@ -145,7 +151,7 @@ constexpr uint32_t BYTE_PER_MB = BYTE_PER_KB * BYTE_PER_KB;
 // HcclMsgArea is the 16MB space reserved by workspace in struct HcclCombinOpParam and belongs to each comm group.
 // cacheline size aligned by 64 bytes
 struct TurnCnt {
-    uint64_t valid; // COMMIT_VALID_MASK, written by client when Commit, checked by server
+    uint64_t valid; // reserved; Commit publication is the adjacent cnt field
     uint64_t cnt;   // commit cnt, written by client, reset by server
     uint64_t reserved[6];
 };
