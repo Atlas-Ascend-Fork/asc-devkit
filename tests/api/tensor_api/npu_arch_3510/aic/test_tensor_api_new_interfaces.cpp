@@ -29,7 +29,14 @@ namespace {
 
 asc_fill_value_config g_fill_l1_config_capture;
 
-void asc_fill_l1_stub(__cbuf__ half* dst, half value, const asc_fill_value_config& config)
+void asc_fill_l1_half_stub(__cbuf__ half* dst, half value, const asc_fill_value_config& config)
+{
+    (void)dst;
+    (void)value;
+    g_fill_l1_config_capture = config;
+}
+
+void asc_fill_l1_uint32_stub(__cbuf__ half* dst, uint32_t value, const asc_fill_value_config& config)
 {
     (void)dst;
     (void)value;
@@ -66,7 +73,7 @@ TEST_F(tensor_api_new_interfaces_aic, fill_l1_forwards_params_to_c_api)
 
     MOCKER_CPP(asc_fill_l1, void(__cbuf__ half*, half, const asc_fill_value_config&))
         .times(1)
-        .will(invoke(asc_fill_l1_stub));
+        .will(invoke(asc_fill_l1_half_stub));
 
     fill(tensor, params);
 
@@ -74,6 +81,56 @@ TEST_F(tensor_api_new_interfaces_aic, fill_l1_forwards_params_to_c_api)
     EXPECT_EQ(g_fill_l1_config_capture.repeat, params.repeat_times);
     EXPECT_EQ(g_fill_l1_config_capture.blk_num, params.block_num);
     EXPECT_EQ(g_fill_l1_config_capture.dst_gap, params.dst_gap);
+}
+
+TEST_F(tensor_api_new_interfaces_aic, fill_l1_forwards_uint32_value_to_c_api)
+{
+    using namespace asc::te;
+
+    constexpr uint32_t length = 32;
+    __cbuf__ half dst[length] = {};
+
+    auto tensor = make_tensor(
+        make_mem_ptr<location::l1>(dst), make_frame_layout<nd_ext_layout_ptn, layout_trait_default<half>>(1, length));
+
+    fill_params<uint32_t> params{};
+    params.repeat_times = 2;
+    params.block_num = 3;
+    params.dst_gap = 4;
+    params.init_value = 5;
+
+    MOCKER_CPP(asc_fill_l1, void(__cbuf__ half*, uint32_t, const asc_fill_value_config&))
+        .times(1)
+        .will(invoke(asc_fill_l1_uint32_stub));
+
+    fill(tensor, params);
+
+    GlobalMockObject::verify();
+    EXPECT_EQ(g_fill_l1_config_capture.repeat, params.repeat_times);
+    EXPECT_EQ(g_fill_l1_config_capture.blk_num, params.block_num);
+    EXPECT_EQ(g_fill_l1_config_capture.dst_gap, params.dst_gap);
+}
+
+TEST_F(tensor_api_new_interfaces_aic, fill_l1_rejects_invalid_init_value_type)
+{
+    using namespace asc::te;
+
+    constexpr uint32_t length = 32;
+    __cbuf__ half dst[length] = {};
+
+    auto tensor = make_tensor(
+        make_mem_ptr<location::l1>(dst), make_frame_layout<nd_ext_layout_ptn, layout_trait_default<half>>(1, length));
+
+    constexpr bool valid_half = detail::is_supported_fill_value_type_v<half, half>;
+    constexpr bool valid_uint32 = detail::is_supported_fill_value_type_v<uint32_t, half>;
+    constexpr bool valid_bfloat16_for_bfloat16_tensor = detail::is_supported_fill_value_type_v<bfloat16_t, bfloat16_t>;
+    constexpr bool invalid_float_init_value = detail::is_supported_fill_value_type_v<float, half>;
+    constexpr bool invalid_bfloat16_for_half_tensor = detail::is_supported_fill_value_type_v<bfloat16_t, half>;
+
+    static_assert(valid_half && valid_uint32 && valid_bfloat16_for_bfloat16_tensor);
+    static_assert(!invalid_float_init_value);
+    static_assert(!invalid_bfloat16_for_half_tensor);
+    (void)tensor;
 }
 
 TEST_F(tensor_api_new_interfaces_aic, fill_l1_derives_params_from_layout)
@@ -88,7 +145,7 @@ TEST_F(tensor_api_new_interfaces_aic, fill_l1_derives_params_from_layout)
 
     MOCKER_CPP(asc_fill_l1, void(__cbuf__ half*, half, const asc_fill_value_config&))
         .times(1)
-        .will(invoke(asc_fill_l1_stub));
+        .will(invoke(asc_fill_l1_half_stub));
 
     fill(tensor, static_cast<half>(5));
 
