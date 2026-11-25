@@ -517,8 +517,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(half);
     if (selMode == SELMODE::VSEL_CMPMASK_SPR) {
@@ -554,8 +557,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(float);
     if (selMode == SELMODE::VSEL_CMPMASK_SPR) {
@@ -614,8 +620,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     __VEC_SCOPE__
     {
@@ -1119,7 +1128,7 @@ __aicore__ inline void GetCmpMaskImpl(__ubuf__ T* dst)
 template <typename T>
 __aicore__ inline void SetCmpMaskImpl(__ubuf__ T* src)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "GetCmpMask is not supported on current device"); });
+    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "SetCmpMask is not supported on current device"); });
 }
 } // namespace AscendC
 #endif // ASCENDC_MODULE_OPERATOR_VEC_CMPSEL_IMPL_H

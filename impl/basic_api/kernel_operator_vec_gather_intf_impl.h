@@ -195,7 +195,9 @@ __aicore__ inline void Gather(
             KERNEL_LOG(
                 KERNEL_ERROR,
                 "Failed to check dtype in Gather, current api support dtype combination is src and "
-                "dst both: uint8 / int8 / half / bfloat16_t / uint16_t / int16_t / float / uint32_t / int32_t");
+                "dst both: uint8 / int8 / half / bfloat16_t / uint16_t / int16_t / float / uint32_t / int32_t. "
+                "Current src and dst template type T (PrimType = PrimT<T>): %s",
+                __PRETTY_FUNCTION__);
         });
     GatherImpl(
         (__ubuf__ PrimType*)dst.GetPhyAddr(), (__ubuf__ PrimType*)src.GetPhyAddr(),
@@ -269,12 +271,15 @@ __aicore__ inline void GatherDataCopy(
                 KERNEL_ERROR,
                 "Failed to check dtype in GatherDataCopy, current api support dtype combination is src and "
                 "dst both: uint8_t, int8_t, fp8_e4m3fn_t, half, bfloat16_t, uint16_t, int16_t, float, uint32_t, "
-                "int32_t, int64_t, uint64_t");
+                "int32_t, int64_t, uint64_t. Current src and dst type T: %s",
+                __PRETTY_FUNCTION__);
         });
     ASCENDC_ASSERT((SupportType<U, int32_t, int64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in GatherDataCopy, current api support index dtype in int32_t, int64_t");
+            "Failed to check dtype in GatherDataCopy, supported index dtypes: int32_t / int64_t. "
+            "Current index type U: %s",
+            __PRETTY_FUNCTION__);
     });
     const uint8_t cacheMode = ExtractCacheMode(srcGlobal);
     GatherFromGlobalImpl(

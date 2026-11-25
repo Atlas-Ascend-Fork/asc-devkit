@@ -744,8 +744,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(half);
     if (selMode == SELMODE::VSEL_CMPMASK_SPR) {
@@ -781,8 +784,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(float);
     if (selMode == SELMODE::VSEL_CMPMASK_SPR) {
@@ -836,8 +842,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     __VEC_SCOPE__
     {
@@ -868,8 +877,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(float);
     __VEC_SCOPE__
@@ -910,8 +922,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(half);
     __ubuf__ uint8_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint8_t>(TMP_UB_OFFSET, 16);
@@ -956,8 +971,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     uint32_t blockElm = ONE_BLK_SIZE / sizeof(float);
     __ubuf__ uint8_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint8_t>(TMP_UB_OFFSET, 16);
@@ -1023,8 +1041,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     ASC_M300_STAGE_SELECT_WRITE_PREDICATE_BUFFER(mask);
 
@@ -1058,8 +1079,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     ASC_M300_STAGE_SELECT_WRITE_PREDICATE_BUFFER(mask);
 
@@ -1117,8 +1141,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     __VEC_SCOPE__
     {
@@ -1147,8 +1174,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     __VEC_SCOPE__
     {
@@ -1203,8 +1233,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     if (selMode == SELMODE::VSEL_CMPMASK_SPR) {
         __VEC_SCOPE__
@@ -1255,8 +1288,11 @@ __aicore__ inline void VselImpl(
 {
     ASCENDC_ASSERT((SupportType<T, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
-                          "uint32_t / uint64_t");
+            KERNEL_ERROR,
+            "Failed to check dtype in Select, current api support dtype selMask:  uint8_t / uint16_t / "
+            "uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     if (selMode == SELMODE::VSEL_CMPMASK_SPR) {
         __VEC_SCOPE__

@@ -78,8 +78,11 @@ __aicore__ inline void VecDupLevel0Template(
 {
     BasicAPIMaskStruct maskArrayStruct;
     if constexpr (isMaskBitMode) {
-        ASCENDC_ASSERT(
-            maskCount == 0, { KERNEL_LOG(KERNEL_ERROR, "maskCount must be 0 when isMaskBitMode is true."); });
+        ASCENDC_ASSERT(maskCount == 0, {
+            KERNEL_LOG(
+                KERNEL_ERROR, "maskCount must be 0 when isMaskBitMode is true, current maskCount is %llu",
+                static_cast<unsigned long long>(maskCount));
+        });
         maskArrayStruct = *(reinterpret_cast<const BasicAPIMaskStruct*>(maskArray));
     } else {
         ASCENDC_ASSERT(maskArray == nullptr, {
@@ -329,7 +332,9 @@ __aicore__ inline void InterleaveImpl(
         SupportType<
             T, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, half, float, bfloat16_t, uint64_t, int64_t>(),
         "current data type is not supported on current device!");
-    ASCENDC_ASSERT((calCount % 2 == 0), { KERNEL_LOG(KERNEL_ERROR, "calCount % 2 = 0!"); });
+    ASCENDC_ASSERT((calCount % 2 == 0), {
+        KERNEL_LOG(KERNEL_ERROR, "calCount must be even, current calCount is %lld", static_cast<long long>(calCount));
+    });
     if constexpr (sizeof(T) != 8) {
         if (calCount * sizeof(T) / 2 % ONE_BLOCK_SIZE == 0) {
             InterleaveImplNormal<T, false>(dst0Local, dst1Local, src0Local, src1Local, calCount);
@@ -513,7 +518,9 @@ __aicore__ inline void DeInterleaveImpl(
         SupportType<
             T, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, half, float, bfloat16_t, uint64_t, int64_t>(),
         "current data type is not supported on current device!");
-    ASCENDC_ASSERT((calCount % 2 == 0), { KERNEL_LOG(KERNEL_ERROR, "calCount % 2 = 0!"); });
+    ASCENDC_ASSERT((calCount % 2 == 0), {
+        KERNEL_LOG(KERNEL_ERROR, "calCount must be even, current calCount is %lld", static_cast<long long>(calCount));
+    });
     if constexpr (sizeof(T) != 8) {
         if (calCount * sizeof(T) / 2 % ONE_BLOCK_SIZE == 0) {
             DeInterleaveImplNormal<T, false>(dst0Local, dst1Local, src0Local, src1Local, calCount);
@@ -537,7 +544,9 @@ __aicore__ inline void DeInterleaveImpl(
         SupportType<
             T, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, half, float, bfloat16_t, uint64_t, int64_t>(),
         "current data type is not supported on current device!");
-    ASCENDC_ASSERT((srcCount % 2 == 0), { KERNEL_LOG(KERNEL_ERROR, "srcCount % 2 = 0!"); });
+    ASCENDC_ASSERT((srcCount % 2 == 0), {
+        KERNEL_LOG(KERNEL_ERROR, "srcCount must be even, current srcCount is %lld", static_cast<long long>(srcCount));
+    });
     // no unalign problem
     if constexpr (sizeof(T) != 8) {
         DeInterleaveImplNormal<T, false, false>(dst0Local, dst1Local, srcLocal, nullptr, srcCount);

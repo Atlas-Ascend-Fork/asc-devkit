@@ -84,7 +84,7 @@ __aicore__ inline void GatherMaskImpl(
     ASCENDC_ASSERT((SupportType<T, half, uint16_t, int16_t, float, uint32_t, int32_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in GatherMask, current api support dtype combination is src and dst both: half / "
+            "Failed to check dtype in GatherMask, the supported dtype combination is src and dst both: half / "
             "uint16_t / int16_t / float / uint32_t / int32_t.");
     });
     if (sizeof(T) == sizeof(uint16_t)) {
@@ -124,7 +124,7 @@ __aicore__ inline void GatherMaskCal(
         ASCENDC_ASSERT((SupportType<T, half, uint16_t, int16_t>()), {
             KERNEL_LOG(
                 KERNEL_ERROR, "Failed to check dtype "
-                              "in GatherMask when src1Pattern is uint16_t tensor, current api support dtype "
+                              "in GatherMask when src1Pattern is uint16_t tensor, the supported dtype "
                               "combination is src and dst "
                               "both: half / uint16_t / int16_t.");
         });
@@ -132,7 +132,7 @@ __aicore__ inline void GatherMaskCal(
         ASCENDC_ASSERT((SupportType<T, float, uint32_t, int32_t>()), {
             KERNEL_LOG(
                 KERNEL_ERROR, "Failed to check dtype "
-                              "in GatherMask when src1Pattern is uint32_t tensor, current api support dtype "
+                              "in GatherMask when src1Pattern is uint32_t tensor, the supported dtype "
                               "combination is src and dst "
                               "both: float / uint32_t / int32_t.");
         });
@@ -152,7 +152,7 @@ __aicore__ inline void GatherMaskCal(
     ASCENDC_ASSERT((SupportType<T, half, uint16_t, int16_t, float, uint32_t, int32_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in GatherMask, current api support dtype combination is src and dst both: half / "
+            "Failed to check dtype in GatherMask, the supported dtype combination is src and dst both: half / "
             "uint16_t / int16_t / float / uint32_t / int32_t.");
     });
     __ubuf__ T* nullsrc1 = ONE_REPEAT_BYTE_SIZE * sizeof(T) + src0;

@@ -310,7 +310,9 @@ __aicore__ inline void InterleaveImpl(
     static_assert(
         SupportType<T, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, half, float, uint64_t, int64_t>(),
         "current data type is not supported on current device!");
-    ASCENDC_ASSERT((calCount % 2 == 0), { KERNEL_LOG(KERNEL_ERROR, "calCount % 2 = 0!"); });
+    ASCENDC_ASSERT((calCount % 2 == 0), {
+        KERNEL_LOG(KERNEL_ERROR, "calCount must be even, current calCount is %lld", static_cast<long long>(calCount));
+    });
     if constexpr (sizeof(T) != 8) {
         if (calCount * sizeof(T) / 2 % ONE_BLOCK_SIZE == 0) {
             InterleaveImplNormal<T, false>(dst0Local, dst1Local, src0Local, src1Local, calCount);
@@ -493,7 +495,9 @@ __aicore__ inline void DeInterleaveImpl(
     static_assert(
         SupportType<T, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, half, float, uint64_t, int64_t>(),
         "current data type is not supported on current device!");
-    ASCENDC_ASSERT((calCount % 2 == 0), { KERNEL_LOG(KERNEL_ERROR, "calCount % 2 = 0!"); });
+    ASCENDC_ASSERT((calCount % 2 == 0), {
+        KERNEL_LOG(KERNEL_ERROR, "calCount must be even, current calCount is %lld", static_cast<long long>(calCount));
+    });
     if constexpr (sizeof(T) != 8) {
         if (calCount * sizeof(T) / 2 % ONE_BLOCK_SIZE == 0) {
             DeInterleaveImplNormal<T, false>(dst0Local, dst1Local, src0Local, src1Local, calCount);
@@ -516,7 +520,9 @@ __aicore__ inline void DeInterleaveImpl(
     static_assert(
         SupportType<T, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, half, float, uint64_t, int64_t>(),
         "current data type is not supported on current device!");
-    ASCENDC_ASSERT((srcCount % 2 == 0), { KERNEL_LOG(KERNEL_ERROR, "srcCount % 2 = 0!"); });
+    ASCENDC_ASSERT((srcCount % 2 == 0), {
+        KERNEL_LOG(KERNEL_ERROR, "srcCount must be even, current srcCount is %lld", static_cast<long long>(srcCount));
+    });
     // no unalign problem
     if constexpr (sizeof(T) != 8) {
         DeInterleaveImplNormal<T, false, false>(dst0Local, dst1Local, srcLocal, nullptr, srcCount);

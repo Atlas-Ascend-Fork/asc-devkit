@@ -78,8 +78,11 @@ __aicore__ inline void VcmpvIntrinsicsImpl(
             break;
         }
         default:
-            ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "illegal input cmp mode %d", static_cast<int32_t>(cmpMode)); });
+            ASCENDC_ASSERT((false), {
+                KERNEL_LOG(
+                    KERNEL_ERROR, "illegal input cmp mode %d, valid modes are CMPMODE::LT / GT / EQ / LE / GE / NE",
+                    static_cast<int32_t>(cmpMode));
+            });
             break;
     }
 }
@@ -235,7 +238,9 @@ __aicore__ inline void VselImpl(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check dtype in Select, current api support dtype combination is dst, "
-            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
+            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     BinaryRepeatParams repeatParams;
     IntriInfo intriInfo = AscendCUtils::CalIntriInfo(sizeof(T), count);
@@ -306,7 +311,9 @@ __aicore__ inline void VselImpl(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check dtype in Select, current api support dtype combination is dst, "
-            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
+            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     AscendCUtils::SetMask<T>(mask[1], mask[0]);
     VselIntrinsicsImpl(dstLocal, selMask, src0Local, src1Local, selMode, repeatTime, repeatParams);
@@ -322,7 +329,9 @@ __aicore__ inline void VselImpl(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check dtype in Select, current api support dtype combination is dst, "
-            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
+            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     AscendCUtils::SetMask<T>(mask);
     VselIntrinsicsImpl(dstLocal, selMask, src0Local, src1Local, selMode, repeatTime, repeatParams);

@@ -79,8 +79,13 @@ __aicore__ inline void VcmpvIntrinsicsImpl(
             break;
         }
         default:
-            ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "illegal input cmp mode %d", static_cast<int32_t>(cmpMode)); });
+            ASCENDC_ASSERT((false), {
+                KERNEL_LOG(
+                    KERNEL_ERROR,
+                    "illegal input cmp mode %d, valid modes are "
+                    "CMPMODE::LT / GT / EQ / LE / GE / NE",
+                    static_cast<int32_t>(cmpMode));
+            });
             break;
     }
 }
@@ -127,8 +132,13 @@ __aicore__ inline void VcmpIntrinsicsImpl(
             break;
         }
         default:
-            ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "illegal input cmp mode %d", static_cast<int32_t>(cmpMode)); });
+            ASCENDC_ASSERT((false), {
+                KERNEL_LOG(
+                    KERNEL_ERROR,
+                    "illegal input cmp mode %d, valid modes are "
+                    "CMPMODE::LT / GT / EQ / LE / GE / NE",
+                    static_cast<int32_t>(cmpMode));
+            });
             break;
     }
 }
@@ -160,7 +170,7 @@ __aicore__ inline void CheckVcmpvDtype()
 {
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, int8_t, uint8_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Compare, current api support dtype combination is src: "
+            KERNEL_ERROR, "Failed to check dtype in Compare, the supported dtype combination is src: "
                           "half / float, dst: int8_t / uint8_t.");
     });
 }
@@ -171,7 +181,7 @@ __aicore__ inline void CheckVcmpDtype()
     ASCENDC_ASSERT((SupportType<T, half, float>()), {
         KERNEL_LOG(
             KERNEL_ERROR, "Failed to check dtype in Compare, "
-                          "current api support dtype combination is src: half / float.");
+                          "the supported dtype combination is src: half / float.");
     });
 }
 
@@ -285,8 +295,13 @@ __aicore__ inline void VcmpvsIntrinsicsImpl(
             break;
         }
         default:
-            ASCENDC_ASSERT(
-                (false), { KERNEL_LOG(KERNEL_ERROR, "illegal input cmp mode %d", static_cast<int32_t>(cmpMode)); });
+            ASCENDC_ASSERT((false), {
+                KERNEL_LOG(
+                    KERNEL_ERROR,
+                    "illegal input cmp mode %d, valid modes are "
+                    "CMPMODE::LT / GT / EQ / LE / GE / NE",
+                    static_cast<int32_t>(cmpMode));
+            });
             break;
     }
 }
@@ -465,7 +480,7 @@ __aicore__ inline void VselImpl(
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in Select, current api support dtype combination is dst, "
+            "Failed to check dtype in Select, the supported dtype combination is dst, "
             "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
     });
     BinaryRepeatParams repeatParams;
@@ -519,7 +534,7 @@ __aicore__ inline void VselImpl(
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in Select, current api support dtype combination is dst, "
+            "Failed to check dtype in Select, the supported dtype combination is dst, "
             "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
     });
     SetMaskCount();
@@ -555,7 +570,7 @@ __aicore__ inline void VselImpl(
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in Select, current api support dtype combination is dst, "
+            "Failed to check dtype in Select, the supported dtype combination is dst, "
             "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
     });
     VselIntrinsicsImplPre(selMask, selMode);
@@ -572,7 +587,7 @@ __aicore__ inline void VselImpl(
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in Select, current api support dtype combination is dst, "
+            "Failed to check dtype in Select, the supported dtype combination is dst, "
             "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
     });
     VselIntrinsicsImplPre(selMask, selMode);
@@ -589,7 +604,7 @@ __aicore__ inline void VselImpl(
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in Select, current api support dtype combination is dst, "
+            "Failed to check dtype in Select, the supported dtype combination is dst, "
             "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
     });
     VselIntrinsicsImplPre(src1Local);
@@ -606,7 +621,7 @@ __aicore__ inline void VselImpl(
     ASCENDC_ASSERT((SupportType<T, half, float>() && SupportType<U, uint8_t, uint16_t, uint32_t, uint64_t>()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check dtype in Select, current api support dtype combination is dst, "
+            "Failed to check dtype in Select, the supported dtype combination is dst, "
             "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
     });
     VselIntrinsicsImplPre(src1Local);

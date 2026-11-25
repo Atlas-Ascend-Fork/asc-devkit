@@ -309,7 +309,11 @@ __aicore__ inline void GatherMaskCal(
     } else if (src1Pattern == 7) {
         GatherMaskAll(dst, src0, reduceMode, mask, reducev2Params, rsvdCnt);
     } else {
-        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "GatherMask Pattern can only be 1~7"); });
+        ASCENDC_ASSERT((false), {
+            KERNEL_LOG(
+                KERNEL_ERROR, "GatherMask Pattern must be in [1, 7], current pattern is %d",
+                static_cast<int>(src1Pattern));
+        });
     }
 }
 

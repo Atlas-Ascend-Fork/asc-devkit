@@ -181,8 +181,11 @@ __aicore__ inline void CheckVcmpvDtype(CMPMODE cmpMode)
     ASCENDC_DEBUG_ASSERT(
         (SupportType<U, int8_t, uint8_t>()),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check "
-                          "dtype U in Compare, current api support dtype combination is int8_t / uint8_t.\n"));
+            KERNEL_ERROR,
+            "Failed to check "
+            "dtype U in Compare, current api support dtype combination is int8_t / uint8_t. "
+            "Current template types: %s\n",
+            __PRETTY_FUNCTION__));
     if (cmpMode == CMPMODE::EQ) {
         ASCENDC_DEBUG_ASSERT(
             (SupportType<T, half, float, int32_t>()),
@@ -190,13 +193,18 @@ __aicore__ inline void CheckVcmpvDtype(CMPMODE cmpMode)
                 KERNEL_ERROR,
                 "Failed to "
                 "check dtype T in Compare when cmpMode is CMPMODE::EQ, current api support dtype combination is half / "
-                "float / int32_t.\n"));
+                "float / int32_t. "
+                "Current template types: %s\n",
+                __PRETTY_FUNCTION__));
     } else {
         ASCENDC_DEBUG_ASSERT(
             (SupportType<T, half, float>()), KERNEL_LOG_INTERNAL(
-                                                 KERNEL_ERROR, "Failed to check dtype "
-                                                               "T in Compare when cmpMode is not CMPMODE::EQ, current "
-                                                               "api support dtype combination is half / float.\n"));
+                                                 KERNEL_ERROR,
+                                                 "Failed to check dtype "
+                                                 "T in Compare when cmpMode is not CMPMODE::EQ, current "
+                                                 "api support dtype combination is half / float. "
+                                                 "Current template types: %s\n",
+                                                 __PRETTY_FUNCTION__));
     }
 #endif
 }
@@ -205,10 +213,12 @@ template <typename T>
 __aicore__ inline void CheckVcmpDtype()
 {
     ASCENDC_DEBUG_ASSERT(
-        (SupportType<T, half, float>()),
-        KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check dtype T "
-                          "in Compare, current api support dtype combination is src: half / float.\n"));
+        (SupportType<T, half, float>()), KERNEL_LOG_INTERNAL(
+                                             KERNEL_ERROR,
+                                             "Failed to check dtype T "
+                                             "in Compare, current api support dtype combination is src: half / float. "
+                                             "Current template types: %s\n",
+                                             __PRETTY_FUNCTION__));
 }
 
 template <typename T, typename U>
@@ -216,10 +226,12 @@ __aicore__ inline void CheckVcmpvsDtype(CMPMODE cmpMode)
 {
 #if defined(ASCENDC_DEBUG) || defined(ASCENDC_CPU_DEBUG)
     ASCENDC_DEBUG_ASSERT(
-        (SupportType<U, uint8_t>()),
-        KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check dtype U in "
-                          "Compares / CompareScalar, current api support dtype combination is uint8_t.\n"));
+        (SupportType<U, uint8_t>()), KERNEL_LOG_INTERNAL(
+                                         KERNEL_ERROR,
+                                         "Failed to check dtype U in "
+                                         "Compares / CompareScalar, current api support dtype combination is uint8_t. "
+                                         "Current template types: %s\n",
+                                         __PRETTY_FUNCTION__));
     if (cmpMode == CMPMODE::EQ) {
         ASCENDC_DEBUG_ASSERT(
             (SupportType<T, half, float, int32_t>()),
@@ -227,14 +239,19 @@ __aicore__ inline void CheckVcmpvsDtype(CMPMODE cmpMode)
                 KERNEL_ERROR,
                 "Failed to "
                 "check dtype T in Compares / CompareScalar when cmpMode is CMPMODE::EQ, current api support dtype "
-                "combination is half / float / int32_t.\n"));
+                "combination is half / float / int32_t. "
+                "Current template types: %s\n",
+                __PRETTY_FUNCTION__));
     } else {
         ASCENDC_DEBUG_ASSERT(
             (SupportType<T, half, float>()), KERNEL_LOG_INTERNAL(
-                                                 KERNEL_ERROR, "Failed to check dtype "
-                                                               "T in Compares / CompareScalar when cmpMode is not "
-                                                               "CMPMODE::EQ, current api support dtype combination is "
-                                                               "half / float.\n"));
+                                                 KERNEL_ERROR,
+                                                 "Failed to check dtype "
+                                                 "T in Compares / CompareScalar when cmpMode is not "
+                                                 "CMPMODE::EQ, current api support dtype combination is "
+                                                 "half / float. "
+                                                 "Current template types: %s\n",
+                                                 __PRETTY_FUNCTION__));
     }
 #endif
 }

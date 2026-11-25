@@ -152,7 +152,7 @@ __simd_callee__ inline void DuplicateImpl(S& dstReg, U scalarValue, MaskReg& mas
     using ActualT = typename S::ActualT;
     CheckDuplicateType<T, U, S>();
     ASCENDC_ASSERT((mode != MaskMergeMode::UNKNOWN), {
-        KERNEL_LOG(KERNEL_ERROR, "The MergeMode only support: MODE_MERGING, MODE_ZEROING.");
+        KERNEL_LOG(KERNEL_ERROR, "The MergeMode only supports: MODE_MERGING, MODE_ZEROING.");
     });
     constexpr auto modeValue = GetMaskMergeMode<mode>();
     if constexpr (IsSameType<ActualT, bool>::value) {
@@ -243,7 +243,7 @@ __simd_callee__ inline void DuplicateImpl(U& dstReg, U& srcReg, MaskReg& mask)
             complex64>()),
         "current data type is not supported on current device!");
     ASCENDC_ASSERT((mode != MaskMergeMode::UNKNOWN), {
-        KERNEL_LOG(KERNEL_ERROR, "The MergeMode only support: MODE_MERGING, MODE_ZEROING.");
+        KERNEL_LOG(KERNEL_ERROR, "The MergeMode only supports: MODE_MERGING, MODE_ZEROING.");
     });
     constexpr auto posValue = std::integral_constant<::Pos, static_cast<::Pos>(pos)>();
     constexpr auto modeValue = GetMaskMergeMode<mode>();

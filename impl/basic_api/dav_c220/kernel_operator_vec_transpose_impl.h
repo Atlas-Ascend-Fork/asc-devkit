@@ -250,8 +250,11 @@ __aicore__ inline void TransDataTo5HDImpl(
     ASCENDC_DEBUG_ASSERT(
         (SupportType<T, int8_t, uint8_t, int16_t, uint16_t, half, float, int32_t, uint32_t>()),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check dtype in TransDataTo5HD, current api support dtype combination is "
-                          "src and dst both: int8_t, uint8_t, int16_t, uint16_t, half, float, int32_t, uint32_t"));
+            KERNEL_ERROR,
+            "Failed to check dtype in TransDataTo5HD, current api support dtype combination is "
+            "src and dst both: int8_t, uint8_t, int16_t, uint16_t, half, float, int32_t, uint32_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__));
     if ASCEND_IS_AIV {
         SetVaReg(dstList, srcList);
         TransDataTo5HDIntrinsicsImpl(dstList, srcList, transDataTo5HDParams);
@@ -747,7 +750,9 @@ __aicore__ inline void TransposeUB2UBImpl(__ubuf__ T* dst, __ubuf__ T* src, cons
             KERNEL_ERROR,
             "Failed to check dtype in Transpose when transposeType is TRANSPOSE_NCHW2NHWC / "
             "TRANSPOSE_NHWC2NCHW, current api support dtype combination is src and dst both: int8_t / uint8_t / int16_t"
-            " / uint16_t / half / int32_t / uint32_t / float");
+            " / uint16_t / half / int32_t / uint32_t / float "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
 
     DataCopyUB2UBImpl(dst, src, intriParams);
@@ -763,11 +768,17 @@ __aicore__ inline void Transpose4DImpl(
             KERNEL_ERROR,
             "Failed to check dtype in Transpose when transposeType is TRANSPOSE_NCHW2NHWC / "
             "TRANSPOSE_NHWC2NCHW, current api support dtype combination is src and dst both: int8_t / uint8_t / int16_t"
-            " / uint16_t / half / int32_t / uint32_t / float");
+            " / uint16_t / half / int32_t / uint32_t / float "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
 
     LocalTensor<T> stackBuffer = sharedTmpBuffer.ReinterpretCast<T>();
-    ASCENDC_ASSERT((sharedTmpBuffer.GetSize() > 0), { KERNEL_LOG(KERNEL_ERROR, "sharedTmpBuffer size must > 0!"); });
+    ASCENDC_ASSERT((sharedTmpBuffer.GetSize() > 0), {
+        KERNEL_LOG(
+            KERNEL_ERROR, "sharedTmpBuffer size must be > 0, current size is %llu",
+            static_cast<unsigned long long>(sharedTmpBuffer.GetSize()));
+    });
 
     Transpose4dParams<T> params;
     GetTransposeParamCal(transposeParams, params);

@@ -254,7 +254,7 @@ __aicore__ inline void TransDataTo5HDVldVaRegImpl(
 {
     ASCENDC_ASSERT(false, {
         KERNEL_LOG(
-            KERNEL_ERROR, "use LocalTensor for storage address in TransDataTo5HD is not supported on current device");
+            KERNEL_ERROR, "Using LocalTensor for storage address in TransDataTo5HD is not supported on current device");
     });
 }
 

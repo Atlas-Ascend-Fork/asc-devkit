@@ -166,7 +166,9 @@ __aicore__ inline void VselImpl(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check dtype in Select, current api support dtype combination is dst, "
-            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
+            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     if ASCEND_IS_AIC {
         return;
@@ -224,7 +226,9 @@ __aicore__ inline void VselImpl(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check dtype in Select, current api support dtype combination is dst, "
-            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t");
+            "src0Local and src1Local are both: half / float, selMask:  uint8_t / uint16_t / uint32_t / uint64_t "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
     if ASCEND_IS_AIC {
         return;

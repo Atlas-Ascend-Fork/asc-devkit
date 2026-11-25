@@ -66,7 +66,9 @@ __aicore__ inline __in_pipe__(S) __out_pipe__(V) void CreateVecIndex(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check "
-            "dtype in CreateVecIndex, current api support dtype combination is dst: half / int16_t / float / int32_t");
+            "dtype in CreateVecIndex, current api support dtype combination is dst: half / int16_t / float / int32_t. "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
 #if ASCENDC_CPU_DEBUG
     if (!CheckFuncCreateVecIndex(dst, mask, repeatTime, dstBlkStride, dstRepStride, "CreateVecIndex")) {
@@ -88,7 +90,9 @@ __aicore__ inline __in_pipe__(S) __out_pipe__(V) void CreateVecIndex(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check "
-            "dtype in CreateVecIndex, current api support dtype combination is dst: half / int16_t / float / int32_t");
+            "dtype in CreateVecIndex, current api support dtype combination is dst: half / int16_t / float / int32_t. "
+            "Current template types: %s",
+            __PRETTY_FUNCTION__);
     });
 #if ASCENDC_CPU_DEBUG
     if (!CheckFuncCreateVecIndex(dst, mask, repeatTime, dstBlkStride, dstRepStride, "CreateVecIndex")) {

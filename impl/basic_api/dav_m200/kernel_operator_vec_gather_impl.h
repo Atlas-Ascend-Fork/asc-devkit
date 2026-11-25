@@ -43,7 +43,7 @@ __aicore__ inline void GatherImpl(
 {
     ASCENDC_ASSERT((SupportType<T, half, uint16_t, int16_t, float, uint32_t, int32_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Gather, current api support dtype combination is src and "
+            KERNEL_ERROR, "Failed to check dtype in Gather, the supported dtype combination is src and "
                           "dst both: half / uint16_t / int16_t / float / uint32_t / int32_t");
     });
     uint32_t offsetAddr = (uint64_t)srcLocal + srcBaseOffset;
@@ -71,7 +71,7 @@ __aicore__ inline void GatherImpl(
 {
     ASCENDC_ASSERT((SupportType<T, half, uint16_t, int16_t, float, uint32_t, int32_t>()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "Failed to check dtype in Gather, current api support dtype combination is src and "
+            KERNEL_ERROR, "Failed to check dtype in Gather, the supported dtype combination is src and "
                           "dst both: half / uint16_t / int16_t / float / uint32_t / int32_t");
     });
     uint32_t offsetAddr = (uint64_t)srcLocal + srcBaseOffset;
