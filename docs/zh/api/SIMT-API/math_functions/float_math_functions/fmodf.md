@@ -48,7 +48,7 @@ inline float fmodf(float x, float y)
 
 输入数据x除以y的余数。
 
--   x为0时，y不为0时，返回值为0。
+-   x为0，y不为0时，返回值为0。
 -   x为有限数，y为inf或-inf时，返回值为x。
 -   x为inf或-inf，或y为0时，返回值为nan。
 -   x，y任意一个为nan时，返回值为nan。

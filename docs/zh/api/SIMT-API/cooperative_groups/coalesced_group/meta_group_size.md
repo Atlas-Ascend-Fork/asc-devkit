@@ -43,7 +43,7 @@ unsigned int meta_group_size() const
 
 直接父组被划分时创建的子组的数量。
 
-- 如果该组是通过`coalesced_threads`创建的，则`meta_group_size()`的返回值将为1。
+- 如果该组是通过`coalesced_threads`创建的，则`meta_group_size()`的返回值为1。
 
 ## 约束说明
 

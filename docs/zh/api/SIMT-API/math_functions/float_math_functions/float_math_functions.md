@@ -189,4 +189,3 @@
 -   **[isnan](isnan.md)**
 
 -   **[isinf](isinf.md)**
-

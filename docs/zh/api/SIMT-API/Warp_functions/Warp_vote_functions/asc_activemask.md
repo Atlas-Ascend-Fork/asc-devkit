@@ -69,7 +69,7 @@ inline uint32_t asc_activemask()
         uint32_t warp_id = idx / warpSize;
         uint32_t active_mask = asc_activemask(); // 获取当前Warp中仍然活跃的线程掩码。
         if (lane_id == 0) {
-            active_masks[warp_id] = active_mask; // 由Lane 0负责写出当前Warp的各个线程的是否活跃的状态。
+            active_masks[warp_id] = active_mask; // 由Lane 0负责写出当前Warp的各个线程是否活跃的状态。
         }
     }
     ```
@@ -92,7 +92,7 @@ inline uint32_t asc_activemask()
         uint32_t warp_id = idx / warpSize;
         uint32_t active_mask = asc_activemask(); // 获取当前Warp中仍然活跃的线程掩码。
         if (lane_id == 0) {
-            active_masks[warp_id] = active_mask; // 由Lane 0负责写出当前Warp的各个线程的是否活跃的状态。
+            active_masks[warp_id] = active_mask; // 由Lane 0负责写出当前Warp的各个线程是否活跃的状态。
         }
     }
     ```

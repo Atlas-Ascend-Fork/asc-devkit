@@ -28,7 +28,7 @@ SIMT API是面向AI处理器的并行计算编程接口，可以实现高效的�
 | --- | --- |
 | `simt_api/asc_simt.h` | SIMT基础API聚合头文件，适用于常规SIMT编程场景。 |
 | `simt_api/common_functions.h` | SIMT通用能力头文件，提供SIMT VF调用等基础定义。 |
-| `simt_api/device_functions.h` | 设备函数头文件，覆盖地址空间谓词、地址空间转换、访存函数、Lane-ID类函数等接口，并包含同步、原子和Warp函数头文件。 |
+| `simt_api/device_functions.h` | 设备函数头文件，覆盖地址空间谓词、地址空间转换、访存函数、Lane ID类函数等接口，并包含同步、原子和Warp函数头文件。 |
 | `simt_api/device_sync_functions.h` | 同步与内存栅栏接口头文件。 |
 | `simt_api/device_atomic_functions.h` | 原子操作接口头文件。 |
 | `simt_api/device_warp_functions.h` | Warp级投票、数据交换和规约接口头文件。 |
@@ -48,7 +48,7 @@ SIMT API是面向AI处理器的并行计算编程接口，可以实现高效的�
 | [同步与内存栅栏](sync_and_memory_fence/sync_and_memory_fence.md) | `#include "simt_api/device_sync_functions.h"` |
 | [原子操作](atomic_operations/atomic_operations.md) | `#include "simt_api/device_atomic_functions.h"` |
 | [Warp函数](Warp_functions/Warp_functions.md) | `#include "simt_api/device_warp_functions.h"` |
-| [数学函数](math_functions/math_functions.md) | 数学函数标准库接口：`#include "simt_api/math_functions.h" `<br><br>数学函数的intrinsic接口：`#include "simt_api/device_functions.h"` |
+| [数学函数](math_functions/math_functions.md) | 数学函数标准库接口：`#include "simt_api/math_functions.h"`<br><br>数学函数的intrinsic接口：`#include "simt_api/device_functions.h"` |
 | [地址空间谓词函数](address_space_predicate_functions/address_space_predicate_functions.md)<br><br>[地址空间转换函数](address_space_conversion_functions/address_space_conversion_functions.md)<br><br>[访存函数](memory_access_functions/memory_access_functions.md) | `#include "simt_api/device_functions.h"` |
 | [协作组](cooperative_groups/cooperative_groups.md) | `#include "simt_api/cooperative_groups.h"` |
 

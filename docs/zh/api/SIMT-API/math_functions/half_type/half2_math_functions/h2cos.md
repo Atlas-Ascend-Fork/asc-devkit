@@ -69,7 +69,7 @@ inline half2 h2cos(half2 x)
     __global__ __launch_bounds__(1024) void KernelCos(half2* dst, half2* x)
     {
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
-        dst[idx] = h2cos(x[idx]); // 对src源地址的第idx个元素取三角函数余弦值
+        dst[idx] = h2cos(x[idx]); // 对x源地址的第idx个元素取三角函数余弦值
     }
     ```
 
@@ -81,7 +81,7 @@ inline half2 h2cos(half2 x)
     __simt_vf__ __launch_bounds__(1024) inline void KernelCos(__gm__ half2* dst, __gm__ half2* x)
     {
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
-        dst[idx] = h2cos(x[idx]); // 对src源地址的第idx个元素取三角函数余弦值
+        dst[idx] = h2cos(x[idx]); // 对x源地址的第idx个元素取三角函数余弦值
     }
     ```
 

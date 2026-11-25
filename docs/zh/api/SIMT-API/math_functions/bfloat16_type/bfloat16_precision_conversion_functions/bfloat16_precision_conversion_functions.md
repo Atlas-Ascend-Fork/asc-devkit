@@ -215,4 +215,3 @@
 -   **[\_\_bfloat16\_as\_ushort](__bfloat16_as_ushort.md)**
 
 -   **[\_\_short\_as\_bfloat16](__short_as_bfloat16.md)**
-

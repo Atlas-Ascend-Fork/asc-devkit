@@ -80,7 +80,7 @@ inline half2 __lows2half2(const half2 x, const half2 y)
         }
         output[idx] = __lows2half2(input1[idx], input2[idx]);
     }
-    __global__ __launch_bounds__(1024)void cast_kernel(half* input1, half* input2, half* output, uint32_t input_total_length)
+    __global__ __launch_bounds__(1024) void cast_kernel(half* input1, half* input2, half* output, uint32_t input_total_length)
     {
         simt_lows2half2((half2*)input1, (half2*)input2, (half2*)output, input_total_length);
     }

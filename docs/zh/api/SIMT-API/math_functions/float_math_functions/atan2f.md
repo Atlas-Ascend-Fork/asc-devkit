@@ -74,6 +74,7 @@ y/x的反正切值。
 ## 约束说明
 
 本接口受编译选项`--cce-use-fast-math`的影响。
+
 -   --cce-use-fast-math=true：开启快速计算模式。本接口内部实现使用到了除法运算符，由于快速计算模式下除法运算符不支持Subnormal场景，因此本接口不支持仅y为Subnormal数据且x为非Subnormal的正数的场景。
 -   --cce-use-fast-math=false：支持Subnormal场景的高精度计算。
 
