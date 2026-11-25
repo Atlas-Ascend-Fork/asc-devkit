@@ -126,6 +126,7 @@ private:
                         ubLocal, srcGlobal + mIdx * n + nStart + nIdx, (uint16_t)tileM,
                         (uint32_t)(tileN * sizeof(half)), 0, 0, 0, asc_load_l2_cache_mode::NORMAL_FIRST_VICTIM,
                         (uint64_t)((n - tileN) * sizeof(half)), 0);
+                    asc_sync_pipe(PIPE_MTE2);
                 }
             }
         }
