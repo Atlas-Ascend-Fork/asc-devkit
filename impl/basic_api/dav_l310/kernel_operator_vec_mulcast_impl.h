@@ -56,7 +56,9 @@ __aicore__ inline void MulCastImpl(
     __ubuf__ T* dst, __ubuf__ U* src0, __ubuf__ U* src1, uint64_t mask, const uint8_t repeatTime,
     const BinaryRepeatParams& repeatParams)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "MulCast Level 0 is not supported on current device!"); });
+    CheckMulCastSupportType<T, U>();
+    constexpr auto func = RegMulCast::MulCast<T, U, Reg::RegTensor<T>, Reg::RegTensor<U>>;
+    Internal::VecBinaryImplTemplate<func, isSetMask, false>(dst, src0, src1, nullptr, mask, repeatTime, repeatParams);
 }
 
 template <typename T, typename U, bool isSetMask = true>
@@ -64,7 +66,9 @@ __aicore__ inline void MulCastImpl(
     __ubuf__ T* dst, __ubuf__ U* src0, __ubuf__ U* src1, uint64_t mask[], const uint8_t repeatTime,
     const BinaryRepeatParams& repeatParams)
 {
-    ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "MulCast Level 0 is not supported on current device!"); });
+    CheckMulCastSupportType<T, U>();
+    constexpr auto func = RegMulCast::MulCast<T, U, Reg::RegTensor<T>, Reg::RegTensor<U>>;
+    Internal::VecBinaryImplTemplate<func, isSetMask, true>(dst, src0, src1, mask, 0, repeatTime, repeatParams);
 }
 
 template <typename T, typename U>

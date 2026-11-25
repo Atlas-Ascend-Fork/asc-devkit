@@ -195,6 +195,7 @@ __simd_vf__ inline void VecBinaryVFImpl(
     }
     constexpr uint8_t ElePerBlkT = GetDataBlockSizeInBytes() / sizeof(T);
     constexpr uint8_t ElePerBlkU = GetDataBlockSizeInBytes() / sizeof(U);
+    constexpr uint8_t ElePerBlkTT = GetDataBlockSizeInBytes() / sizeof(TT);
     const uint32_t countPerLogicalIter = count;
     for (uint16_t index = 0; index < newRepeatTimes; ++index) {
         if constexpr (isNormalMode) {
@@ -211,14 +212,12 @@ __simd_vf__ inline void VecBinaryVFImpl(
                     Reg::Pack(maskRegSrc, maskReg);
                 }
                 constexpr uint32_t blkBaseOfMicro = 0;
-                __ubuf__ U* src0Micro =
-                    src0 +
-                    (index * repeatParams.src0RepStride + blkBaseOfMicro * repeatParams.src0BlkStride) * ElePerBlkU;
-                __ubuf__ U* src1Micro =
-                    src1 +
-                    (index * repeatParams.src1RepStride + blkBaseOfMicro * repeatParams.src1BlkStride) * ElePerBlkU;
-                __ubuf__ T* dstMicro =
-                    dst + (index * repeatParams.dstRepStride + blkBaseOfMicro * repeatParams.dstBlkStride) * ElePerBlkT;
+                __ubuf__ U* src0Micro = src0 + index * repeatParams.src0RepStride * ElePerBlkU +
+                                        blkBaseOfMicro * repeatParams.src0BlkStride * ElePerBlkTT;
+                __ubuf__ U* src1Micro = src1 + index * repeatParams.src1RepStride * ElePerBlkU +
+                                        blkBaseOfMicro * repeatParams.src1BlkStride * ElePerBlkTT;
+                __ubuf__ T* dstMicro = dst + index * repeatParams.dstRepStride * ElePerBlkT +
+                                       blkBaseOfMicro * repeatParams.dstBlkStride * ElePerBlkTT;
                 Reg::RegTensor<T> dstVreg;
                 Reg::RegTensor<U> srcVreg0, srcVreg1;
                 Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
@@ -244,14 +243,12 @@ __simd_vf__ inline void VecBinaryVFImpl(
                     Reg::Pack(maskRegSrc, maskReg);
                 }
                 constexpr uint32_t blkBaseOfMicro = BLK_NUM_PER_MICRO;
-                __ubuf__ U* src0Micro =
-                    src0 +
-                    (index * repeatParams.src0RepStride + blkBaseOfMicro * repeatParams.src0BlkStride) * ElePerBlkU;
-                __ubuf__ U* src1Micro =
-                    src1 +
-                    (index * repeatParams.src1RepStride + blkBaseOfMicro * repeatParams.src1BlkStride) * ElePerBlkU;
-                __ubuf__ T* dstMicro =
-                    dst + (index * repeatParams.dstRepStride + blkBaseOfMicro * repeatParams.dstBlkStride) * ElePerBlkT;
+                __ubuf__ U* src0Micro = src0 + index * repeatParams.src0RepStride * ElePerBlkU +
+                                        blkBaseOfMicro * repeatParams.src0BlkStride * ElePerBlkTT;
+                __ubuf__ U* src1Micro = src1 + index * repeatParams.src1RepStride * ElePerBlkU +
+                                        blkBaseOfMicro * repeatParams.src1BlkStride * ElePerBlkTT;
+                __ubuf__ T* dstMicro = dst + index * repeatParams.dstRepStride * ElePerBlkT +
+                                       blkBaseOfMicro * repeatParams.dstBlkStride * ElePerBlkTT;
                 Reg::RegTensor<T> dstVreg;
                 Reg::RegTensor<U> srcVreg0, srcVreg1;
                 Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
@@ -280,14 +277,12 @@ __simd_vf__ inline void VecBinaryVFImpl(
                     }
                 }
                 const uint32_t blkBaseOfMicro = micro * BLK_NUM_PER_MICRO;
-                __ubuf__ U* src0Micro =
-                    src0 +
-                    (index * repeatParams.src0RepStride + blkBaseOfMicro * repeatParams.src0BlkStride) * ElePerBlkU;
-                __ubuf__ U* src1Micro =
-                    src1 +
-                    (index * repeatParams.src1RepStride + blkBaseOfMicro * repeatParams.src1BlkStride) * ElePerBlkU;
-                __ubuf__ T* dstMicro =
-                    dst + (index * repeatParams.dstRepStride + blkBaseOfMicro * repeatParams.dstBlkStride) * ElePerBlkT;
+                __ubuf__ U* src0Micro = src0 + index * repeatParams.src0RepStride * ElePerBlkU +
+                                        blkBaseOfMicro * repeatParams.src0BlkStride * ElePerBlkTT;
+                __ubuf__ U* src1Micro = src1 + index * repeatParams.src1RepStride * ElePerBlkU +
+                                        blkBaseOfMicro * repeatParams.src1BlkStride * ElePerBlkTT;
+                __ubuf__ T* dstMicro = dst + index * repeatParams.dstRepStride * ElePerBlkT +
+                                       blkBaseOfMicro * repeatParams.dstBlkStride * ElePerBlkTT;
                 Reg::RegTensor<T> dstVreg;
                 Reg::RegTensor<U> srcVreg0, srcVreg1;
                 Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
