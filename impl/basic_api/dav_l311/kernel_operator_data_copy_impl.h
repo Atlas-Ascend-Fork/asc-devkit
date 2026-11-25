@@ -636,7 +636,9 @@ __aicore__ inline void DataCopyPadGm2UBImpl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR, "b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
     if constexpr (g_gm_overflow_check) {

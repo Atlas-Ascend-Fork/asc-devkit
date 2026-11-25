@@ -432,7 +432,9 @@ __aicore__ inline void DataCopyGM2L1DN2NZImpl(
     }
     if constexpr (SupportType<T, fp4x2_e2m1_t, fp4x2_e1m2_t>()) {
         ASCENDC_ASSERT((intriParams.nValue % 2 == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "if src datatype is 4bit, the inner axis must be an even number.");
+            KERNEL_LOG(
+                KERNEL_ERROR, "A 4-bit source dtype requires an even inner axis (nValue); got %u.",
+                static_cast<unsigned int>(intriParams.nValue));
         });
         // data is transferred based on the b8 type, and parameters are set based on the b8 type
         DataCopyGM2L1DN2NZImplBase((__cbuf__ uint8_t*)dst, (__gm__ uint8_t*)src, intriParams, enableSmallC0, cacheMode);
@@ -847,7 +849,9 @@ __aicore__ inline void DataCopyPadGm2UBImpl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR, "b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
     if constexpr (g_gm_overflow_check) {
@@ -869,7 +873,9 @@ __aicore__ inline void DataCopyPadGm2UBImpl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR, "b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
     if constexpr (g_gm_overflow_check) {

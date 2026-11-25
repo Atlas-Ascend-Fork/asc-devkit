@@ -270,7 +270,7 @@ __aicore__ inline __inout_pipe__(MTE2) void DataCopy(
             cacheMode, enablePreReadIgnoreSync);
         return;
     }
-    ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "DataCopy dn2nz only support position:GM to position: L1"); });
+    ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "DataCopy with DN2NZ only supports copying from GM to L1."); });
 #endif
 }
 
@@ -308,7 +308,7 @@ __aicore__ inline __inout_pipe__(MTE2) void DataCopy(
             cacheMode);
         return;
     }
-    ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "DataCopy dn2nz only support position:GM to position: L1"); });
+    ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "DataCopy with DN2NZ only supports copying from GM to L1."); });
 }
 #endif
 
@@ -1754,7 +1754,11 @@ __aicore__ inline __inout_pipe__(MTE2) void DataCopyPad(
     const Hardware dstHWPos = GetPhyType((TPosition)dst.GetPosition());
     const uint8_t cacheMode = ExtractCacheMode(src);
     ASCENDC_ASSERT(((dstHWPos == Hardware::UB) || (dstHWPos == Hardware::L1)), {
-        KERNEL_LOG(KERNEL_ERROR, "DataCopyPad dst position must be UB(VECIN/VECOUT/LCM)/L1 Buffer(TSCM)");
+        KERNEL_LOG(
+            KERNEL_ERROR,
+            "DataCopyPad dst position must be UB(VECIN/VECOUT/LCM)/L1 Buffer(TSCM); got position=%u (hardware "
+            "position=%u).",
+            static_cast<unsigned int>(dst.GetPosition()), static_cast<unsigned int>(dstHWPos));
     });
     if (dstHWPos == Hardware::UB) {
         DataCopyPadGm2UBImpl<PrimType, mode>(
@@ -2420,7 +2424,10 @@ __aicore__ inline __inout_pipe__(MTE2) void DataCopyPad(
     const Hardware dstHWPos = GetPhyType((TPosition)dst.GetPosition());
     const uint8_t cacheMode = ExtractCacheMode(src);
     ASCENDC_ASSERT(((dstHWPos == Hardware::UB) || (dstHWPos == Hardware::L1)), {
-        KERNEL_LOG(KERNEL_ERROR, "DataCopyPad dst position must be VECIN/VECOUT/LCM/TSCM");
+        KERNEL_LOG(
+            KERNEL_ERROR,
+            "DataCopyPad dst position must be VECIN/VECOUT/LCM/TSCM; got position=%u (hardware position=%u).",
+            static_cast<unsigned int>(dst.GetPosition()), static_cast<unsigned int>(dstHWPos));
     });
     if (dstHWPos == Hardware::UB) {
         DataCopyPadGm2UBImpl<PrimType, mode>(

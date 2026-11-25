@@ -602,9 +602,10 @@ __aicore__ inline void DataCopyL0C2GMImpl(__gm__ T* dst, __cc__ U* src, const Da
             ASCENDC_ASSERT(false, {
                 KERNEL_LOG(
                     KERNEL_ERROR,
-                    "Failed to check quantPre value in DataCopy from L0C Buffer(CO1) "
-                    "to GM, supported values are NoQuant / F322F16 / F322BF16 / DEQF16 / VDEQF16 / QF322B8_PRE / "
-                    "VQF322B8_PRE / REQ8 / VREQ8.");
+                    "Failed to check quantPre value in DataCopy from L0C Buffer(CO1) to GM, supported values are "
+                    "NoQuant / F322F16 / F322BF16 / DEQF16 / VDEQF16 / QF322B8_PRE / VQF322B8_PRE / REQ8 / VREQ8; "
+                    "got quantPre=%u.",
+                    static_cast<unsigned int>(intriParams.quantPre));
             });
     }
 }

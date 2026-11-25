@@ -44,13 +44,13 @@ __aicore__ inline void ScmDataCopyMsg(
 {
     ASCENDC_DEBUG_ASSERT(
         (g_coreType == AIV),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "DataCopy from GM/UB to L1 is not supported on current device.\n"));
+        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "DataCopy from GM/UB to L1 is not supported on current device."));
     ASCENDC_DEBUG_ASSERT(
         (GetKfcClient() != nullptr),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR,
             "DataCopy Gm2L1 is software-emulated on this device and works with Matmul API. Use REGISTER_MATMUL_OBJ "
-            "to enable Matmul API first.\n"));
+            "to enable Matmul API first."));
     auto msg = GetKfcClient()->AllocMessage();
     ASSERT(sizeof(msg->buffer) >= sizeof(struct Gm2L1Params));
 
@@ -71,24 +71,25 @@ __aicore__ inline void ScmDataCopyND2NZMsg(
 {
     ASCENDC_DEBUG_ASSERT(
         (g_coreType == AIV),
+        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "DataCopy from GM/UB to L1 with ND2NZ is not supported on current device."));
+    ASCENDC_DEBUG_ASSERT(
+        (dst != nullptr),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "DataCopy from GM/UB to L1 with ND2NZ is not supported on current device.\n"));
+            KERNEL_ERROR,
+            "Failed to check dst tensor address in DataCopy from GM to L1 Buffer(A1/B1/TSCM) with Nd2NzParams, dst "
+            "address is nullptr."));
     ASCENDC_DEBUG_ASSERT(
-        (dst != nullptr), KERNEL_LOG_INTERNAL(
-                              KERNEL_ERROR, "Failed to check dst tensor address in DataCopy from GM to L1 "
-                                            "Buffer(A1/B1/TSCM) with Nd2NzParams, dst address is "
-                                            "nullptr.\n"));
-    ASCENDC_DEBUG_ASSERT(
-        (src != nullptr), KERNEL_LOG_INTERNAL(
-                              KERNEL_ERROR, "Failed to check src tensor address in DataCopy from GM to L1 "
-                                            "Buffer(A1/B1/TSCM) with Nd2NzParams, src address is "
-                                            "nullptr.\n"));
+        (src != nullptr),
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR,
+            "Failed to check src tensor address in DataCopy from GM to L1 Buffer(A1/B1/TSCM) with Nd2NzParams, src "
+            "address is nullptr."));
     ASCENDC_DEBUG_ASSERT(
         (GetKfcClient() != nullptr),
         KERNEL_LOG_INTERNAL(
             KERNEL_ERROR,
-            "DataCopy from GM/UB to L1 with ND2NZ is software-emulated on this device and works with Matmul API. Use "
-            "REGISTER_MATMUL_OBJ to enable Matmul API first.\n"));
+            "DataCopy from GM/UB to L1 with ND2NZ is software-emulated on this device and works with Matmul API. "
+            "Use REGISTER_MATMUL_OBJ to enable Matmul API first."));
     auto msg = GetKfcClient()->AllocMessage();
     ASSERT(sizeof(msg->buffer) >= sizeof(struct Gm2L1Nd2NzParams));
 

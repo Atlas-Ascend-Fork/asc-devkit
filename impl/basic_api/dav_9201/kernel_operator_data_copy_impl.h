@@ -28,21 +28,31 @@
 #include <utility>
 #include "../../utils/base/compat_utils.h"
 
-#define ASCENDC_COPY_LOOP_PARAM_CHK_()                                                                   \
-    ASCENDC_ASSERT((loopParams.loop1Size < (1ul << 21)), {                                               \
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop1Size is too big and needs to be less than 2^21");      \
-    });                                                                                                  \
-    ASCENDC_ASSERT((loopParams.loop1DstStride < (1ul << 21)), {                                          \
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop1DstStride is too big and needs to be less than 2^21"); \
-    });                                                                                                  \
-    ASCENDC_ASSERT((loopParams.loop2DstStride < (1ul << 21)), {                                          \
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop2DstStride is too big and needs to be less than 2^21"); \
-    });                                                                                                  \
-    ASCENDC_ASSERT((loopParams.loop1SrcStride < (1ul << 40)), {                                          \
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop1SrcStride is too big and needs to be less than 2^40"); \
-    });                                                                                                  \
-    ASCENDC_ASSERT((loopParams.loop2SrcStride < (1ul << 40)), {                                          \
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop2SrcStride is too big and needs to be less than 2^40"); \
+#define ASCENDC_COPY_LOOP_PARAM_CHK_()                                                   \
+    ASCENDC_ASSERT((loopParams.loop1Size < (1ul << 21)), {                               \
+        KERNEL_LOG(                                                                      \
+            KERNEL_ERROR, "loopParams.loop1Size must be less than 2^21; got %u.",        \
+            static_cast<unsigned int>(loopParams.loop1Size));                            \
+    });                                                                                  \
+    ASCENDC_ASSERT((loopParams.loop1DstStride < (1ul << 21)), {                          \
+        KERNEL_LOG(                                                                      \
+            KERNEL_ERROR, "loopParams.loop1DstStride must be less than 2^21; got %llu.", \
+            static_cast<unsigned long long>(loopParams.loop1DstStride));                 \
+    });                                                                                  \
+    ASCENDC_ASSERT((loopParams.loop2DstStride < (1ul << 21)), {                          \
+        KERNEL_LOG(                                                                      \
+            KERNEL_ERROR, "loopParams.loop2DstStride must be less than 2^21; got %llu.", \
+            static_cast<unsigned long long>(loopParams.loop2DstStride));                 \
+    });                                                                                  \
+    ASCENDC_ASSERT((loopParams.loop1SrcStride < (1ul << 40)), {                          \
+        KERNEL_LOG(                                                                      \
+            KERNEL_ERROR, "loopParams.loop1SrcStride must be less than 2^40; got %llu.", \
+            static_cast<unsigned long long>(loopParams.loop1SrcStride));                 \
+    });                                                                                  \
+    ASCENDC_ASSERT((loopParams.loop2SrcStride < (1ul << 40)), {                          \
+        KERNEL_LOG(                                                                      \
+            KERNEL_ERROR, "loopParams.loop2SrcStride must be less than 2^40; got %llu.", \
+            static_cast<unsigned long long>(loopParams.loop2SrcStride));                 \
     })
 
 namespace AscendC {
@@ -403,7 +413,8 @@ __aicore__ inline void CopyCbufToBt(
                     (blockLen % 2 == 0),
                     KERNEL_LOG_INTERNAL(
                         KERNEL_ERROR,
-                        "For float or int32_t types, blockLen must be even when DataCopy from L1 to BIAS."));
+                        "DataCopy from L1 to BIAS requires an even blockLen for float or int32_t; got %u.",
+                        static_cast<unsigned int>(blockLen)));
             }
             if (IsCompatibleTo3510()) {
                 DrainCopyMessageQueueImpl<T, PIPE_MTE1>();
@@ -418,7 +429,8 @@ __aicore__ inline void SmallC0Checker(bool enableSmallC0, uint16_t dValue)
 {
     if (enableSmallC0) {
         ASCENDC_ASSERT((dValue <= 4), {
-            KERNEL_LOG(KERNEL_ERROR, "Small C0 can be enabled only when D value is less or equal to 4.");
+            KERNEL_LOG(
+                KERNEL_ERROR, "Small C0 requires dValue to be at most 4; got %u.", static_cast<unsigned int>(dValue));
         });
     }
 }
@@ -456,7 +468,7 @@ __aicore__ inline void DataCopyGM2UBImpl(
     __ubuf__ void* dst, __gm__ void* src, const DataCopyParams& intriParams, const uint8_t cacheMode,
     const bool enablePreReadIgnoreSync)
 {
-    ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "DataCopyGM2UBImpl not support type void*"); });
+    ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "DataCopyGM2UBImpl does not support void*."); });
 }
 
 template <typename T>
@@ -692,7 +704,9 @@ __aicore__ inline void DataCopyGM2UBND2NZImpl(
 __aicore__ inline void SetLoopModeOutParaImpl(const LoopModeParams& loopParams)
 {
     ASCENDC_ASSERT((loopParams.loop2Size < (1ul << 21)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop2Size is too big and needs to be less than 2^21");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop2Size must be less than 2^21; got %u.",
+            static_cast<unsigned int>(loopParams.loop2Size));
     });
     ASCENDC_COPY_LOOP_PARAM_CHK_();
     uint64_t loopSizePara = static_cast<uint64_t>(loopParams.loop2Size) << 21; // LOOP_SIZE_OUTTOUB[42:21]
@@ -700,13 +714,17 @@ __aicore__ inline void SetLoopModeOutParaImpl(const LoopModeParams& loopParams)
 
     // LOOP1_STRIDE_OUTTOUB[60:40], must be 32B aligned
     ASCENDC_ASSERT((loopParams.loop1DstStride % GetDataBlockSizeInBytes() == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "loop1DstStride must be 32B aligned");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop1DstStride must be 32B aligned; got %llu bytes.",
+            static_cast<unsigned long long>(loopParams.loop1DstStride));
     });
     uint64_t loop1StridePara = (loopParams.loop1DstStride) << 40; // loop1DstStride must be 32B aligned
     loop1StridePara |= loopParams.loop1SrcStride;                 // LOOP1_STRIDE_OUTTOUB[39:0]
     // LOOP2_STRIDE_OUTTOUB[60:40], must be 32B aligned
     ASCENDC_ASSERT((loopParams.loop2DstStride % GetDataBlockSizeInBytes() == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "loop2DstStride must be 32B aligned");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop2DstStride must be 32B aligned; got %llu bytes.",
+            static_cast<unsigned long long>(loopParams.loop2DstStride));
     });
     uint64_t loop2StridePara = (loopParams.loop2DstStride) << 40; // loop2DstStride must be 32B aligned
     loop2StridePara |= loopParams.loop2SrcStride;                 // LOOP2_STRIDE_OUTTOUB[39:0]
@@ -719,35 +737,51 @@ __aicore__ inline void SetLoopModeOutParaImpl(const LoopModeParams& loopParams)
 __aicore__ inline void SetLoopModeUBParaImpl(const LoopModeParams& loopParams)
 {
     ASCENDC_ASSERT((loopParams.loop2Size < (1ul << 21)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop2Size is too big and needs to be less than 2^21");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop2Size must be less than 2^21; got %u.",
+            static_cast<unsigned int>(loopParams.loop2Size));
     });
     ASCENDC_ASSERT((loopParams.loop1Size < (1ul << 21)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop1Size is too big and needs to be less than 2^21");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop1Size must be less than 2^21; got %u.",
+            static_cast<unsigned int>(loopParams.loop1Size));
     });
     ASCENDC_ASSERT((loopParams.loop1SrcStride < (1ul << 21)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop1SrcStride is too big and needs to be less than 2^21");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop1SrcStride must be less than 2^21; got %llu.",
+            static_cast<unsigned long long>(loopParams.loop1SrcStride));
     });
     ASCENDC_ASSERT((loopParams.loop2SrcStride < (1ul << 21)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop2SrcStride is too big and needs to be less than 2^21");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop2SrcStride must be less than 2^21; got %llu.",
+            static_cast<unsigned long long>(loopParams.loop2SrcStride));
     });
     ASCENDC_ASSERT((loopParams.loop1DstStride < (1ul << 40)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop1DstStride is too big and needs to be less than 2^40");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop1DstStride must be less than 2^40; got %llu.",
+            static_cast<unsigned long long>(loopParams.loop1DstStride));
     });
     ASCENDC_ASSERT((loopParams.loop2DstStride < (1ul << 40)), {
-        KERNEL_LOG(KERNEL_ERROR, "loopParams.loop2DstStride is too big and needs to be less than 2^40");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop2DstStride must be less than 2^40; got %llu.",
+            static_cast<unsigned long long>(loopParams.loop2DstStride));
     });
     uint64_t loopSizePara = static_cast<uint64_t>(loopParams.loop2Size) << 21; // LOOP_SIZE_UBTOOUT[42:21]
     loopSizePara |= static_cast<uint64_t>(loopParams.loop1Size);               // LOOP_SIZE_UBTOOUT[20:0]
 
     // LOOP1_STRIDE_UBTOOUT[60:40], must be 32B aligned
     ASCENDC_ASSERT((loopParams.loop1SrcStride % GetDataBlockSizeInBytes() == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "loop1SrcStride must be 32B aligned");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop1SrcStride must be 32B aligned; got %llu bytes.",
+            static_cast<unsigned long long>(loopParams.loop1SrcStride));
     });
     uint64_t loop1StridePara = (loopParams.loop1SrcStride) << 40; // loop1SrcStride must be 32B aligned
     loop1StridePara |= loopParams.loop1DstStride;                 // LOOP1_STRIDE_UBTOOUT[39:0]
     // LOOP2_STRIDE_UBTOOUT[60:40], must be 32B aligned
     ASCENDC_ASSERT((loopParams.loop2SrcStride % GetDataBlockSizeInBytes() == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "loop2SrcStride must be 32B aligned");
+        KERNEL_LOG(
+            KERNEL_ERROR, "loopParams.loop2SrcStride must be 32B aligned; got %llu bytes.",
+            static_cast<unsigned long long>(loopParams.loop2SrcStride));
     });
     uint64_t loop2StridePara = (loopParams.loop2SrcStride) << 40; // loop2SrcStride must be 32B aligned
     loop2StridePara |= loopParams.loop2DstStride;                 // LOOP2_STRIDE_UBTOOUT[39:0]
@@ -945,13 +979,21 @@ __aicore__ inline void DataCopyUB2L1ND2NZImpl(__cbuf__ T* dst, __ubuf__ T* src, 
     ASCENDC_ASSERT((dst != nullptr), { KERNEL_LOG(KERNEL_ERROR, "dst ptr can not be nullptr"); });
     ASCENDC_ASSERT((src != nullptr), { KERNEL_LOG(KERNEL_ERROR, "src ptr can not be nullptr"); });
     ASCENDC_ASSERT((intriParams.dValue * sizeof(T) % ONE_BLK_SIZE == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "dValue must be 32B aligned");
+        KERNEL_LOG(
+            KERNEL_ERROR, "dValue * sizeof(T) must be 32B aligned; dValue=%u, element size=%u bytes.",
+            static_cast<unsigned int>(intriParams.dValue), static_cast<unsigned int>(sizeof(T)));
     });
     ASCENDC_ASSERT((intriParams.srcDValue * sizeof(T) % ONE_BLK_SIZE == 0), {
-        KERNEL_LOG(KERNEL_ERROR, "srcDValue must be 32B aligned");
+        KERNEL_LOG(
+            KERNEL_ERROR, "srcDValue * sizeof(T) must be 32B aligned; srcDValue=%u, element size=%u bytes.",
+            static_cast<unsigned int>(intriParams.srcDValue), static_cast<unsigned int>(sizeof(T)));
     });
     ASCENDC_ASSERT((intriParams.nValue > 0 && intriParams.dValue > 0 && intriParams.srcDValue > 0), {
-        KERNEL_LOG(KERNEL_ERROR, "nvalue, dValue and srcDValue must be greater than 0");
+        KERNEL_LOG(
+            KERNEL_ERROR,
+            "nValue, dValue and srcDValue must all be greater than 0; got nValue=%u, dValue=%u, srcDValue=%u.",
+            static_cast<unsigned int>(intriParams.nValue), static_cast<unsigned int>(intriParams.dValue),
+            static_cast<unsigned int>(intriParams.srcDValue));
     });
     ASCENDC_ASSERT((intriParams.ndNum == 1), {
         KERNEL_LOG(KERNEL_ERROR, "intriParams.ndNum is %hu, which can only be 1", intriParams.ndNum);
@@ -985,7 +1027,9 @@ __aicore__ inline void DataCopyUB2L1ND2NZImpl(__cbuf__ T* dst, __ubuf__ T* src, 
         ASSERT(GetKfcClient() != nullptr);
         ASCENDC_DEBUG_ASSERT(
             (TransUBAddr<TPosition::VECIN>(reinterpret_cast<uint64_t>(src)) % ONE_BLK_SIZE == 0),
-            KERNEL_LOG_INTERNAL(KERNEL_ERROR, "src address should be 32B aligned \n"));
+            KERNEL_LOG_INTERNAL(
+                KERNEL_ERROR, "src address 0x%llx must be 32B aligned.",
+                static_cast<unsigned long long>(TransUBAddr<TPosition::VECIN>(reinterpret_cast<uint64_t>(src)))));
         uint32_t tensorSize = intriParams.nValue * intriParams.dValue;
         int32_t ubAddr = -1;
         // 1. get GM addr, copy corresponding data to GM, ND->ND
@@ -994,9 +1038,10 @@ __aicore__ inline void DataCopyUB2L1ND2NZImpl(__cbuf__ T* dst, __ubuf__ T* src, 
         uint64_t absL1Addr = (uint8_t*)dst - (uint8_t*)(GetTPipePtr()->GetBaseAddr((int8_t)TPosition::TSCM));
         ASCENDC_ASSERT((absL1Addr % ONE_BLK_SIZE == 0), {
             KERNEL_LOG(
-                KERNEL_ERROR, "Failed to check dst tensor address "
-                              "alignment in DataCopy with Nd2NzParams from UB(VECIN/VECOUT) to L1 Buffer(TSCM), it "
-                              "should be 32B aligned");
+                KERNEL_ERROR,
+                "DataCopy with Nd2NzParams from UB(VECIN/VECOUT) to L1 Buffer(TSCM): dst address 0x%llx must be 32B "
+                "aligned.",
+                static_cast<unsigned long long>(absL1Addr));
         });
         ASCENDC_ASSERT((intriParams.ndNum == 1), {
             KERNEL_LOG(KERNEL_ERROR, "intriParams.ndNum is %hu, which can only be 1", intriParams.ndNum);
@@ -1294,7 +1339,9 @@ __aicore__ inline void DataCopyPadGm2UBImpl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR, "b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
     CopyGmToUbufAlignV2<T, mode>(
@@ -1316,7 +1363,9 @@ __aicore__ inline void DataCopyPadGm2UBImpl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR, "b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
     if constexpr (g_gm_overflow_check) {
@@ -1347,7 +1396,10 @@ __aicore__ inline void DataCopyPadGm2L1Impl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "DataCopyPad GM to L1 b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR,
+                "DataCopyPad from GM to L1: b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
     CopyGmToCbufAlignV2<T, mode>(
@@ -1372,7 +1424,10 @@ __aicore__ inline void DataCopyPadGm2L1Impl(
     }
     if constexpr (sizeof(T) > B32_BYTE_SIZE) {
         ASCENDC_ASSERT((padParams.paddingValue == 0), {
-            KERNEL_LOG(KERNEL_ERROR, "DataCopyPad GM to L1 b64 paddingValue on current device only support 0");
+            KERNEL_LOG(
+                KERNEL_ERROR,
+                "DataCopyPad from GM to L1: b64 paddingValue must be zero on this device; current bits: 0x%llx.",
+                static_cast<unsigned long long>(GetScalarBitcodeValue(padParams.paddingValue)));
         });
     }
 
@@ -1436,9 +1491,9 @@ __aicore__ inline void DataCopyPadUB2L1ImplCommon(
         ASCENDC_DEBUG_ASSERT(
             (TransUBAddr<TPosition::VECIN>(reinterpret_cast<uint64_t>(src)) % ONE_BLK_SIZE == 0),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "Failed to check src tensor address alignment in DataCopyPad from UB(VECIN/VECOUT) to "
-                              "L1 Buffer(TSCM), it should be 32B "
-                              "aligned.\n"));
+                KERNEL_ERROR,
+                "DataCopyPad from UB(VECIN/VECOUT) to L1 Buffer(TSCM): src address 0x%llx must be 32B aligned.",
+                static_cast<unsigned long long>(TransUBAddr<TPosition::VECIN>(reinterpret_cast<uint64_t>(src)))));
         uint32_t tensorSize = nd2nzParams.nValue * nd2nzParams.dValue;
         int32_t ubAddr = -1;
         // 1. get GM addr, first copy to GM, ND->ND
@@ -1449,8 +1504,8 @@ __aicore__ inline void DataCopyPadUB2L1ImplCommon(
         ASCENDC_ASSERT((absL1Addr % ONE_BLK_SIZE == 0), {
             KERNEL_LOG(
                 KERNEL_ERROR,
-                "Failed to check dst tensor address "
-                "alignment in DataCopyPad from UB(VECIN/VECOUT) to L1 Buffer(TSCM), it should be 32B aligned");
+                "DataCopyPad from UB(VECIN/VECOUT) to L1 Buffer(TSCM): dst address 0x%llx must be 32B aligned.",
+                static_cast<unsigned long long>(absL1Addr));
         });
         ASCENDC_ASSERT((nd2nzParams.ndNum == 1), {
             KERNEL_LOG(KERNEL_ERROR, "nd2nzParams.ndNum is %hu, which can only be 1", nd2nzParams.ndNum);
@@ -1858,7 +1913,11 @@ __aicore__ inline void DataCopyWithNDDMAB64Impl(
     const bool enablePreReadIgnoreSync)
 {
     static_assert(!config.isNearestValueMode, "nddma b64 only supports constant value mode");
-    ASCENDC_ASSERT((constValue == 0), { KERNEL_LOG(KERNEL_ERROR, "nddma b64 only support const pad value 0"); });
+    ASCENDC_ASSERT((constValue == 0), {
+        KERNEL_LOG(
+            KERNEL_ERROR, "B64 NDDMA only supports zero constant padding; current constValue bits: 0x%llx.",
+            static_cast<unsigned long long>(GetScalarBitcodeValue(constValue)));
+    });
     if constexpr (dim <= 4) {
         auto newParams = BuildLoopInfoByFuseAxis<dim, dim + 1, true>(params);
         DataCopyWithNDDMAImpl<uint32_t, dim + 1, config>(

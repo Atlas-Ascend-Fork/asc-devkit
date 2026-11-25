@@ -296,16 +296,26 @@ __aicore__ inline void DataCopyUB2L1ND2NZImpl(__cbuf__ T* dst, __ubuf__ T* src, 
 
     ASCENDC_DEBUG_ASSERT(
         ((dValue * sizeof(T)) % BYTE_32_ALIGN == 0),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "dValue should be 32B aligned \n"));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR, "dValue * sizeof(T) must be 32B aligned; dValue=%u, element size=%u bytes.",
+            static_cast<unsigned int>(dValue), static_cast<unsigned int>(sizeof(T))));
     ASCENDC_DEBUG_ASSERT(
         ((srcNdMatrixStride * sizeof(T)) % BYTE_32_ALIGN == 0),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "srcNdMatrixStride should be 32B aligned \n"));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR,
+            "srcNdMatrixStride * sizeof(T) must be 32B aligned; srcNdMatrixStride=%u, element size=%u bytes.",
+            static_cast<unsigned int>(srcNdMatrixStride), static_cast<unsigned int>(sizeof(T))));
     ASCENDC_DEBUG_ASSERT(
         ((srcDValue * sizeof(T)) % BYTE_32_ALIGN == 0),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "dValue should be 32B aligned \n"));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR, "srcDValue * sizeof(T) must be 32B aligned; srcDValue=%u, element size=%u bytes.",
+            static_cast<unsigned int>(srcDValue), static_cast<unsigned int>(sizeof(T))));
     ASCENDC_DEBUG_ASSERT(
         ((dstNzMatrixStride * sizeof(T)) % BYTE_32_ALIGN == 0),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "dValue should be 32B aligned \n"));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR,
+            "dstNzMatrixStride * sizeof(T) must be 32B aligned; dstNzMatrixStride=%u, element size=%u bytes.",
+            static_cast<unsigned int>(dstNzMatrixStride), static_cast<unsigned int>(sizeof(T))));
 
     uint32_t elementsPerBlock = ONE_BLK_SIZE / sizeof(T);
     uint32_t NBlockSize = dValue / elementsPerBlock;
@@ -451,7 +461,9 @@ __aicore__ inline void DataCopyL12GMNZ2NDImpl(__gm__ T* dst, __cbuf__ T* src, co
 {
     ASCENDC_DEBUG_ASSERT(
         (TransUBAddr<TPosition::A1>(reinterpret_cast<uint64_t>(src)) % ONE_BLK_SIZE == 0),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "src address should be 32B aligned \n"));
+        KERNEL_LOG_INTERNAL(
+            KERNEL_ERROR, "src address 0x%llx must be 32B aligned.",
+            static_cast<unsigned long long>(TransUBAddr<TPosition::A1>(reinterpret_cast<uint64_t>(src)))));
     const uint16_t ndNum = intriParams.ndNum;
     const uint16_t nValue = intriParams.nValue;
     const uint16_t dValue = intriParams.dValue;
