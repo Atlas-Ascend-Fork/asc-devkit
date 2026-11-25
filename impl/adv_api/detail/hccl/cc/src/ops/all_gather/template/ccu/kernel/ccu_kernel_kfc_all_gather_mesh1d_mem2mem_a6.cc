@@ -50,10 +50,10 @@ struct KfcAllGatherMesh1DMem2MemContext : CcuKernelCtxBase {
     ccu::Event localCopyEvent;
 
     ccu::Variable constVar1;
-    ccu::Variable repeatTimeFlag;
+    ccu::Variable locRepFlag;
     ccu::Variable remoteRepeatTimeFlag;
     ccu::Variable waitRepeatNum;
-    ccu::Variable localCopyRepeatNum;
+    ccu::Variable locCopyRepNum;
     ccu::Variable sliceSize;
     ccu::LocalAddr src;
     std::vector<ccu::RemoteAddr> dst;
@@ -69,22 +69,22 @@ static CcuResult InitResource(KfcAllGatherMesh1DMem2MemContext& ctx)
         return CcuResult::CCU_E_INTERNAL;
     }
 
-    ctx.output.resize(ctx.rankSize);
     ctx.token.resize(ctx.rankSize);
+    ctx.output.resize(ctx.rankSize);
     uint32_t channelIdx = 0;
     for (uint32_t peerId = 0; peerId < ctx.rankSize; ++peerId) {
         if (peerId == ctx.rankId) {
             continue;
         }
-        ctx.output[peerId] = ccu::GetResByChannel<ccu::Variable>(ctx.channels[channelIdx], AG_M2M_OUTPUT_XN_ID);
         ctx.token[peerId] = ccu::GetResByChannel<ccu::Variable>(ctx.channels[channelIdx], AG_M2M_TOKEN_XN_ID);
+        ctx.output[peerId] = ccu::GetResByChannel<ccu::Variable>(ctx.channels[channelIdx], AG_M2M_OUTPUT_XN_ID);
         ++channelIdx;
     }
 
     const uint32_t eventNumPerIter = (ctx.rankSize + AG_M2M_BITS_PER_EVENT - 1) / AG_M2M_BITS_PER_EVENT;
     ctx.events.resize(AG_M2M_UNROLL_NUM * eventNumPerIter);
+    ctx.locRepFlag = 0;
     ctx.constVar1 = 1;
-    ctx.repeatTimeFlag = 0;
     ctx.remoteRepeatTimeFlag = 0;
     ctx.resourceAllocated = false;
     return CCU_SUCCESS;
@@ -100,10 +100,10 @@ static CcuResult LoadArgs(
     ctx.input = inputAddr;
     ctx.output[ctx.rankId] = outputAddr;
     ctx.token[ctx.rankId] = tokenInfo;
-    ctx.currentRankSliceOutputOffset = outputOffset;
     ctx.currentRankSliceInputOffset = currentRankSliceInputOffset;
-    ctx.normalSliceSize = sliceSize;
+    ctx.currentRankSliceOutputOffset = outputOffset;
     ctx.lastSliceSize = lastSliceSize;
+    ctx.normalSliceSize = sliceSize;
     ctx.tmpRepeatNum = tmpRepeatNum;
     ctx.inputRepeatStride = inputRepeatStride;
     ctx.outputRepeatStride = outputRepeatStride;
@@ -146,24 +146,24 @@ static CcuResult PostSync(KfcAllGatherMesh1DMem2MemContext& ctx)
 
 static CcuResult InitAllGatherAddr(KfcAllGatherMesh1DMem2MemContext& ctx)
 {
+    ctx.src.token = ctx.token[ctx.rankId];
     ctx.src.addr = ctx.input;
     ctx.src.addr += ctx.currentRankSliceInputOffset;
-    ctx.src.token = ctx.token[ctx.rankId];
 
+    ctx.srcLocCopy.token = ctx.token[ctx.rankId];
     ctx.srcLocCopy.addr = ctx.input;
     ctx.srcLocCopy.addr += ctx.currentRankSliceInputOffset;
-    ctx.srcLocCopy.token = ctx.token[ctx.rankId];
 
     ctx.dst.resize(ctx.rankSize);
-    for (uint32_t rankIdx = 0; rankIdx < ctx.rankSize; ++rankIdx) {
-        if (rankIdx == ctx.rankId) {
+    for (uint32_t curRankIdx = 0; curRankIdx < ctx.rankSize; ++curRankIdx) {
+        if (curRankIdx == ctx.rankId) {
             ctx.localDst.addr = ctx.output[ctx.rankId];
             ctx.localDst.addr += ctx.currentRankSliceOutputOffset;
             ctx.localDst.token = ctx.token[ctx.rankId];
         } else {
-            ctx.dst[rankIdx].addr = ctx.output[rankIdx];
-            ctx.dst[rankIdx].addr += ctx.currentRankSliceOutputOffset;
-            ctx.dst[rankIdx].token = ctx.token[rankIdx];
+            ctx.dst[curRankIdx].addr = ctx.output[curRankIdx];
+            ctx.dst[curRankIdx].addr += ctx.currentRankSliceOutputOffset;
+            ctx.dst[curRankIdx].token = ctx.token[curRankIdx];
         }
     }
     return CCU_SUCCESS;
@@ -175,14 +175,14 @@ static CcuResult DoAllGatherWrite(
 {
     const uint32_t eventNumPerIter = (ctx.rankSize + AG_M2M_BITS_PER_EVENT - 1) / AG_M2M_BITS_PER_EVENT;
     uint32_t channelIdx = 0;
-    for (uint32_t rankIdx = 0; rankIdx < ctx.rankSize; ++rankIdx) {
-        const uint32_t eventIdx = unrollIdx * eventNumPerIter + rankIdx / AG_M2M_BITS_PER_EVENT;
-        const uint16_t rankMask = static_cast<uint16_t>(1U << (rankIdx % AG_M2M_BITS_PER_EVENT));
-        if (rankIdx == ctx.rankId) {
+    for (uint32_t curRankIdx = 0; curRankIdx < ctx.rankSize; ++curRankIdx) {
+        const uint32_t eventIdx = unrollIdx * eventNumPerIter + curRankIdx / AG_M2M_BITS_PER_EVENT;
+        const uint16_t rankMask = static_cast<uint16_t>(1U << (curRankIdx % AG_M2M_BITS_PER_EVENT));
+        if (curRankIdx == ctx.rankId) {
             CCU_CHK_RET(ccu::EventRecord(ctx.events[eventIdx], rankMask));
         } else {
             CCU_CHK_RET(
-                ccu::Write(ctx.channels[channelIdx], dst[rankIdx], src, sliceSize, ctx.events[eventIdx], rankMask));
+                ccu::Write(ctx.channels[channelIdx], dst[curRankIdx], src, sliceSize, ctx.events[eventIdx], rankMask));
             ++channelIdx;
         }
     }
@@ -193,12 +193,12 @@ static CcuResult DoAllGatherWait(KfcAllGatherMesh1DMem2MemContext& ctx, uint32_t
 {
     const uint32_t eventNumPerIter = (ctx.rankSize + AG_M2M_BITS_PER_EVENT - 1) / AG_M2M_BITS_PER_EVENT;
     for (uint32_t eventOffset = 0; eventOffset < eventNumPerIter; ++eventOffset) {
-        const uint32_t eventIdx = unrollIdx * eventNumPerIter + eventOffset;
+        const uint32_t evtIdx = unrollIdx * eventNumPerIter + eventOffset;
         const uint32_t remainingRanks = ctx.rankSize - eventOffset * AG_M2M_BITS_PER_EVENT;
         const uint16_t eventMask = remainingRanks >= AG_M2M_BITS_PER_EVENT ?
                                        AG_M2M_FULL_EVENT_MASK :
                                        static_cast<uint16_t>((1U << remainingRanks) - 1U);
-        CCU_CHK_RET(ccu::EventWait(ctx.events[eventIdx], eventMask));
+        CCU_CHK_RET(ccu::EventWait(ctx.events[evtIdx], eventMask));
     }
     return CCU_SUCCESS;
 }
@@ -207,14 +207,14 @@ static CcuResult DoAllGatherGroupCopy(KfcAllGatherMesh1DMem2MemContext& ctx, boo
 {
     CCU_IF(ctx.isInputOutputEqual == 0)
     {
-        for (uint32_t unrollIdx = 0; unrollIdx < AG_M2M_UNROLL_NUM; ++unrollIdx) {
-            CCU_IF(ctx.localCopyRepeatNum != UINT64_MAX)
+        for (uint32_t unrollId = 0; unrollId < AG_M2M_UNROLL_NUM; ++unrollId) {
+            CCU_IF(ctx.locCopyRepNum != UINT64_MAX)
             {
-                ctx.localCopyRepeatNum += ctx.constVar1;
-                CCU_IF(ctx.repeatTimeFlag != 0)
+                ctx.locCopyRepNum += ctx.constVar1;
+                CCU_IF(ctx.locRepFlag != 0)
                 {
-                    ctx.localDst.addr += ctx.outputRepeatStride;
                     ctx.srcLocCopy.addr += ctx.inputRepeatStride;
+                    ctx.localDst.addr += ctx.outputRepeatStride;
                 }
                 if (useGroupCopy) {
                     HCCL_INFO("[KFC][AllGather][Kernel]Run groupCopy for allgather.");
@@ -223,7 +223,7 @@ static CcuResult DoAllGatherGroupCopy(KfcAllGatherMesh1DMem2MemContext& ctx, boo
                     CCU_CHK_RET(ccu::LocalCopy(ctx.localDst, ctx.srcLocCopy, ctx.sliceSize, ctx.localCopyEvent, 1));
                     CCU_CHK_RET(ccu::EventWait(ctx.localCopyEvent, 1));
                 }
-                ctx.repeatTimeFlag = 1;
+                ctx.locRepFlag = 1;
             }
         }
     }
@@ -233,8 +233,8 @@ static CcuResult DoAllGatherGroupCopy(KfcAllGatherMesh1DMem2MemContext& ctx, boo
 static CcuResult DoRepeatAllGather(KfcAllGatherMesh1DMem2MemContext& ctx, bool useGroupCopy)
 {
     CCU_CHK_RET(InitAllGatherAddr(ctx));
-    ctx.repeatTimeFlag = 0;
     ctx.remoteRepeatTimeFlag = 0;
+    ctx.locRepFlag = 0;
 
     // One event set contains AG_M2M_UNROLL_NUM groups.  A queue entry may
     // carry more repeats, so consume it in batches and reuse the event set
@@ -242,23 +242,23 @@ static CcuResult DoRepeatAllGather(KfcAllGatherMesh1DMem2MemContext& ctx, bool u
     CCU_WHILE(ctx.tmpRepeatNum != UINT64_MAX)
     {
         ctx.waitRepeatNum = ctx.tmpRepeatNum;
-        ctx.localCopyRepeatNum = ctx.tmpRepeatNum;
+        ctx.locCopyRepNum = ctx.tmpRepeatNum;
 
         // Phase 1: issue at most one event group per unrolled repeat.
-        for (uint32_t unrollIdx = 0; unrollIdx < AG_M2M_UNROLL_NUM; ++unrollIdx) {
+        for (uint32_t unrollId = 0; unrollId < AG_M2M_UNROLL_NUM; ++unrollId) {
             CCU_IF(ctx.tmpRepeatNum != UINT64_MAX)
             {
                 CCU_IF(ctx.remoteRepeatTimeFlag != 0)
                 {
                     ctx.src.addr += ctx.inputRepeatStride;
-                    for (uint32_t rankIdx = 0; rankIdx < ctx.rankSize; ++rankIdx) {
-                        if (rankIdx != ctx.rankId) {
-                            ctx.dst[rankIdx].addr += ctx.outputRepeatStride;
+                    for (uint32_t curRankIdx = 0; curRankIdx < ctx.rankSize; ++curRankIdx) {
+                        if (curRankIdx != ctx.rankId) {
+                            ctx.dst[curRankIdx].addr += ctx.outputRepeatStride;
                         }
                     }
                 }
                 ctx.tmpRepeatNum += ctx.constVar1;
-                CCU_CHK_RET(DoAllGatherWrite(ctx, ctx.src, ctx.dst, ctx.normalSliceSize, unrollIdx));
+                CCU_CHK_RET(DoAllGatherWrite(ctx, ctx.src, ctx.dst, ctx.normalSliceSize, unrollId));
                 ctx.remoteRepeatTimeFlag = 1;
             }
         }
@@ -268,11 +268,11 @@ static CcuResult DoRepeatAllGather(KfcAllGatherMesh1DMem2MemContext& ctx, bool u
 
         // Phase 3: wait before the corresponding event group is reused by
         // the next batch.
-        for (uint32_t unrollIdx = 0; unrollIdx < AG_M2M_UNROLL_NUM; ++unrollIdx) {
+        for (uint32_t unrollId = 0; unrollId < AG_M2M_UNROLL_NUM; ++unrollId) {
             CCU_IF(ctx.waitRepeatNum != UINT64_MAX)
             {
                 ctx.waitRepeatNum += ctx.constVar1;
-                CCU_CHK_RET(DoAllGatherWait(ctx, unrollIdx));
+                CCU_CHK_RET(DoAllGatherWait(ctx, unrollId));
             }
         }
     }
@@ -284,19 +284,19 @@ static CcuResult DoParallelAllGatherGroupCopy(KfcAllGatherMesh1DMem2MemContext& 
 {
     CCU_IF(ctx.isInputOutputEqual == 0)
     {
-        CCU_IF(ctx.localCopyRepeatNum != UINT64_MAX)
+        CCU_IF(ctx.locCopyRepNum != UINT64_MAX)
         {
-            ctx.repeatTimeFlag = 0;
-            CCU_WHILE(ctx.localCopyRepeatNum != UINT64_MAX)
+            ctx.locRepFlag = 0;
+            CCU_WHILE(ctx.locCopyRepNum != UINT64_MAX)
             {
-                ctx.localCopyRepeatNum += ctx.constVar1;
-                CCU_IF(ctx.repeatTimeFlag != 0)
+                ctx.locCopyRepNum += ctx.constVar1;
+                CCU_IF(ctx.locRepFlag != 0)
                 {
                     ctx.localDst.addr += ctx.outputRepeatStride;
                     ctx.srcLocCopy.addr += ctx.inputRepeatStride;
                 }
                 CCU_CHK_RET(GroupCopy(ctx, ctx.localDst, ctx.srcLocCopy, ctx.goSize, GetCcuVersion()));
-                ctx.repeatTimeFlag = 1;
+                ctx.locRepFlag = 1;
             }
         }
     }
@@ -307,7 +307,7 @@ static CcuResult DoParallelRepeatAllGather(KfcAllGatherMesh1DMem2MemContext& ctx
 {
     CCU_CHK_RET(InitAllGatherAddr(ctx));
     ctx.waitRepeatNum = ctx.tmpRepeatNum;
-    ctx.localCopyRepeatNum = ctx.tmpRepeatNum;
+    ctx.locCopyRepNum = ctx.tmpRepeatNum;
 
     // Phase 1: 先下发所有WriteNb（非阻塞，event错开），不包含GroupCopy
     CCU_IF(ctx.tmpRepeatNum != UINT64_MAX)
@@ -319,11 +319,11 @@ static CcuResult DoParallelRepeatAllGather(KfcAllGatherMesh1DMem2MemContext& ctx
     for (uint32_t i = 1; i < AG_M2M_UNROLL_NUM; i++) {
         CCU_IF(ctx.tmpRepeatNum != UINT64_MAX)
         {
-            ctx.tmpRepeatNum += ctx.constVar1;
             ctx.src.addr += ctx.inputRepeatStride;
-            for (uint32_t rankIdx = 0; rankIdx < ctx.rankSize; rankIdx++) {
-                if (rankIdx != ctx.rankId) {
-                    ctx.dst[rankIdx].addr += ctx.outputRepeatStride;
+            ctx.tmpRepeatNum += ctx.constVar1;
+            for (uint32_t curRankIdx = 0; curRankIdx < ctx.rankSize; curRankIdx++) {
+                if (curRankIdx != ctx.rankId) {
+                    ctx.dst[curRankIdx].addr += ctx.outputRepeatStride;
                 }
             }
             CCU_CHK_RET(DoAllGatherWrite(ctx, ctx.src, ctx.dst, ctx.normalSliceSize, i));
@@ -334,11 +334,11 @@ static CcuResult DoParallelRepeatAllGather(KfcAllGatherMesh1DMem2MemContext& ctx
     CCU_CHK_RET(DoParallelAllGatherGroupCopy(ctx));
 
     // Phase 3: 批量WaitEvent
-    for (uint32_t i = 0; i < AG_M2M_UNROLL_NUM; i++) {
+    for (uint32_t idx = 0; idx < AG_M2M_UNROLL_NUM; idx++) {
         CCU_IF(ctx.waitRepeatNum != UINT64_MAX)
         {
             ctx.waitRepeatNum += ctx.constVar1;
-            CCU_CHK_RET(DoAllGatherWait(ctx, i));
+            CCU_CHK_RET(DoAllGatherWait(ctx, idx));
         }
     }
 
@@ -361,8 +361,8 @@ CcuResult CcuKfcAllGatherMesh1DMem2MemKernel(
     const ChannelHandle channels[], uint32_t channelCount, uint32_t rankSize, uint32_t rankId)
 {
     KfcAllGatherMesh1DMem2MemContext ctx;
-    ctx.channels = channels;
     ctx.channelCount = channelCount;
+    ctx.channels = channels;
     ctx.rankSize = rankSize;
     ctx.rankId = rankId;
     InitCcuKernelCtxBase(ctx);
@@ -382,6 +382,7 @@ CcuResult CcuKfcAllGatherMesh1DMem2MemKernel(
     // 按芯片版本选择本卡数据拷贝方式：Ascend950(CCU_V1)与Ascend960(CCU_V2)均使用 GroupCopy，
     CCU_IF(ctx.sliceSize != 0) { CCU_CHK_RET(DoRepeatAllGather(ctx, true)); }
     CCU_CHK_RET(PostSync(ctx));
+    HCCL_INFO("[CcuKfcAllGatherMesh1DMem2Mem_V2] CcuKfcAllGatherMesh1DMem2Mem end.");
     return CCU_SUCCESS;
 }
 
@@ -400,10 +401,10 @@ CcuResult CcuKfcParallelAllGatherMesh1DMem2MemKernel(
         return CcuResult::CCU_E_PARA;
     }
     KfcAllGatherMesh1DMem2MemContext ctx;
-    ctx.channels = channels;
     ctx.channelCount = channelCount;
-    ctx.rankSize = rankSizeLevel0;
+    ctx.channels = channels;
     ctx.rankId = rankIdxLevel0;
+    ctx.rankSize = rankSizeLevel0;
     InitCcuKernelCtxBase(ctx);
     CCU_CHK_RET(InitResource(ctx));
 
@@ -424,8 +425,8 @@ CcuResult CcuKfcParallelAllGatherMesh1DMem2MemKernel(
     AddVariableNTimes(phase0OutputOffset, outputStride, rankIdxLevel0);
     phase1Buffer = outputBase + part1Offset;
     AddVariableNTimes(phase1RankOffset, outputStride, rankIdxLevel0);
-    phase1RepeatNumInv = UINT64_MAX - rankSizeLevel1;
     phase0RepeatNumInv = UINT64_MAX - 1U;
+    phase1RepeatNumInv = UINT64_MAX - rankSizeLevel1;
     AddVariableNTimes(phase1RepeatStride, outputStride, rankSizeLevel0);
 
     // Stage 0: Mesh gathers part0 inside each level-0 group.
@@ -453,6 +454,7 @@ CcuResult CcuKfcParallelAllGatherMesh1DMem2MemKernel(
     ctx.sliceSize = part1Size;
     CCU_IF(part1Size != 0) { CCU_CHK_RET(DoParallelRepeatAllGather(ctx)); }
     CCU_CHK_RET(PostSync(ctx));
+    HCCL_INFO("[CcuKfcParallelAllGatherMesh1DMem2Mem_V2] CcuKfcParallelAllGatherMesh1DMem2Mem end.");
     return CCU_SUCCESS;
 }
 

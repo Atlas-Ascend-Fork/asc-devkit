@@ -56,8 +56,8 @@ static CcuResult InitResource(AlltoAllMesh1DContext& ctx)
     }
 
     // 按照rank号从小到大遍历channels，遇到本rank就填充本地资源，否则依次取远端资源，要求算法返回的Link同样是按顺序排列的
-    ctx.input.resize(ctx.rankSize);
     ctx.output.resize(ctx.rankSize);
+    ctx.input.resize(ctx.rankSize);
     ctx.token.resize(ctx.rankSize);
     for (uint64_t peerId = 0; peerId < ctx.rankSize; peerId++) {
         if (peerId != ctx.rankId) {
@@ -133,8 +133,8 @@ static CcuResult DoAlltoAll(AlltoAllMesh1DContext& ctx)
 
     for (uint32_t rankIdx = 0; rankIdx < ctx.rankSize; rankIdx++) {
         if (rankIdx != ctx.rankId) {
-            dst[rankIdx].token = ctx.token[rankIdx];
             dst[rankIdx].addr = ctx.output[rankIdx];
+            dst[rankIdx].token = ctx.token[rankIdx];
             dst[rankIdx].addr += ctx.dstOffset;
         } else {
             localDst.token = ctx.token[rankIdx];
@@ -142,8 +142,8 @@ static CcuResult DoAlltoAll(AlltoAllMesh1DContext& ctx)
             localDst.addr += ctx.dstOffset;
         }
 
-        src[rankIdx].addr = ctx.srcOffset;
         src[rankIdx].token = ctx.token[rankIdx];
+        src[rankIdx].addr = ctx.srcOffset;
         for (uint64_t i = 0; i < rankIdx; i++) {
             src[rankIdx].addr += ctx.srcStride;
         }
@@ -189,7 +189,7 @@ static CcuResult DoAlltoAll(AlltoAllMesh1DContext& ctx)
                 channelId++;
             }
         }
-        HCCL_INFO("[KFC][Alltoall][Kernel]Run groupCopy for alltoall.");
+        HCCL_INFO("[KFC][Alltoall][Kernel]Run groupCopy for alltoall v2.");
         GroupCopy(ctx, localDst, src[ctx.rankId], ctx.goSize, GetCcuVersion());
         // 本 rank 位无需等待（GroupCopy 同步完成），只收远端位
         for (uint32_t eventIdx = 0; eventIdx < events.size(); eventIdx++) {
@@ -221,7 +221,7 @@ CcuResult CcuAlltoAllMesh1DKernel(
     ctx.loadFromMem = loadFromMem;
     InitCcuKernelCtxBase(ctx);
 
-    HCCL_INFO("[CcuKernelAlltoAllMesh1D] AlltoAllMesh1D run");
+    HCCL_INFO("[CcuKernelAlltoAllMesh1D_v2] AlltoAllMesh1D run");
     CCU_CHK_RET(InitResource(ctx));
     CCU_CHK_RET(LoadArgs(
         ctx, inputAddr, outputAddr, tokenInfo, sliceSize, srcStride, srcOffset, dstOffset, goSize1, goSize2, goSize3,
@@ -232,7 +232,7 @@ CcuResult CcuAlltoAllMesh1DKernel(
     CCU_CHK_RET(DoAlltoAll(ctx));
 
     PostSync(ctx);
-    HCCL_INFO("[CcuKernelAlltoAllMesh1D] AlltoAllMesh1D end");
+    HCCL_INFO("[CcuKernelAlltoAllMesh1D_V2] AlltoAllMesh1D end");
 
     return CCU_SUCCESS;
 }
