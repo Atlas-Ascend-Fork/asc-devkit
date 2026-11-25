@@ -16,7 +16,7 @@
 | [Asin](math_compute/Asin_interface/Asin.md) | 按元素做反正弦函数计算。 |
 | [Asinh](math_compute/Asinh_interface/Asinh.md) | 按元素做反双曲正弦函数计算。 |
 | [Atan](math_compute/Atan_interface/Atan.md) | 按元素做三角函数反正切运算。 |
-| [Atanh](math_compute/Atanh_interface/Atanh.md) | 按元素做反双曲正切余弦函数计算。 |
+| [Atanh](math_compute/Atanh_interface/Atanh.md) | 按元素做反双曲正切函数计算。 |
 | [Axpy](math_compute/Axpy_interface/Axpy.md) | 源操作数中每个元素与标量求积后和目的操作数中的对应元素相加。 |
 | [Ceil](math_compute/Ceil_interface/Ceil.md) | 获取大于或等于x的最小的整数值，即向正无穷取整操作。 |
 | [ClampMax](math_compute/Clamp_interface/ClampMax.md) | 将srcTensor中大于scalar的数替换为scalar，小于等于scalar的数保持不变，作为dstTensor输出。 |
@@ -72,7 +72,7 @@
 | [Quantize](quantization/Quantize.md) | 按元素做量化计算，比如将half/float数据类型量化为int8_t数据类型。 |
 | [AscendQuant](quantization/AscendQuant.md) | 按元素做量化计算，比如将half/float数据类型量化为int8_t数据类型。 |
 
-##  归一化操作
+## 归一化操作
 
 | 接口名 | 功能描述 |
 | --- | --- |
@@ -90,7 +90,7 @@
 | [WelfordUpdate](normalization/WelfordUpdate.md) | 实现Welford算法的前处理。 |
 | [WelfordFinalize](normalization/WelfordFinalize.md) | 实现Welford算法的后处理。 |
 
-##  激活函数
+## 激活函数
 
 | 接口名 | 功能描述 |
 | --- | --- |
@@ -113,7 +113,7 @@
 | [SwiGLU](activation_functions/SwiGLU_interface/SwiGLU.md) | 采用Swish作为激活函数的GLU变体。 |
 | [Swish](activation_functions/Swish_interface/Swish.md) | 神经网络中的Swish激活函数。 |
 
-##  归约操作
+## 归约操作
 
 | 接口名 | 功能描述 |
 | --- | --- |
@@ -128,7 +128,7 @@
 | [ReduceAll](reduction_operations/ReduceAll_interface/ReduceAll.md) | 对一个多维向量在指定的维度求逻辑与。 |
 | [ReduceProd](reduction_operations/ReduceProd_interface/ReduceProd.md) | 对一个多维向量在指定的维度求积。 |
 
-##  排序操作
+## 排序操作
 
 | 接口名 | 功能描述 |
 | --- | --- |
@@ -138,14 +138,14 @@
 | [Sort](sort_operations/Sort.md) | 排序函数，按照数值大小进行降序排序。 |
 | [MrgSort](sort_operations/MrgSort.md) | 将已经排好序的最多4条队列，合并排列成1条队列，结果按照score域由大到小排序。 |
 
-##  数据过滤
+## 数据过滤
 
 | 接口名 | 功能描述 |
 | --- | --- |
 | [Select](data_filter/Select.md) | 给定两个源操作数src0和src1，根据maskTensor相应位置的值（非bit位）选取元素，得到目的操作数dst。 |
 | [DropOut](data_filter/DropOut.md) | 提供根据MaskTensor对源操作数进行过滤的功能，得到目的操作数。 |
 
-##  张量变换
+## 张量变换
 
 | 接口名 | 功能描述 |
 | --- | --- |
@@ -156,25 +156,25 @@
 | [UnPad](tensor_transform/UnPad.md) | 对height * width的二维Tensor在width方向上进行unpad。 |
 | [Fill](tensor_transform/Fill.md) | 将Global Memory上的数据初始化为指定值。 |
 
-##  索引计算
+## 索引计算
 
 | 接口名 | 功能描述 |
 | --- | --- |
 | [Arange](index_compute/Arange.md) | 给定起始值，等差值和长度，返回一个等差数列。 |
 
-##  矩阵计算
+## 矩阵计算
 
 | 接口名 | 功能描述 |
 | --- | --- |
 | [Matmul](cube_compute/Matmul_Kernel/Matmul_Kernel.md) | Matmul矩阵乘法的运算。 |
 
-##  HCCL通信类
+## HCCL通信类
 
 | 接口名 | 功能描述 |
 | --- | --- |
 | [HCCL通信类](HCCL_communication/HCCL_communication.md) | 在AI Core侧编排集合通信任务。 |
 
-##  卷积计算
+## 卷积计算
 
 | 接口名 | 功能描述 |
 | --- | --- |
@@ -182,7 +182,7 @@
 | [Conv3DBackpropInput](convolution_compute/Conv3DBackpropInput_Kernel/Conv3DBackpropInput_Kernel.md) | 卷积的反向运算，求解特征矩阵的反向传播误差。 |
 | [Conv3DBackpropFilter](convolution_compute/Conv3DBackpropFilter_Kernel/Conv3DBackpropFilter_Kernel.md) | 卷积的反向运算，求解权重的反向传播误差。 |
 
-##  随机函数
+## 随机函数
 
 | 接口名 | 功能描述 |
 | --- | --- |

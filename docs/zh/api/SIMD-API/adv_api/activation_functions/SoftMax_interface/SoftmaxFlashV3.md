@@ -70,7 +70,7 @@ def softmax_flash_3(src, height, width, loopCnt, alpha, baseK, inmax=None, insum
         maxTmp = np.max(src, axis=-1, keepdims=True)
         shiftCurr = (rowMeanGlobal - x_mean) * scalar
         shiftPrev = (inmean - x_mean) * scalar
-	x_max = shiftCurr + maxTmp
+        x_max = shiftCurr + maxTmp
         maxTmp = shiftPrev + inmax
         x_max = np.max(np.concatenate((x_max, maxTmp), axis=(-1)), axis=(-1), keepdims=True)
         maxTmp = x_max - shiftCurr
@@ -157,7 +157,7 @@ struct SoftMaxParams {
 
 -   操作数地址对齐要求请参见[通用地址对齐约束](../../../general_description_and_constraints.md#alignment_requirements)。
 -   对于输入srcTensor需要满足：尾轴长度n大于等于512，同时n是64的倍数；非尾轴长度的乘积m为8的倍数。
--   srcTensor和dstTensor的Tensor的空间可以复用，meanTensor和inMeanTensor的空间可以复用，maxTensor和inMaxTensor的空间可以复用，expSumTensor和inExpSumTensor的空间可以复用。
+-   srcTensor和dstTensor的Tensor空间可以复用，meanTensor和inMeanTensor的空间可以复用，maxTensor和inMaxTensor的空间可以复用，expSumTensor和inExpSumTensor的空间可以复用。
 -   meanTensor、expSumTensor、maxTensor、expMaxTensor、inMeanTensor、inExpSumTensor、inMaxTensor的Tensor空间，last轴长度必须是32字节。
 -   不支持sharedTmpBuffer与源操作数和目的操作数地址重叠。
 
@@ -189,7 +189,7 @@ AscendC::SoftMaxParams params(
     /* 尾轴长度，必须32Bytes对齐 */ srcK,
     /* 原始非尾轴长度的乘积      */ oriSrcM,
     /* 原始尾轴长度              */ oriSrcK,
-    /* 循环次数，update为true时大于等于1    */ loopCn,
+    /* 循环次数，update为true时大于等于1    */ loopCnt,
     /* 每一行平均值时的分块个数，仅支持为8  */ splitMeanCnt,
     /* 计算参数，推荐取值0.9375、0.96889、0.984497 */ alpha);
 

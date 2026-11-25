@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-设置baseM/baseN/baseK的最大值和最小值。目前Tiling暂时不支持该功能。
+设置baseM/baseN/baseK的最大值和最小值。目前Tiling暂不支持该功能。
 
 ## 函数原型
 
@@ -16,12 +16,12 @@ int32_t SetSplitRange(int32_t maxBaseM = -1, int32_t maxBaseN = -1, int32_t maxB
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| maxBaseM | 输入 | 设置最大的baseM值，默认值为-1。-1表示不设置指定的baseM最大值，该值由Tiling函数自行计算。 |
-| maxBaseN | 输入 | 设置最大的baseN值，默认值为-1。-1表示不设置指定的baseN最大值，该值由Tiling函数自行计算。 |
-| maxBaseK | 输入 | 设置最大的baseK值，默认值为-1。-1表示不设置指定的baseK最大值，该值由Tiling函数自行计算。 |
-| minBaseM | 输入 | 设置最小的baseM值，默认值为-1。-1表示不设置指定的baseM最小值，该值由Tiling函数自行计算。 |
-| minBaseN | 输入 | 设置最小的baseN值，默认值为-1。-1表示不设置指定的baseN最小值，该值由Tiling函数自行计算。 |
-| minBaseK | 输入 | 设置最小的baseK值，默认值为-1。-1表示不设置指定的baseK最小值，该值由Tiling函数自行计算。 |
+| maxBaseM | 输入 | 设置最大的baseM值，默认值为-1，表示不设置指定的baseM最大值，该值由Tiling函数自行计算。 |
+| maxBaseN | 输入 | 设置最大的baseN值，默认值为-1，表示不设置指定的baseN最大值，该值由Tiling函数自行计算。 |
+| maxBaseK | 输入 | 设置最大的baseK值，默认值为-1，表示不设置指定的baseK最大值，该值由Tiling函数自行计算。 |
+| minBaseM | 输入 | 设置最小的baseM值，默认值为-1，表示不设置指定的baseM最小值，该值由Tiling函数自行计算。 |
+| minBaseN | 输入 | 设置最小的baseN值，默认值为-1，表示不设置指定的baseN最小值，该值由Tiling函数自行计算。 |
+| minBaseK | 输入 | 设置最小的baseK值，默认值为-1，表示不设置指定的baseK最小值，该值由Tiling函数自行计算。 |
 
 ## 返回值说明
 

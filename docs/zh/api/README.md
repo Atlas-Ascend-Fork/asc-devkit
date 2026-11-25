@@ -2557,7 +2557,6 @@
         -   [随机函数](SIMD-API/adv_api/random_functions/random_functions.md)
             -   [PhiloxRandom](SIMD-API/adv_api/random_functions/PhiloxRandom.md)
 
-
 -   [SIMT API<a npu_parse_enabled="true"></a>](SIMT-API/SIMT-API.md)
     -   [概述](SIMT-API/overview.md)
     -   [SIMT编程简介](SIMT-API/SIMT_programming_intro/SIMT_programming_intro.md)

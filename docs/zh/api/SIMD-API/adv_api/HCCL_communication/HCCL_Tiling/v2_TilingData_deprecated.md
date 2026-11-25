@@ -5,7 +5,7 @@
 
 ## 功能说明
 
-AI CPU启动下发通信任务前，需获取固定的通信配置，如[表1](#table4835205712588)所示。在算子实现中，由Tiling组装通信配置项，通过配置固定参数和固定参数顺序的Tiling Data，将通信配置信息在调用AI CPU通信接口时传递给AI CPU。
+AI CPU启动下发通信任务前，需获取固定的通信配置，如[表1](#table4835205712588)所示。在算子实现中，由Tiling组装通信配置项，通过配置固定参数和固定参数顺序的TilingData，将通信配置信息在调用AI CPU通信接口时传递给AI CPU。
 
 ## 参数说明
 
@@ -47,7 +47,7 @@ AI CPU启动下发通信任务前，需获取固定的通信配置，如[表1](#
 ## 约束说明
 
 -   如果需要使用v2版本的Tiling结构体，必须设置Tiling结构体的第一个参数version=2。
--   算子的Tiling Data结构需要完整包含[v2版本HCCL TilingData参数](#table4835205712588)，其中各参数需要严格按照对应参数的结构来定义。
+-   算子的TilingData结构需要完整包含[v2版本HCCL TilingData参数](#table4835205712588)，其中各参数需要严格按照对应参数的结构来定义。
 
 ## 调用示例
 
@@ -93,9 +93,9 @@ OP_ADD(AlltoallvDoubleCommCustom);
 } // namespace ops
 ```
 
-如下为该自定义算子Tiling Data声明和实现。
+如下为该自定义算子TilingData声明和实现。
 
-该自定义算子Tiling Data的声明中：首先定义version字段，设置为2，表明为v2版本的通信算子Tiling结构体。其次，定义mc2HcommCnt字段，本例AlltoallvDoubleCommCustom算子的核函数（Kernel）实现中，共2个AlltoAllV通信任务，该参数取值为2。然后定义server通用参数配置，Mc2ServerCfg。最后，定义2个Mc2HcommCfg结构体，表示各通信域中的每个通信任务参数配置。
+该自定义算子TilingData的声明中：首先定义version字段，设置为2，表明为v2版本的通信算子Tiling结构体。其次，定义mc2HcommCnt字段，本例AlltoallvDoubleCommCustom算子的核函数（Kernel）实现中，共2个AlltoAllV通信任务，该参数取值为2。然后定义server通用参数配置，Mc2ServerCfg。最后，定义2个Mc2HcommCfg结构体，表示各通信域中的每个通信任务参数配置。
 
 ```
 // HCCL TilingData声明

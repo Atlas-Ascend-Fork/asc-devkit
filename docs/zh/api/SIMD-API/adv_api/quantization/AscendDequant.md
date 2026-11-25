@@ -55,7 +55,7 @@
 2.  calCount为32 / sizeof\(dstT\)的倍数
 3.  n % calCount = 0
 
-此时 \{1, n, calCount\}会被视作为** \{n / calCount, calCount, calCount\}**  进行反量化的计算。
+此时 \{1, n, calCount\}会被视作**\{n / calCount, calCount, calCount\}** 进行反量化的计算。
 
 具体效果可看下图所示，传入的DequantParams为 \{1, 16, 8\}。因为dstT为float，所以calCount满足为8的倍数，在**DEQUANT\_WITH\_SINGLE\_ROW**模式下会将\{1, 2 \* 8, 8\}转换为 \{2, 8, 8\}进行计算。
 
@@ -212,7 +212,7 @@ struct AscendDeQuantConfig {
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| dstTensor | 输出 | 目的操作数。类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。不同型号支持的数据类型请参考[dstTensor支持的数据类型](#li17926145114504)。<br>dstTensor的行数和srcTensor的行数保持一致。<br>n * sizeof(dstT)不满足32字节对齐时，需要向上补齐为32字节，n_dst为向上补齐后的列数。如srcTensor数据类型为int32_t，shape为(4, 8)，dstTensor为bfloat16_t，则n_dst应从8补齐为16，dstTensor shape为(4, 16)。补齐的计算过程为：n_dst = (8 * sizeof(bfloat16_t) + 32 - 1) / 32 * 32 / sizeof(bfloat16_t)。 |
+| dstTensor | 输出 | 目的操作数。类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。不同型号支持的数据类型请参考[dstTensor支持的数据类型](#li17926145114504)。<br>dstTensor的行数和srcTensor的行数保持一致。<br>n \* sizeof(dstT)不满足32字节对齐时，需要向上补齐为32字节，n_dst为向上补齐后的列数。如srcTensor数据类型为int32_t，shape为(4, 8)，dstTensor为bfloat16_t，则n_dst应从8补齐为16，dstTensor shape为(4, 16)。补齐的计算过程为：n_dst = (8 \* sizeof(bfloat16_t) + 32 - 1) / 32 \* 32 / sizeof(bfloat16_t)。 |
 | srcTensor | 输入 | 源操作数。类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。支持的数据类型为：int32_t。<br><br>shape为 [m, n]，n个输入数据所占字节数要求32字节对齐。 |
 | deqScale | 输入 | 源操作数。类型为标量或者[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)。类型为LocalTensor时，支持的TPosition为VECIN/VECCALC/VECOUT。不同型号支持的数据类型请参考[deqScale支持的数据类型](#li189021550175211)。<br><br>dstTensor、srcTensor、deqScale支持的数据类型组合请参考表5和表6。 |
 | sharedTmpBuffer | 输入 | 临时缓存。类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。支持的数据类型为：uint8_t。<br><br>临时空间大小BufferSize的获取方式请参考[GetAscendDequantMaxMinTmpSize](GetAscendDequantMaxMinTmpSize.md)。 |
@@ -232,10 +232,10 @@ struct DequantParams {
 | --- | --- | --- |
 | dstTensor | 输出 | 目的操作数。支持的数据类型为：half、bfloat16_t、float。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。 |
 | srcTensor | 输入 | 源操作数。支持的数据类型为：int32_t、float。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。 |
-| sharedTmpBuffer | 输入 | 临时缓存。支持的数据类型为：uint8_t。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>临时空间大小BufferSize的获取方式请参考[GetAscendQuantMaxMinTmpSize](GetAscendDequantMaxMinTmpSize.md)。 |
+| sharedTmpBuffer | 输入 | 临时缓存。支持的数据类型为：uint8_t。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>临时空间大小BufferSize的获取方式请参考[GetAscendDequantMaxMinTmpSize](GetAscendDequantMaxMinTmpSize.md)。 |
 | scaleTensor | 输入 | 量化参数scale。支持的数据类型为：half、bfloat16_t、float。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。 |
 | offsetTensor | 输入 | 量化参数offset。支持的数据类型和scaleTensor保持一致。预留参数，当前暂不支持。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。 |
-| para | 输入 | 反量化接口的参数，定义如下方代码所示，其中参数的含义如下。<br>m：m方向元素个数。<br>n：n方向元素个数。n值对应的数据大小需满足32B对齐的要求，即shape最后一维为n的输入输出均需要满足该维度上32B对齐的要求。<br>calCount：参与计算的元素个数。calCount必须是n的整数倍。<br>groupSize ：PER_GROUP场景有效，表示groupSize行/列数据共用一个scale/offset。groupSize的取值必须大于0且是32的整倍数。 |
+| para | 输入 | 反量化接口的参数，定义如下方代码所示，其中参数的含义如下。<br>m：m方向元素个数。<br>n：n方向元素个数。n值对应的数据大小需满足32B对齐的要求，即shape最后一维为n的输入输出均需要满足该维度上32B对齐的要求。<br>calCount：参与计算的元素个数。calCount必须是n的整数倍。<br>groupSize ：PER_GROUP场景有效，表示groupSize行/列数据共用一个scale/offset。groupSize的取值必须大于0且是32的整数倍。 |
 
 ```
 struct AscendDeQuantParam {
@@ -364,7 +364,7 @@ struct AscendDeQuantParam {
 ```
 // dstLocal: 存放反量化计算的结果Tensor
 // srcLocal: 存放反量化计算的输入Tensor
-// deqScaleLocal: 存放反量化计算量反量化系数的输入Tensor
+// deqScaleLocal: 存放反量化计算的反量化系数的输入Tensor
 // sharedTmpBuffer: 存放反量化计算过程中临时缓存的Tensor
 
 uint32_t m = 4;        // srcTensor的行数

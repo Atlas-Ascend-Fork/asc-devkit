@@ -25,7 +25,7 @@
 
 ## 功能说明
 
-在深层神经网络训练过程中，执行层LayerNorm归一化时，可以使用DeepNorm进行替代，通过扩大残差连接来提高Transformer的稳定性。
+在深层神经网络训练过程中，执行LayerNorm归一化时，可以使用DeepNorm进行替代，通过扩大残差连接来提高Transformer的稳定性。
 
 本接口实现了对shape大小为\[B，S，H\]的输入数据的DeepNorm归一化，其计算公式如下：
 

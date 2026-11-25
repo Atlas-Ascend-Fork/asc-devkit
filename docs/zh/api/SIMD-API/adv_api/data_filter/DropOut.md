@@ -63,7 +63,7 @@
 
         DstTensor=\[1，0，3，0，5，0，0，8，11，0， 13， 0， 15， 0， 0，18\]
 
-    -   特殊情况2：当MaskTensor有效数据连续存放，maskTensor\_size不满足32B对齐时，需要在MaskTensor的尾部补齐32B对齐时，对应SrcTensor的尾部也需要补充无效数据，使得srcTensor\_size满足32B对齐。示例如下：
+    -   特殊情况2：当MaskTensor有效数据连续存放，maskTensor\_size不满足32B对齐时，需要在MaskTensor的尾部补齐32B对齐，对应SrcTensor的尾部也需要补充无效数据，使得srcTensor\_size满足32B对齐。示例如下：
 
         SrcTensor=\[1，2，3，4，5，6，7，8，11，12，13，14，15，16，17，18\]
 

@@ -53,7 +53,7 @@ __aicore__ inline HcclHandle AllReduce(GM_ADDR sendBuf, GM_ADDR recvBuf, uint64_
 | count | 输入 | 参与AllReduce操作的数据个数，比如只有一个int32数据参与，则count=1。 |
 | dataType | 输入 | AllReduce操作的数据类型。不同产品和通信服务端支持的数据类型请参见[数据类型](#数据类型)。HcclDataType数据类型的介绍请参考[表1](HCCL_usage.md#table116710585514)。 |
 | op | 输入 | Reduce的操作类型。支持的操作类型及约束请参见[op说明](#op说明)。HcclReduceOp数据类型的介绍请参考[表2](HCCL_usage.md#table2469980529)。 |
-| repeat | 输入 | 一次下发的AllReduce通信任务个数。repeat取值≥1，默认值为1。当repeat>1时，每个AllReduce任务的sendBuf和recvBuf地址由服务端自动算出，计算公式如下：<br><br>sendBuf[i] = sendBuf + count* sizeof(datatype) * i, i∈[0, repeat)<br><br>recvBuf[i] = recvBuf + count* sizeof(datatype) * i, i∈[0, repeat)<br><br>注意：当设置repeat>1时，须与count参数配合使用，规划通信数据地址。 |
+| repeat | 输入 | 一次下发的AllReduce通信任务个数。repeat取值≥1，默认值为1。当repeat>1时，每个AllReduce任务的sendBuf和recvBuf地址由服务端自动算出，计算公式如下：<br><br>sendBuf[i] = sendBuf + count\* sizeof(datatype) \* i, i∈[0, repeat)<br><br>recvBuf[i] = recvBuf + count\* sizeof(datatype) \* i, i∈[0, repeat)<br><br>注意：当设置repeat>1时，须与count参数配合使用，规划通信数据地址。 |
 
 ### 数据类型
 
@@ -111,7 +111,7 @@ __aicore__ inline HcclHandle AllReduce(GM_ADDR sendBuf, GM_ADDR recvBuf, uint64_
 <!-- end id8 -->
 <!-- npu="950" id9 -->
 -   对于Ascend 950PR&950DT系列产品，一个通信域内，所有Prepare接口的总调用次数不能超过63。
--   对于Ascend 950PR&950DT系列产品，通信服务端为CCU时，最大支持8卡的全链接，并且单次通信任务中，任意两卡之间的最大通信数据量不能超过256M。
+-   对于Ascend 950PR&950DT系列产品，通信服务端为CCU时，最大支持8卡的全连接，并且单次通信任务中，任意两卡之间的最大通信数据量不能超过256M。
 <!-- end id9 -->
 
 ## 调用示例

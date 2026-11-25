@@ -104,10 +104,10 @@
 // dstLocal：存放RmsNorm计算结果的Tensor
 // srcLocal：参与计算的输入Tensor
 // gammaLocal：输入张量，归一化后数据的缩放系数γ
-// epsilon：防除0的权重系数ε
+// epsilon：防除零的权重系数ε
 // tiling：Tiling数据，从Host侧获取
 
-// // 若尾轴的长度（H）不超过2040且为64的倍数，同时非尾轴长度（B*S）为8的倍数，可设置isBasicBlock = true提升性能
+// 若尾轴的长度（H）不超过2040且为64的倍数，同时非尾轴长度（B*S）为8的倍数，可设置isBasicBlock = true提升性能
 AscendC::RmsNorm<dataType, isBasicBlock>(dstLocal, srcLocal, gammaLocal, epsilon, tiling);
 ```
 

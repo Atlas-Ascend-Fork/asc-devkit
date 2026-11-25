@@ -25,4 +25,3 @@
 -   **[SetStride](SetStride.md)**
 
 -   **[SetDilation](SetDilation.md)**
-

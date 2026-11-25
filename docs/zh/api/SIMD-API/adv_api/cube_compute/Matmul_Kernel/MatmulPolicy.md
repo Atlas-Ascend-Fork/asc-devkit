@@ -108,7 +108,7 @@
 
 ## 功能说明
 
-模板参数MatmulPolicy用于定义Matmul可拓展模块策略。目前支持设置以下几种Matmul内置模板策略。
+模板参数MatmulPolicy用于定义Matmul可扩展模块策略。目前支持设置以下几种Matmul内置模板策略。
 
 -   MatmulPolicy（默认模板策略）
 
@@ -180,7 +180,7 @@
 
 -   SplitNMatmulPolicy：
     -   只支持C矩阵输出到UB。
-    -   baseN必须满足是16的倍数。
+    -   baseN必须是16的倍数。
     -   [Tiling参数](../Matmul_Tiling/TCubeTiling_struct.md#tcubetiling-struct)必须满足：singleCoreM = baseM，singleCoreN = baseN，singleCoreK = baseK。
     -   A矩阵、B矩阵类型信息MatmulType中的参数[IBSHARE](Matmul_usage.md)必须为true。
 

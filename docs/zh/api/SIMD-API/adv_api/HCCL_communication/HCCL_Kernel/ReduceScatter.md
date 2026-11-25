@@ -54,7 +54,7 @@ __aicore__ inline HcclHandle ReduceScatter(GM_ADDR sendBuf, GM_ADDR recvBuf, uin
 | dataType | 输入 | ReduceScatter操作的数据类型。不同产品和通信服务端支持的数据类型请参见[数据类型](#数据类型)。HcclDataType数据类型的介绍请参考[表1](HCCL_usage.md#table116710585514)。 |
 | op | 输入 | ReduceScatter的操作类型。支持的操作类型及约束请参见[op说明](#op说明)。HcclReduceOp数据类型的介绍请参考[表2](HCCL_usage.md#table2469980529)。 |
 | strideCount | 输入 | 当将一张卡上sendBuf中的数据scatter到多张卡的recvBuf时，需要用strideCount参数表示sendBuf上相邻数据块间的起始地址的偏移量。<br>strideCount=0，表示从当前卡发送数据给其它卡时，相邻数据块保持地址连续。本卡发送数据到卡rank[i]，且本卡数据块在sendBuf中的偏移为i\*recvCount。非多轮切分场景下，推荐用户设置该参数为0。<br>strideCount>0，表示从当前卡发送数据给其它卡时，相邻数据块在sendBuf中起始地址的偏移数据量为strideCount。本卡发送数据到卡rank[i]，且本卡数据块在SendBuf中的偏移为i\*strideCount。<br><br>注意：上述的偏移数据量为数据个数，单位为sizeof(dataType)。 |
-| repeat | 输入 | 一次下发的ReduceScatter通信任务个数。repeat取值≥1，默认值为1。当repeat>1时，每个ReduceScatter任务的sendBuf和recvBuf地址由服务端自动算出，计算公式如下：<br><br>sendBuf[i] = sendBuf + recvCount * sizeof(datatype) * i, i∈[0, repeat)<br><br>recvBuf[i] = recvBuf + recvCount * sizeof(datatype) * i, i∈[0, repeat)<br><br>注意：当设置repeat>1时，须与strideCount参数配合使用，规划通信数据地址。 |
+| repeat | 输入 | 一次下发的ReduceScatter通信任务个数。repeat取值≥1，默认值为1。当repeat>1时，每个ReduceScatter任务的sendBuf和recvBuf地址由服务端自动算出，计算公式如下：<br><br>sendBuf[i] = sendBuf + recvCount \* sizeof(datatype) \* i, i∈[0, repeat)<br><br>recvBuf[i] = recvBuf + recvCount \* sizeof(datatype) \* i, i∈[0, repeat)<br><br>注意：当设置repeat>1时，须与strideCount参数配合使用，规划通信数据地址。 |
 
 ### 数据类型
 
@@ -116,7 +116,7 @@ __aicore__ inline HcclHandle ReduceScatter(GM_ADDR sendBuf, GM_ADDR recvBuf, uin
 <!-- end id8 -->
 <!-- npu="950" id9 -->
 -   对于Ascend 950PR&950DT系列产品，一个通信域内，所有Prepare接口的总调用次数不能超过63。
--   对于Ascend 950PR&950DT系列产品，通信服务端为CCU时，最大支持8卡的全链接，默认仅支持FullMesh算法，并且单次最大通信数据量不能超过256M。
+-   对于Ascend 950PR&950DT系列产品，通信服务端为CCU时，最大支持8卡的全连接，默认仅支持FullMesh算法，并且单次最大通信数据量不能超过256M。
 <!-- end id9 -->
 
 ## 调用示例

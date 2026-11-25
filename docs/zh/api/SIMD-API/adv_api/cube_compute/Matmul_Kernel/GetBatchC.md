@@ -71,16 +71,16 @@ GlobalTensor<DstT\>，返回计算的矩阵分片。
 ```
 // 计算需要多Batch计算循环次数
 int g_lay = tiling.ALayoutInfoG > tiling.BLayoutInfoG ? tiling.ALayoutInfoG : tiling.BLayoutInfoG;
-int for_exent = tiling.ALayoutInfoB * tiling.ALayoutInfoN * g_lay / tiling.BatchNum;
+int for_extent = tiling.ALayoutInfoB * tiling.ALayoutInfoN * g_lay / tiling.BatchNum;
 mm1.SetTensorA(gm_a[0], isTransposeAIn);
 mm1.SetTensorB(gm_b[0], isTransposeBIn);
 if (tiling.isBias) {
     mm1.SetBias(gm_bias[0]);
 }
 // 多batch Matmul计算
-mm1.template IterateNBatch<false>(for_exent, batchA, batchB, false);
+mm1.template IterateNBatch<false>(for_extent, batchA, batchB, false);
 // ...other compute
-for (int i = 0; i < for_exent ; ++i) {
+for (int i = 0; i < for_extent ; ++i) {
     mm1.template GetBatchC<false>(ubCmatrix, batchA, batchB);
     // ...other compute
 }

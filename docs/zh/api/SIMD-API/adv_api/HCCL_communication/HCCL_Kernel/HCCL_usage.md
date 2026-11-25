@@ -65,8 +65,8 @@ HCCL为**集合通信任务客户端**，主要对外提供了集合通信原语
         hccl.ReduceScatter<false>(aGM, cGM, recvCount, AscendC::HCCL_DATA_TYPE_FP16, HCCL_REDUCE_SUM, strideCount, 1);
     // 对于Prepare接口，在调试时可增加异常值校验和PRINTF打印
     // if (handleId == INVALID_HANDLE_ID) {
-    // 	PRINTF("[ERROR] call ReduceScatter failed, handleId is -1.");
-    //	return;
+    // PRINTF("[ERROR] call ReduceScatter failed, handleId is -1.");
+    // return;
     // }
     ```
 
@@ -134,8 +134,8 @@ HCCL为**集合通信任务客户端**，主要对外提供了集合通信原语
     auto ret = hccl.Wait(handleId);
     // 对于Wait和Query接口，在调试时可增加异常值校验和PRINTF打印
     // if (ret == HCCL_FAILED) {
-    //	PRINTF("[ERROR] call Wait for handleId[%d] failed.", handleId);
-    //	return;
+    // PRINTF("[ERROR] call Wait for handleId[%d] failed.", handleId);
+    // return;
     // }
 
     // 调用核间同步接口，防止部分核执行较快退出，触发Hccl析构，影响执行较慢的核

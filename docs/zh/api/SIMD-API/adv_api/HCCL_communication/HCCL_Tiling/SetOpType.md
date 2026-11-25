@@ -64,4 +64,3 @@ mc2CcTilingConfig.SetAlgConfig("sole[mesh.two_shot]");
 mc2CcTilingConfig.GetTiling(tiling->allReduceTiling);
 ```
 <!-- end id4 -->
-

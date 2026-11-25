@@ -5,7 +5,7 @@ Ascend C提供一组SoftMax Tiling API，方便用户获取SoftMax核函数（Ke
 获取Tiling参数主要分为如下两步：
 
 1.  获取SoftMax接口计算所需最小和最大临时空间大小，注意该步骤不是必须的，只是作为一个参考，供合理分配计算空间。
-2.  获取输入SoftMax核函数（Kernel）侧接口所需tiling参数，需要传入[AscendC::TensorShape](../../data_structures/TensorShape.md)类型的输入shape、剩余的可供softmax接口计算的空间大小和计算的数据类型大小。
+2.  获取SoftMax核函数（Kernel）侧接口所需tiling参数，需要传入[AscendC::TensorShape](../../data_structures/TensorShape.md)类型的输入shape、剩余的可供softmax接口计算的空间大小和计算的数据类型大小。
 
     SoftMax Tiling结构体的定义如下，开发者无需关注该tiling结构的具体信息，只需要传递到核函数（Kernel）侧，传入SoftMax高阶API接口，直接进行使用即可。
 
@@ -85,7 +85,7 @@ Ascend C提供一组SoftMax Tiling API，方便用户获取SoftMax核函数（Ke
     } // namespace optiling
     ```
 
-3.  对应的核函数（Kernel）侧通过在核函数（Kernel）中调用GET\_TILING\_DATA获取TilingData，继而将TilingData中的SoftMax Tiling信息传入SoftMax接口参与计算。完整的核函数（Kernel）侧样例请参考[调用示例](SoftMax.md#调用示例)。
+3.  对应的核函数（Kernel）侧通过在核函数中调用GET\_TILING\_DATA获取TilingData，继而将TilingData中的SoftMax Tiling信息传入SoftMax接口参与计算。完整的核函数（Kernel）侧样例请参考[调用示例](SoftMax.md#调用示例)。
 
     ```
     extern "C" __global__ __aicore__ void func_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR workspace, GM_ADDR tiling)

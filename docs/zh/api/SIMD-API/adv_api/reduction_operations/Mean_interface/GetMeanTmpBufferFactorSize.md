@@ -2,19 +2,19 @@
 
 ## 功能说明
 
-该接口用于获取maxLiveNodeCnt和extraBuf，在固定空间大小的情况下，通过maxLiveNodeCnt和extraBuf可以推算算子单次最大计算元素数量。maxLiveNodeCnt表示临时空间是单次计算数据量所占空间的多少倍；extraBuf表示使用的额外临时空间大小。
+该接口用于获取maxLiveNodeCount和extraBuf，在固定空间大小的情况下，通过maxLiveNodeCount和extraBuf可以推算算子单次最大计算元素数量。maxLiveNodeCount表示临时空间是单次计算数据量所占空间的多少倍；extraBuf表示使用的额外临时空间大小。
 
 推算示例如下：
 
--   算子实现需要调用Mean接口，开发者为其预留currBuff大小的空间，利用GetMeanTmpBufferFactorSize接口得到maxLiveNodeCnt、extraBuf输出值，可推导算子单次最大计算元素数量为：
+-   算子实现需要调用Mean接口，开发者为其预留currBuff大小的空间，利用GetMeanTmpBufferFactorSize接口得到maxLiveNodeCount、extraBuf输出值，可推导算子单次最大计算元素数量为：
 
-    **currentShapeSize = \(currBuff - extraBuf\) / maxLiveNodeCnt / typeSize**
+    **currentShapeSize = \(currBuff - extraBuf\) / maxLiveNodeCount / typeSize**
 
--   算子实现需要调用两个核函数（Kernel）侧API KernelIntf1、KernelIntf2，利用两个GetXxxTmpBufferFactorSize（其中Xxx为需要调用的两个高阶API）接口的两组输出值\(maxLiveNodeCnt、extraBuf\)以及当前现有的临时空间，推导单次最大计算元素数量currentShapeSize为：
+-   算子实现需要调用两个核函数（Kernel）侧API KernelIntf1、KernelIntf2，利用两个GetXxxTmpBufferFactorSize（其中Xxx为需要调用的两个高阶API）接口的两组输出值\(maxLiveNodeCount、extraBuf\)以及当前现有的临时空间，推导单次最大计算元素数量currentShapeSize为：
 
-    **currentShapeSize1 = \(currBuff - extraBuf1\) / maxLiveNodeCnt1 / typeSize**
+    **currentShapeSize1 = \(currBuff - extraBuf1\) / maxLiveNodeCount1 / typeSize**
 
-    **currentShapeSize2 = \(currBuff - extraBuf2\) / maxLiveNodeCnt2 / typeSize**
+    **currentShapeSize2 = \(currBuff - extraBuf2\) / maxLiveNodeCount2 / typeSize**
 
     **currentShapeSize = min\(currentShapeSize1 , currentShapeSize2\)**
 
@@ -49,7 +49,7 @@ void GetMeanTmpBufferFactorSize(const uint32_t typeSize, uint32_t& maxLiveNodeCo
 完整的调用样例请参考[更多样例](../../math_compute/more_examples.md)。
 
 ```
-uint32_t maxLiveNodeCnt = 0;
+uint32_t maxLiveNodeCount = 0;
 uint32_t extraBuf = 0;
-AscendC::GetMeanTmpBufferFactorSize(typeSize, maxLiveNodeCnt, extraBuf);
+AscendC::GetMeanTmpBufferFactorSize(typeSize, maxLiveNodeCount, extraBuf);
 ```

@@ -67,7 +67,7 @@
 | 参数名 | 描述 |
 | --- | --- |
 | T | 操作数的数据类型。支持的数据类型为：half、float。 |
-| accType | 实际参与计算的数据类型，设置的accType精度高于输入T的情况下，在计算之前会将输入转换为accType，使用accType类型计算，计算完成后再转换为原来的数据类型。设置accType值升精度可以防止数据类型溢出。T为half时，您可以将accType设置为float，表示为输入half类型升精度至float进行计算。不支持accType精度低于输入T的情况。 |
+| accType | 实际参与计算的数据类型，设置的accType精度高于输入T的情况下，在计算之前会将输入转换为accType，使用accType类型计算，计算完成后再转换为原来的数据类型。设置accType升精度可以防止数据类型溢出。T为half时，您可以将accType设置为float，表示为输入half类型升精度至float进行计算。不支持accType精度低于输入T的情况。 |
 | isReuseSource | 是否允许修改源操作数。该参数预留，传入默认值false即可。 |
 | isBasicBlock | 预留参数，暂不支持。 |
 | reduceDim | 用于指定按数据的哪一维度进行求和。本接口按最后一个维度实现，不支持reduceDim参数，传入默认值-1即可。 |
@@ -77,9 +77,9 @@
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
 | dstTensor | 输出 | 目的操作数。<br><br>类型为[LocalTensor](../../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>输出值需要outter * sizeof(T)大小的空间进行保存。开发者要根据该大小和框架的对齐要求来为dstTensor分配实际内存空间。 |
-| srcTensor | 输入 | 源操作数。<br><br>类型为[LocalTensor](../../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>源操作数的数据类型需要与目的操作数保持一致。<br><br>输入数据shape为outter * inner。开发者需要为其开辟大小为outter * inner * sizeof(T)的空间。 |
+| srcTensor | 输入 | 源操作数。<br><br>类型为[LocalTensor](../../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>源操作数的数据类型需要与目的操作数保持一致。<br><br>输入数据shape为outter \* inner。开发者需要为其开辟大小为outter \* inner \* sizeof(T)的空间。 |
 | sharedTmpBuffer | 输入 | 临时缓存。<br><br>类型为[LocalTensor](../../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>用于Mean内部复杂计算时存储中间变量，由开发者提供。<br><br>临时空间大小BufferSize的获取方式请参考[GetMeanMaxMinTmpSize](GetMeanMaxMinTmpSize.md)。 |
-| MeanParams | 输入 | srcTensor的shape信息。MeanParams类型，具体定义如下方代码所示，其中参数的含义为：<br>outter：输入数据的外轴长度。<br>inner：输入数据内轴实际元素个数32字节补齐后的元素个数，inner\*sizeof(T)必须是32字节的整数倍。<br>n：输入数据内轴的实际元素个数。<br>请注意：MeanParams.inner是MeanParams.n向上32字节对齐后的值，inner = (n *sizeof(T) + 32 - 1) / 32 * 32 / sizeof(T)，因此MeanParams.n的大小应该满足：1 <= MeanParams.n <= MeanParams.inner。 |
+| MeanParams | 输入 | srcTensor的shape信息。MeanParams类型，具体定义如下方代码所示，其中参数的含义为：<br>outter：输入数据的外轴长度。<br>inner：输入数据内轴实际元素个数32字节补齐后的元素个数，inner\*sizeof(T)必须是32字节的整数倍。<br>n：输入数据内轴的实际元素个数。<br>请注意：MeanParams.inner是MeanParams.n向上32字节对齐后的值，inner = (n \*sizeof(T) + 32 - 1) / 32 \* 32 / sizeof(T)，因此MeanParams.n的大小应该满足：1 <= MeanParams.n <= MeanParams.inner。 |
 
 ```
 struct MeanParams {
