@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 # 后续如果更新asc-comm代码需要同步更新至devkit run包需要更新change id
-set(ASC_COMM_TAG_ID f702a65bbfec65b8c0983cfd320606a89cf4a374)
+set(ASC_COMM_TAG_ID cc2a082a7cb4f8d09f55bb22a676ec6841de4b32)
 
 # asc-comm 与 asc-devkit 按同级目录放置。路径以本文件所在目录(<devkit>/cmake/third_party)为锚，
 # 对于CI环境已经存在asc-comm代码, 不去拉取代码否则使用submodule方式拉取asc-comm仓代码
@@ -176,6 +176,7 @@ if(EXISTS "${ASC_COMM_CCU_CMAKE_DIR}/CMakeLists.txt")
             target_sources(ccu_runtime_static PRIVATE
                 ${ASC_COMM_CCU_CMAKE_DIR}/experimental/ccu_runtime.cpp
                 ${ASC_COMM_CCU_CMAKE_DIR}/experimental/ccu_runtime_backend.cpp
+                ${ASC_COMM_CCU_CMAKE_DIR}/experimental/ccu_profiling.cc
                 ${ASC_COMM_CCU_CMAKE_DIR}/experimental/ccu_aot_adapter.cpp
                 ${ASC_COMM_CCU_CMAKE_DIR}/experimental/ccu_runtime_asccomm_backend.cpp)
             target_compile_features(ccu_runtime_static PRIVATE cxx_std_17)
@@ -206,7 +207,7 @@ if(EXISTS "${ASC_COMM_CCU_CMAKE_DIR}/CMakeLists.txt")
             # Keep the dependency surface PUBLIC for in-tree consumers and
             # deliver ccu_runtime.pc so external link lines retain it.
             target_link_libraries(ccu_runtime_static PUBLIC
-                acl_rt runtime c_sec pthread)
+                acl_rt runtime c_sec pthread atomic ${CMAKE_DL_LIBS})
             set_target_properties(ccu_runtime_static PROPERTIES
                 OUTPUT_NAME ccu_runtime
                 POSITION_INDEPENDENT_CODE ON)
