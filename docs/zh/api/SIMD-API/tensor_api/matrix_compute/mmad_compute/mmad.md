@@ -58,11 +58,11 @@ mmad的矩阵乘加关系可参考下图：
 
 | 矩阵 | 物理位置 | 维度 | 数据格式 | 数据类型 |
 | :--- | :--- | :--- | :--- | :--- |
-| 左矩阵A | L0A Buffer | m × k | NZ | 参见[数据类型](#数据类型) |
-| 右矩阵B | L0B Buffer | k × n | ZN | 参见[数据类型](#数据类型) |
-| 结果矩阵C | L0C Buffer | m × n | NZ | 参见[数据类型](#数据类型) |
+| 左矩阵A | L0A Buffer | M × K | NZ | 参见[数据类型](#数据类型) |
+| 右矩阵B | L0B Buffer | K × N | ZN | 参见[数据类型](#数据类型) |
+| 结果矩阵C | L0C Buffer | M × N | NZ | 参见[数据类型](#数据类型) |
 
-矩阵A、B、C分别按照`m`、`n`和`k`描述有效逻辑尺寸。硬件以16 * 16分形块组织矩阵数据，非16倍数的维度会占用完整分形的物理空间，尾块中的无效数据不参与计算。
+硬件以16 * 16分形块组织矩阵数据，非16倍数的维度会占用完整分形的物理空间，尾块中的无效数据不参与计算。
 
 ## 函数原型
 
@@ -164,7 +164,7 @@ struct mmad_params {
 | :--- | :--- | :--- | :--- |
 | m | `uint16_t` | `0` | 左矩阵A的高度，结果矩阵C的高度，取值范围为[0, 4095]。为0时接口不执行。 |
 | n | `uint16_t` | `0` | 右矩阵B的宽度，结果矩阵C的宽度，取值范围为[0, 4095]。为0时接口不执行。 |
-| k | `uint16_t` | `0` | 左矩阵A的宽度，右矩阵B的高度，取值范围为[0, 4095]。为0时接口不执行。 |
+| k | `uint16_t` | `0` | 左矩阵A的宽度，右矩阵B的高度，取值范围为[0, 4095]。为0时接口不执行。`mmad_type::mx`场景下，`k`还需为64的倍数。 |
 | unit_flag | `unit_flag_mode` | `unit_flag_mode::disable` | 控制`mmad`和后续矩阵数据搬出的细粒度并行。可选值为`unit_flag_mode::disable`、`unit_flag_mode::enable_keep`和`unit_flag_mode::enable_update`。 |
 | init_with_zero | `bool` | `false` | 不传bias时，控制是否初始化结果矩阵C。`true`表示C矩阵初始化为0，结果为`C = A * B`；`false`表示保留C已有内容，结果为`C = A * B + C`，也可以通过Trait配置从BT Buffer初始化。带bias时，该参数不生效。 |
 
@@ -226,11 +226,14 @@ struct mmad_trait {
 
 - `c`必须位于L0C Buffer，`a`必须位于L0A Buffer，`b`必须位于L0B Buffer。
 - 结果矩阵C起始地址需要满足1024Byte地址对齐要求。
-- 左矩阵A和右矩阵B起始地址需要满足512Byte地址对齐要求。
+- `mmad_type::normal`场景下，左矩阵A和右矩阵B起始地址需要满足512Byte地址对齐要求。
+- `mmad_type::mx`场景下，左矩阵A和右矩阵B的数据类型为`fp4x2_e2m1_t`或`fp4x2_e1m2_t`时，起始地址需要满足512Byte地址对齐要求；数据类型为`fp8_e5m2_t`或`fp8_e4m3fn_t`时，起始地址需要满足1024Byte地址对齐要求。
 - 上述地址对齐要求属于硬件访问约束，编译器和运行时不对所有场景单独检查，用户需要保证入参满足约束。
 - `m`、`n`、`k`的取值范围为[0, 4095]，需要与实际参与`mmad`计算的数据尺寸一致；任意一个参数为0时，接口视为NOP。
 - 开启`unit_flag`功能时，需要结果矩阵C搬出接口的`l0c_to_gm_params::unit_flag`或`l0c_to_ub_params::unit_flag`与`mmad`计算的`mmad_params::unit_flag`参数配合设置。
 - 连续两次`mmad`沿K方向累加时，需要关注结果矩阵C的写读依赖。同步优化的阈值关系可参考[结果矩阵C初始化](#结果矩阵c初始化)中的图示。
+- `mmad_type::mx`场景下，`k`需为64的倍数。原始K不是64的倍数时，需将K向上补齐到64的倍数。调用`mmad`时，`mmad_params::k`传入补齐后的K；矩阵A和矩阵B的存储空间按补齐后的K分配，并将补齐区域置0。
+- `mmad_type::mx`场景下，调用`mmad`前，需先通过L1到L0ScaleA和L1到L0ScaleB的`copy`接口完成ScaleA、ScaleB搬运。ScaleA和ScaleB的数据类型必须为`fp8_e8m0_t`，K方向上每个Scale元素对应32个输入矩阵元素；ScaleA的M维和ScaleB的N维需向上补齐到16的倍数，K维大小为补齐后的K / 32。
 - 当M、K、N不是16的倍数时，硬件仍以16×16分形块组织数据，尾块中的无效数据会占用分形块空间但不参与有效计算。有效数据与无效数据排布方式如下图所示：
 
 **图3**  尾块有效数据排布
@@ -280,7 +283,7 @@ if ((m / 16) * (n / 16) < 10) {
 
 ### MmadMx模式
 
-MmadMx模式没有单独的函数接口，而是通过`mmad_trait::mmad_type`设置。执行MmadMx时，需要将`mmad_trait::mmad_type`设置为`mmad_type::mx`，并通过`make_mmad(mmad_operation{}, mmad_trait_mx{})`构造矩阵计算原子对象。调用`mmad`前，需要先通过L1到L0ScaleA和L1到L0ScaleB的`copy`接口完成ScaleA、ScaleB搬运；Scale数据不作为`mmad`函数参数传入，而是由硬件从对应的L0Scale Buffer隐式读取。
+MmadMx模式没有单独的函数接口，而是通过`mmad_trait::mmad_type`设置。执行MmadMx时，需要将`mmad_trait::mmad_type`设置为`mmad_type::mx`，并通过`make_mmad(mmad_operation{}, mmad_trait_mx{})`构造矩阵计算原子对象。Scale数据不作为`mmad`函数参数传入，而是由硬件从对应的L0Scale Buffer隐式读取。
 
 ```cpp
 struct mmad_trait_mx {
@@ -293,16 +296,16 @@ MmadMx支持如下左矩阵A、右矩阵B、结果矩阵C的数据类型组合�
 
 **表8**  MmadMx模式支持的数据类型组合
 
-| 左矩阵A | 右矩阵B | 结果矩阵C |
-| :--- | :--- | :--- |
-| `fp4x2_e2m1_t` | `fp4x2_e2m1_t` | `float` |
-| `fp4x2_e2m1_t` | `fp4x2_e1m2_t` | `float` |
-| `fp4x2_e1m2_t` | `fp4x2_e2m1_t` | `float` |
-| `fp4x2_e1m2_t` | `fp4x2_e1m2_t` | `float` |
-| `fp8_e4m3fn_t` | `fp8_e4m3fn_t` | `float` |
-| `fp8_e4m3fn_t` | `fp8_e5m2_t` | `float` |
-| `fp8_e5m2_t` | `fp8_e4m3fn_t` | `float` |
-| `fp8_e5m2_t` | `fp8_e5m2_t` | `float` |
+| 左矩阵A | 右矩阵B | ScaleA/ScaleB数据类型 | 结果矩阵C | Bias数据类型 |
+| :--- | :--- | :--- | :--- | :--- |
+| `fp4x2_e2m1_t` | `fp4x2_e2m1_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp4x2_e2m1_t` | `fp4x2_e1m2_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp4x2_e1m2_t` | `fp4x2_e2m1_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp4x2_e1m2_t` | `fp4x2_e1m2_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp8_e4m3fn_t` | `fp8_e4m3fn_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp8_e4m3fn_t` | `fp8_e5m2_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp8_e5m2_t` | `fp8_e4m3fn_t` | `fp8_e8m0_t` | `float` | `float` |
+| `fp8_e5m2_t` | `fp8_e5m2_t` | `fp8_e8m0_t` | `float` | `float` |
 
 ## 调用示例
 
@@ -351,7 +354,7 @@ MmadMx支持如下左矩阵A、右矩阵B、结果矩阵C的数据类型组合�
 
         constexpr uint16_t m = 16;
         constexpr uint16_t n = 16;
-        constexpr uint16_t k = 16;
+        constexpr uint16_t k = 64;
 
         __ca__ fp8_e5m2_t l0a_buf[m * k];
         __cb__ fp8_e5m2_t l0b_buf[k * n];

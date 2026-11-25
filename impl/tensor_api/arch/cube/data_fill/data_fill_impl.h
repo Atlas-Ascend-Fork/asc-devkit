@@ -29,18 +29,27 @@
 
 namespace asc {
 namespace te {
+namespace detail {
+template <typename ValueType, typename DstType>
+constexpr bool is_supported_fill_value_type_v =
+    Std::is_same_v<ValueType, half> || Std::is_same_v<ValueType, uint32_t> ||
+    (Std::is_same_v<ValueType, bfloat16_t> && Std::is_same_v<DstType, bfloat16_t>);
+} // namespace detail
+
 template <typename Tensor, typename T>
 __aicore__ inline void fill(const Tensor& dst, const fill_params<T>& params)
 {
-    static_assert(
-        Std::is_same_v<typename Tensor::data_type, T>, "Fill value must match the writable destination element type");
     using dst_pos = get_mem_location<Tensor>;
     static_assert(Std::is_same_v<dst_pos, location::l1>, "Fill requires the destination tensor to be located in L1.");
+    using dst_type = typename Tensor::data_type;
     static_assert(
-        Std::is_same_v<T, half> || Std::is_same_v<T, bfloat16_t> || Std::is_same_v<T, int16_t> ||
-            Std::is_same_v<T, uint16_t> || Std::is_same_v<T, int32_t> || Std::is_same_v<T, uint32_t> ||
-            Std::is_same_v<T, float>,
-        "Unsupported Fill element type");
+        detail::is_supported_fill_value_type_v<T, dst_type>,
+        "init_value supports half, uint32_t, and bfloat16_t; bfloat16_t is valid only for a bfloat16_t tensor");
+    static_assert(
+        Std::is_same_v<dst_type, half> || Std::is_same_v<dst_type, int16_t> || Std::is_same_v<dst_type, uint16_t> ||
+            Std::is_same_v<dst_type, int32_t> || Std::is_same_v<dst_type, uint32_t> ||
+            Std::is_same_v<dst_type, float> || Std::is_same_v<dst_type, bfloat16_t>,
+        "Unsupported destination element type");
 
     asc_fill_value_config config{};
     config.repeat = params.repeat_times;
@@ -48,10 +57,8 @@ __aicore__ inline void fill(const Tensor& dst, const fill_params<T>& params)
     config.dst_gap = params.dst_gap;
     if constexpr (Std::is_same_v<T, half> || Std::is_same_v<T, bfloat16_t>) {
         asc_fill_l1(dst.data().get(), params.init_value, config);
-    } else if constexpr (sizeof(T) == 2) {
-        asc_fill_l1(dst.data().get(), static_cast<half>(params.init_value), config);
     } else {
-        asc_fill_l1(dst.data().get(), static_cast<uint32_t>(params.init_value), config);
+        asc_fill_l1(dst.data().get(), params.init_value, config);
     }
 }
 
