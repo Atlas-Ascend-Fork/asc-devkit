@@ -33,6 +33,7 @@ SIMD场景下，通过仿真器进行算子性能仿真时，可对算子任意�
 >该功能主要用于**调试和性能分析**，开启后会对算子性能产生一定影响，通常在调测阶段使用，**生产环境建议关闭**。
 >默认情况下，该功能关闭，开发者可以按需通过如下方式开启打点功能。
 >修改核函数（Kernel）直调工程cmake目录下的npu\_lib.cmake文件，在ascendc\_compile\_definitions命令中增加-DASCENDC\_TRACE\_ON编译选项，来开启打点功能。示例如下：
+>
 >```
 >// 打开算子的打点功能
 >ascendc_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE
