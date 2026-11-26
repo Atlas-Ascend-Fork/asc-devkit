@@ -299,6 +299,41 @@ inline void RollbackWriteInfo(RingBufWriteInfo* writeInfo, uint64_t oldBufOff)
     __atomic_store_n(reinterpret_cast<uint64_t*>(&writeInfo->bufOffset), oldBufOff, __ATOMIC_SEQ_CST);
 }
 
+/* ── Formatted text rendering (glibc, clamped) ──────────────────────── */
+
+/*
+ * Render fmt/args into strDest with glibc vsnprintf — the same engine the
+ * length probe (CalcFormattedLen) uses, so the rendered text always matches
+ * the reserved length. Huawei Secure C's vsnprintf_s is deliberately not
+ * used here: its self-contained formatter only supports d i o u x X e E
+ * f F g G s c p and rejects other standard conversions such as %a/%A, which
+ * made the probe reserve text space while the renderer failed and dropped
+ * the whole line. Behaviour now matches host glibc printf for every
+ * conversion, including %a/%A.
+ *
+ * Overflow safety without the Secure C wrapper:
+ *  - vsnprintf never writes more than the given bound (NUL included) and is
+ *    additionally checked at runtime via _FORTIFY_SOURCE=2 (__vsnprintf_chk);
+ *  - count limits the output to the length reserved by the probe, so a FIFO
+ *    record cannot spill into its neighbour.
+ *
+ * Returns the number of characters written (excluding NUL), or -1 on
+ * failure (strDest is then an empty string).
+ */
+static int32_t FormatToString(char* strDest, size_t destMax, size_t count, const char* fmt, va_list args)
+{
+    if (strDest == nullptr || fmt == nullptr || destMax == 0U) {
+        return -1;
+    }
+    size_t cap = (count < destMax - 1U) ? (count + 1U) : destMax;
+    int32_t len = vsnprintf(strDest, cap, fmt, args);
+    if (len < 0) {
+        strDest[0] = '\0';
+        return -1;
+    }
+    return (static_cast<size_t>(len) < cap) ? len : static_cast<int32_t>(cap - 1U);
+}
+
 /* ── Legacy printf (linear buffer) ──────────────────────────────────── */
 
 static void PrintfLegacy(const char* fmt, va_list otherArgs)
@@ -315,10 +350,13 @@ static void PrintfLegacy(const char* fmt, va_list otherArgs)
     if (aicpuDumpOffSet >= aicpuDumpBufSize) {
         return;
     }
-    aicpuDumpOffSet += static_cast<size_t>(vsnprintf_s(
+    int32_t ret = FormatToString(
         reinterpret_cast<char*>(aicpuDumpBuffer) + aicpuDumpOffSet, aicpuDumpBufSize - aicpuDumpOffSet,
-        aicpuDumpBufSize - aicpuDumpOffSet, fmt, otherArgs));
-    *reinterpret_cast<size_t*>(g_aicpuDumpConfig.dumpBufAddr) = aicpuDumpOffSet;
+        aicpuDumpBufSize - aicpuDumpOffSet, fmt, otherArgs);
+    if (ret > 0) {
+        aicpuDumpOffSet += static_cast<size_t>(ret);
+        *reinterpret_cast<size_t*>(g_aicpuDumpConfig.dumpBufAddr) = aicpuDumpOffSet;
+    }
 }
 
 /* ── FIFO write helpers ─────────────────────────────────────────────── */
@@ -363,11 +401,10 @@ static bool WriteFormattedString(const RingBufWriteCtx& ctx, const char* fmt, va
         char* strDest = reinterpret_cast<char*>(ctx.ringBase + ctx.writingOff);
         size_t destMax = ctx.ringBufLen - ctx.writingOff;
         size_t count = (ctx.strLen < destMax) ? ctx.strLen : (destMax - 1U);
-        (void)vsnprintf_s(strDest, destMax, count, fmt, otherArgs);
-        return true;
+        return (FormatToString(strDest, destMax, count, fmt, otherArgs) >= 0);
     }
     // Write formatted string to temp buffer after header.
-    // vsnprintf_s to tempBuf first, then copy to ringBuf (string may span boundary)
+    // FormatToString to tempBuf first, then copy to ringBuf (string may span boundary)
     uint8_t* tempBuf = g_fifoTempBuf.Get(ctx.ringBufLen);
     if (tempBuf == nullptr) {
         return false;
@@ -375,7 +412,9 @@ static bool WriteFormattedString(const RingBufWriteCtx& ctx, const char* fmt, va
     char* strDest = reinterpret_cast<char*>(tempBuf);
     size_t destMax = static_cast<size_t>(ctx.ringBufLen);
     size_t count = (ctx.strLen < destMax) ? ctx.strLen : (destMax - 1U);
-    (void)vsnprintf_s(strDest, destMax, count, fmt, otherArgs);
+    if (FormatToString(strDest, destMax, count, fmt, otherArgs) < 0) {
+        return false;
+    }
     // Copy string to ringbuf at the position after header (may span boundary)
     uint32_t strCopyLen = ctx.tlvLen - sizeof(PrintfInfo);
     uint32_t part1 = tailSpace;
