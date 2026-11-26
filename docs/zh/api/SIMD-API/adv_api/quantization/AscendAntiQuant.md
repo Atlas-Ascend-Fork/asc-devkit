@@ -109,7 +109,7 @@
 **图2**  isTranspose为False且输出为bfloat16的AscendAntiQuant算法框图  
 ![](../../../figures/ascendantiquant_no_transpose_bfloat16.png "isTranspose为False且输出为bfloat16的AscendAntiQuant算法框图")
 
-在Atlas A2系列产品上，当输出为bfloat16时，计算过程分为如下几步：
+当输出为bfloat16时，计算过程分为如下几步：
 
 1.  src精度转换：将输入的src转换为half类型，再转换为float类型，存放到tmp1；
 2.  offset精度转换：当输入的offset为向量时转换为float类型，存放到tmp2，为scalar时做Cast转换为float类型；
