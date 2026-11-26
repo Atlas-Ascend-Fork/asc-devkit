@@ -30,7 +30,7 @@
 
 `fill`将标量填充值写入L1 Buffer，并将填充值广播到多个32字节分形块，可用于矩阵计算前的L1 Buffer初始化。
 
-Tensor API提供两种填充形式：显式传入`fill_params<T>`描述填充配置；仅传入填充值时，接口根据目的Tensor的Layout推导填充参数，并完整填充该Tensor。两种形式均要求填充值类型`T`与目的Tensor的`data_type`完全一致。
+Tensor API提供两种填充形式：显式传入`fill_params<T>`描述填充配置；仅传入填充值时，接口根据目的Tensor的Layout推导填充参数，并完整填充该Tensor。填充值类型`T`支持`half`、`uint32_t`和`bfloat16_t`；其中`bfloat16_t`仅可用于`bfloat16_t`目的Tensor。
 
 ## 函数原型
 
@@ -57,7 +57,7 @@ __aicore__ inline void fill(const Tensor& dst, const T& init_value)
 | 参数名 | 描述 |
 | :--- | :--- |
 | Tensor | 目的Tensor类型。 |
-| T | 填充值类型，必须与`Tensor::data_type`一致。 |
+| T | 填充值类型，支持`half`、`uint32_t`和`bfloat16_t`。 |
 
 **表2** `fill`接口参数说明
 
@@ -78,7 +78,7 @@ __aicore__ inline void fill(const Tensor& dst, const T& init_value)
 
 ## 数据类型
 
-`T`支持`half`、`bfloat16_t`、`int16_t`、`uint16_t`、`int32_t`、`uint32_t`和`float`。
+`Tensor::data_type`支持`half`、`bfloat16_t`、`int16_t`、`uint16_t`、`int32_t`、`uint32_t`和`float`。填充值类型`T`支持`half`、`uint32_t`和`bfloat16_t`。
 
 ## 返回值说明
 
@@ -88,7 +88,8 @@ __aicore__ inline void fill(const Tensor& dst, const T& init_value)
 
 - 本接口仅在AIC上生效。
 - 目的Tensor必须位于L1 Buffer。
-- `T`必须与`Tensor::data_type`一致，否则编译期报错。
+- 当`Tensor::data_type`为`half`、`int16_t`、`uint16_t`、`int32_t`、`uint32_t`或`float`时，`T`支持`half`和`uint32_t`。
+- 当`Tensor::data_type`为`bfloat16_t`时，`T`支持`half`、`bfloat16_t`和`uint32_t`。
 - 目的Tensor起始地址需要按照32字节对齐。
 - L1 Buffer总容量为512KB。目的Tensor偏移量与实际占用空间之和不可超过L1 Buffer容量。
 - 如果本指令与其他指令存在数据依赖，需要插入同步指令，保证多个指令串行化，防止出现异常数据。
