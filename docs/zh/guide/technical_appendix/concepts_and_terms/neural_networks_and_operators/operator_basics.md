@@ -67,7 +67,7 @@ Tensor是算子计算数据的容器，包含如下属性信息。
 </thead>
 <tbody><tr id="row1482216942017"><td class="cellrowborder" valign="top" width="27.339999999999996%" headers="mcps1.2.4.1.1 "><p id="p1182211962011"><a name="p1182211962011"></a><a name="p1182211962011"></a>1</p>
 </td>
-<td class="cellrowborder" valign="top" width="34.4%" headers="mcps1.2.4.1.2 "><p id="p158221962016"><a name="p158221962016"></a><a name="p158221962016"></a>(0,)</p>
+<td class="cellrowborder" valign="top" width="34.4%" headers="mcps1.2.4.1.2 "><p id="p158221962016"><a name="p158221962016"></a><a name="p158221962016"></a>()</p>
 </td>
 <td class="cellrowborder" valign="top" width="38.26%" headers="mcps1.2.4.1.3 "><p id="p22591314182"><a name="p22591314182"></a><a name="p22591314182"></a>0维张量，也是一个标量</p>
 </td>

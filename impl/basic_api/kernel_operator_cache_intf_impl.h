@@ -142,9 +142,9 @@ __aicore__ inline void CheckPrefetchParams(const PrefetchParams& p, const __gm__
     ASCENDC_ASSERT((p.burstLen % burstLenAlign == 0), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check burstLen value in %s, "
+            "Failed to check burstLen value in %s, burstLen must be a multiple of %u (sizeof(T)), "
             "current value is %u.",
-            apiMsg, p.burstLen);
+            apiMsg, burstLenAlign, p.burstLen);
     });
 }
 
