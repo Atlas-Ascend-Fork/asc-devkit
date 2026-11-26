@@ -101,7 +101,7 @@ This API must be called before the **SetTensorA**, **SetTensorB**, **SetBias**, 
                    mm.SetBias(gm_bias[offset_bias]);
                    mm.Iterate(k != 0);
                 }
-                matmulObj.GetTensorC(gm_c[offset_c]);
+                mm.GetTensorC(gm_c[offset_c]);
          }
     }
     ```

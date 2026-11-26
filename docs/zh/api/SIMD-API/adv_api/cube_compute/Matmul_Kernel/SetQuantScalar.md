@@ -55,7 +55,7 @@ __aicore__ inline void SetQuantScalar(const uint64_t quantScalar)
     -   若offset存在：
         1.  将offset值处理为int，范围为\[-256, 255\]。
 
-            offset = Max\(Min\(INT\(Round\(offset\)\), 255\), 256\)
+            offset = Max\(Min\(INT\(Round\(offset\)\), 255\), -256\)
 
         2.  再将offset按bit位保留9位并存储于quantScalar的37到45位。
 

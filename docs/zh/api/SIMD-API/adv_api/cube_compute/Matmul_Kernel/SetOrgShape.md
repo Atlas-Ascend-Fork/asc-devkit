@@ -99,7 +99,7 @@ __aicore__ inline void SetOrgShape(int orgM, int orgN, int orgKa, int orgKb, int
                    mm.SetBias(gm_bias[offset_bias]);
                    mm.Iterate(k != 0);
                 }
-                matmulObj.GetTensorC(gm_c[offset_c]);
+                mm.GetTensorC(gm_c[offset_c]);
          }
     }
     ```

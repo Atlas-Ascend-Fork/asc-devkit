@@ -61,7 +61,7 @@ REGIST_MATMUL_OBJ(&pipe, GetSysWorkSpacePtr(), mm, &tiling);
 // tailM: number of remaining elements in the M direction, tailN: number of remaining elements in the N direction, tailK: number of remaining elements in the K direction.
 // If this is a tail core, the remaining elements may be fewer than the elements that a single core needs to compute. In this case, use SetSingleShape to reset the number of elements to be computed this time.
 if (tailM < tiling.singleCoreM || tailN < tiling.singleCoreN || tailK < tiling.singleCoreK) {
-    matmulObj.SetSingleShape(tailM, tailN, tailK);
+    mm.SetSingleShape(tailM, tailN, tailK);
 }
 
 mm.SetTensorA(gm_a);
