@@ -59,7 +59,7 @@ inline __asc_fp8_storage_t __asc_cvt_float_to_fp8(const float x, const __asc_sat
     | 超出float8_e4m3_t范围的正值 | nan | 448 |
     | 超出float8_e4m3_t范围的负值 | nan | -448 |
 
-- fp8_interpretation的参数为__ASC_E5M2时：
+- fp8_interpretation参数为__ASC_E5M2时：
 
     | 输入 | 非饱和模式返回值 | 饱和模式返回值 |
     |---|---|---|

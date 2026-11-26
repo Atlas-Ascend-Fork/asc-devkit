@@ -292,9 +292,9 @@
 | [__hmulx2](../math_functions/half_type/half2_arithmetic_functions/__hmulx2.md) | 计算两个half2类型数据各分量的相乘结果，并遵循CAST_RINT模式舍入。 |
 | [__hdivx2](../math_functions/half_type/half2_arithmetic_functions/__hdivx2.md) | 计算两个half2类型数据各分量的相除结果，并遵循CAST_RINT模式舍入。 |
 | [__habsx2](../math_functions/half_type/half2_arithmetic_functions/__habsx2.md) | 计算输入half2类型数据各分量的绝对值。 |
-| [__hfmax2](../math_functions/half_type/half2_arithmetic_functions/__hfmax2.md) | 计算两个half2类型数据各分量的乘加的结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。 |
+| [__hfmax2](../math_functions/half_type/half2_arithmetic_functions/__hfmax2.md) | 计算两个half2类型数据各分量的乘加结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。 |
 | [__hnegx2](../math_functions/half_type/half2_arithmetic_functions/__hnegx2.md) | 获取输入half2类型数据各分量的负值。 |
-| [__hfmax2_relu](../math_functions/half_type/half2_arithmetic_functions/__hfmax2_relu.md) | 计算两个half2类型数据各分量的乘加的结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。负数结果置为0。 |
+| [__hfmax2_relu](../math_functions/half_type/half2_arithmetic_functions/__hfmax2_relu.md) | 计算两个half2类型数据各分量的乘加结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。负数结果置为0。 |
 | [__hcmadd](../math_functions/half_type/half2_arithmetic_functions/__hcmadd.md) | 将三个half2输入视为复数（第一个分量为实部，第二个分量为虚部），执行复数乘加运算x*y+z。 |
 
 **表14**  half2类型比较函数
@@ -543,9 +543,9 @@
 | [__hmulx2](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hmulx2.md) | 计算两个bfloat16x2_t类型数据各分量的相乘结果，并遵循CAST_RINT模式舍入。 |
 | [__hdivx2](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hdivx2.md) | 计算两个bfloat16x2_t类型数据各分量的相除结果，并遵循CAST_RINT模式舍入。 |
 | [__habsx2](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__habsx2.md) | 计算输入bfloat16x2_t类型数据各分量的绝对值。 |
-| [__hfmax2](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hfmax2.md) | 计算两个bfloat16x2_t类型数据各分量的乘加的结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。 |
+| [__hfmax2](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hfmax2.md) | 计算两个bfloat16x2_t类型数据各分量的乘加结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。 |
 | [__hnegx2](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hnegx2.md) | 获取输入bfloat16x2_t类型数据各分量的负值。 |
-| [__hfmax2_relu](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hfmax2_relu.md) | 计算两个bfloat16x2_t类型数据各分量的乘加的结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。负数结果置为0。 |
+| [__hfmax2_relu](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hfmax2_relu.md) | 计算两个bfloat16x2_t类型数据各分量的乘加结果（前两个输入相乘后与第三个输入相加），并遵循CAST_RINT模式舍入。负数结果置为0。 |
 | [__hcmadd](../math_functions/bfloat16_type/bfloat16x2_arithmetic_functions/__hcmadd.md) | 将三个bfloat16x2_t输入视为复数（第一个分量为实部，第二个分量为虚部），执行复数乘加运算x*y+z。 |
 
 **表21**  bfloat16x2类型比较函数

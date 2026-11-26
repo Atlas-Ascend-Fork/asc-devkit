@@ -6,7 +6,7 @@
 
 ## 线程架构
 
-SIMT编程模型采用分层的抽象线程组织结构，示意图如下图所示，从顶层到底层依次为：Grid（线程块网格）、Thread Block（线程块）、Warp（线程束）和Thread（线程）。这种层次化的设计使得开发者可以方便地将并行计算问题映射到硬件资源上。
+SIMT编程模型采用分层的抽象线程组织结构，示意图如下所示，从顶层到底层依次为：Grid（线程块网格）、Thread Block（线程块）、Warp（线程束）和Thread（线程）。这种层次化的设计使得开发者可以方便地将并行计算问题映射到硬件资源上。
 
 **图1**  线程结构示意图
 
@@ -44,7 +44,7 @@ Grid是SIMT线程层次结构的最顶层，由多个Thread Block组成。使用
 | 内置变量 | 说明 | 数据类型 | 约束 |
 | --- | --- | --- | --- |
 | gridDim | Grid的维度大小。 | dim3 | gridDim.x <= 65535；gridDim.y、gridDim.z必须为1 |
-| blockDim | Thread Block的维度大小。 | dim3 | blockDim.x * blockDim.y * blockDim.z  <= 2048 |
+| blockDim | Thread Block的维度大小。 | dim3 | blockDim.x \* blockDim.y \* blockDim.z  <= 2048 |
 | blockIdx | 当前Thread Block在Grid中的索引。 | dim3 | 无 |
 | threadIdx | 当前线程在Thread Block内的索引。 | dim3 | 无 |
 
@@ -105,6 +105,6 @@ UB是同一线程块内所有线程均可访问的内存空间，位于每个AIV
     Data Cache空间大小 = min(UB总大小（256KB） - 静态内存 - 动态内存 - 预留空间（8KB）, 128KB)
     ```
 
-    若DataCache小于32KB，会出现校验报错。
+    若Data Cache小于32KB，会出现校验报错。
 
 更多UB内存的排布、复用、对齐等规则，详见[SIMD与SIMT混合编程场景的UB内存划分](../../../guide/programming_guide/advanced_programming/advanced_ai_core_programming_model/simd_simt_hybrid_programming/memory_hierarchy.md#ub划分)。

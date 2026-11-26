@@ -9,4 +9,3 @@
 -   **[asc\_ballot](asc_ballot.md)**
 
 -   **[asc\_activemask](asc_activemask.md)**
-

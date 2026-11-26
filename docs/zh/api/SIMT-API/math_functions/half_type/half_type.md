@@ -13,4 +13,3 @@
 -   **[half2类型比较函数](half2_compare_functions/half2_compare_functions.md)**
 
 -   **[half2类型数学库函数](half2_math_functions/half2_math_functions.md)**
-

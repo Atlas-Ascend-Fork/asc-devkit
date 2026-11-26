@@ -70,7 +70,7 @@ inline half hcos(half x)
     __global__ __launch_bounds__(1024) void KernelCos(half* dst, half* x)
     {
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
-        dst[idx] = hcos(x[idx]); // 对src源地址的第idx个元素取三角函数余弦值
+        dst[idx] = hcos(x[idx]); // 对x源地址的第idx个元素取三角函数余弦值
     }
     ```
 
@@ -82,7 +82,7 @@ inline half hcos(half x)
     __simt_vf__ __launch_bounds__(1024) inline void KernelCos(__gm__ half* dst, __gm__ half* x)
     {
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
-        dst[idx] = hcos(x[idx]); // 对src源地址的第idx个元素取三角函数余弦值
+        dst[idx] = hcos(x[idx]); // 对x源地址的第idx个元素取三角函数余弦值
     }
     ```
 

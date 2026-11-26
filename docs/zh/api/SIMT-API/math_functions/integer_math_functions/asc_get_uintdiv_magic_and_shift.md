@@ -43,10 +43,9 @@ $$
 > [!NOTE]说明
 >
 > 整数快除算法使用方式：
+>
 > 1. 在标量计算逻辑中，调用`asc_get_uintdiv_magic_and_shift`接口，计算除数的`magic`和`shift`值。
 > 2. 在SIMT VF计算逻辑中，调用[asc_uintdiv](asc_uintdiv.md)接口，完成指定被除数的除法运算。
-
-> [!CAUTION]注意
 >
 > 本接口不能在SIMT VF中调用，只能在标量计算逻辑中调用。
 

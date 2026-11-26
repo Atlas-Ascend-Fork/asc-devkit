@@ -51,7 +51,7 @@ half2 __hcmadd(const half2 x, const half2 y, const half2 z)
 
 | 实部结果 | 虚部结果 |
 | --- | --- |
-| __hfma(-x.y, y.y, __hfma(x.x, y.x, z.x)) | __hfma(x.y, y.x, __hfma(x.x, y.y, z.y)) |
+| \_\_hfma\(-x.y, y.y, \_\_hfma\(x.x, y.x, z.x\)\) | \_\_hfma\(x.y, y.x, \_\_hfma\(x.x, y.y, z.y\)\) |
 
 ## 约束说明
 

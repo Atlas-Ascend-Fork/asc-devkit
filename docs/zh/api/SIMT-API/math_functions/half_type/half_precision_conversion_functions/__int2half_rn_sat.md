@@ -45,7 +45,7 @@ inline half __int2half_rn_sat(const int x)
 
 ## 返回值说明
 
-遵循CAST\_RINT模式，将输入int32数据转换成的half数据。特殊值如下：
+遵循CAST\_RINT模式，输入int32数据转换成的half数据。特殊值如下：
 
 | x值 | 返回值 |
 | --- | --- |

@@ -13,4 +13,3 @@
 -   **[bfloat16x2类型比较函数](bfloat16x2_compare_functions/bfloat16x2_compare_functions.md)**
 
 -   **[bfloat16x2类型数学库函数](bfloat16x2_math_functions/bfloat16x2_math_functions.md)**
-

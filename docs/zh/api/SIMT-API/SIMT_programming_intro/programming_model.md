@@ -37,8 +37,8 @@ Grid是SIMT线程层次结构的最顶层，由多个Thread Block组成。使用
 
 | 内置变量 | 说明 | 数据类型 | 约束 |
 | --- | --- | --- | --- |
-| gridDim | Grid的维度大小 | dim3 | gridDim.x * gridDim.y * gridDim.z <= UINT64_MAX |
-| blockDim | Thread Block的维度大小 | dim3 | blockDim.x * blockDim.y * blockDim.z <= 2048 |
+| gridDim | Grid的维度大小 | dim3 | gridDim.x \* gridDim.y \* gridDim.z <= UINT64_MAX |
+| blockDim | Thread Block的维度大小 | dim3 | blockDim.x \* blockDim.y \* blockDim.z <= 2048 |
 | blockIdx | 当前Thread Block在Grid中的索引 | dim3 | 无 |
 | threadIdx | 当前线程在Thread Block内的索引 | dim3 | 无 |
 
@@ -93,4 +93,4 @@ UB是同一线程块内所有线程均可访问的内存空间，位于每个AIV
     DataCache = min(UB总大小（256KB） - 静态内存 - 动态内存 - 预留空间(8KB), 128KB)
     ```
 
-    若DataCache小于32KB，会出现校验报错。
+    若Data Cache小于32KB，会出现校验报错。

@@ -45,7 +45,7 @@ inline half __bfloat162half_rna_sat(const bfloat16_t x)
 
 ## 返回值说明
 
-将输入遵循CAST\_ROUND模式转换成的half类型数据。本接口受全局饱和寄存器的影响，特殊值如下：
+输入遵循CAST\_ROUND模式转换成的half类型数据。本接口受全局饱和寄存器的影响，特殊值如下：
 
 | x值 | 非饱和模式返回值 | 饱和模式返回值 |
 | --- | --- | --- |
