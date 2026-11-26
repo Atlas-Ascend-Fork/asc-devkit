@@ -16,6 +16,7 @@
 
 #include "ccu_kernel_alg_base.h"
 #include "../../../../all_gather/template/ccu/kernel/ccu_kernel_kfc_all_gather_mesh1d_mem2mem_a6.h"
+#include "../../../../all_gather/template/ccu/kernel/ccu_kernel_kfc_all_gather_nhr1d_mem2mem_a6.h"
 #include "../../../../all_reduce/template/ccu/kernel/ccu_kernel_kfc_all_reduce_mesh1d_mem2mem_a6.h"
 #include "../../../../all_reduce/template/ccu/kernel/ccu_kernel_kfc_all_reduce_nhr1d_mem2mem_a6.h"
 #include "../../../../reduce_scatter/template/ccu/kernel/ccu_kernel_kfc_reduce_scatter_mesh1d_mem2mem_a6.h"
@@ -248,78 +249,116 @@ CcuResult LoadFuncParamFromMemory(
 
 // Sole Mesh 队列负载布局与 Concur/Parallel AG mission-0 Mesh 共享（frame 见各常量文件）。
 // A6 无提前写 turn-end 的 kernel（D3 为 A5 SoleNHR AG 专属），dispatch 后统一发放。
-static void DispatchKfcSubKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& srvCtx)
+
+// SoleNHR（CcuSchedAllGatherSoleNHR）参数帧见 KfcAllGatherSoleNhrParamIndex，
+// goSize 组按 kernelArg.axisId 选档（D0/D1）；A6 无 D3 turn-end 提前。
+static CcuResult DispatchAllGatherSoleNhrKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& ctx)
 {
-    if (srvCtx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLGATHER) {
-        CcuKfcAllGatherMesh1DMem2MemKernel(
-            param[KFC_CONCURRENT_AG_MESH_INPUT], param[KFC_CONCURRENT_AG_MESH_OUTPUT], srvCtx.token,
-            param[KFC_CONCURRENT_AG_MESH_OUTPUT_OFFSET], param[KFC_CONCURRENT_AG_MESH_SLICE_SIZE],
-            param[KFC_CONCURRENT_AG_MESH_GO_SIZE_0], param[KFC_CONCURRENT_AG_MESH_GO_SIZE_1],
-            param[KFC_CONCURRENT_AG_MESH_GO_SIZE_2], param[KFC_CONCURRENT_AG_MESH_GO_SIZE_3],
-            param[KFC_CONCURRENT_AG_MESH_CURRENT_RANK_SLICE_INPUT_OFFSET], param[KFC_CONCURRENT_AG_MESH_REPEAT_NUM_INV],
-            param[KFC_CONCURRENT_AG_MESH_INPUT_REPEAT_STRIDE], param[KFC_CONCURRENT_AG_MESH_OUTPUT_REPEAT_STRIDE],
-            param[KFC_CONCURRENT_AG_MESH_LAST_SLICE_SIZE], param[KFC_CONCURRENT_AG_MESH_INPUT_OUTPUT_EQUAL],
-            srvCtx.arg->channels, srvCtx.arg->channelCount, static_cast<uint32_t>(srvCtx.arg->rankSize),
-            srvCtx.arg->rankId);
-    } else if (srvCtx.arg->opParam.opType == HcclCMDType::HCCL_CMD_REDUCE_SCATTER) {
-        if (srvCtx.arg->opParam.algName != nullptr &&
-            std::strcmp(srvCtx.arg->opParam.algName, KFC_REDUCE_SCATTER_PEER_ONLY_ALG_NAME) == 0) {
-            CcuReduceScatterMeshMem2Mem1DPeerOnlyKernel(
-                param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], srvCtx.token, param[HBM_PARAM_IDX_4],
-                param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_7], param[HBM_PARAM_IDX_8], srvCtx.arg->channels,
-                srvCtx.arg->channelCount, static_cast<uint32_t>(srvCtx.arg->rankSize), srvCtx.arg->rankId,
-                srvCtx.arg->opParam.DataDes.dataType, srvCtx.arg->opParam.reduceType);
-        } else {
-            CcuReduceScatterMesh1DMem2MemKernel(
-                param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], srvCtx.token, param[HBM_PARAM_IDX_3],
-                param[HBM_PARAM_IDX_4], param[HBM_PARAM_IDX_KFC_CHUNK_SIZE], param[HBM_PARAM_IDX_KFC_CHUNK_LOOP_NUM],
-                param[HBM_PARAM_IDX_KFC_TAIL_SIZE], param[HBM_PARAM_IDX_KFC_FULL_GO_ADDR_OFFSET],
-                param[HBM_PARAM_IDX_KFC_FULL_GO_LOOP_PARAM], param[HBM_PARAM_IDX_KFC_FULL_GO_PARALLEL_PARAM],
-                param[HBM_PARAM_IDX_KFC_FULL_GO_RESIDUAL], param[HBM_PARAM_IDX_KFC_TAIL_GO_ADDR_OFFSET],
-                param[HBM_PARAM_IDX_KFC_TAIL_GO_LOOP_PARAM], param[HBM_PARAM_IDX_KFC_TAIL_GO_PARALLEL_PARAM],
-                param[HBM_PARAM_IDX_KFC_TAIL_GO_RESIDUAL], srvCtx.arg->channels, srvCtx.arg->channelCount,
-                static_cast<uint32_t>(srvCtx.arg->rankSize), srvCtx.arg->rankId, srvCtx.arg->opParam.DataDes.dataType,
-                srvCtx.arg->opParam.DataDes.outputType, srvCtx.arg->opParam.reduceType);
-        }
-    } else if (srvCtx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLREDUCE) {
-        if (srvCtx.arg->role == KfcServerRole::ALL_REDUCE_SOLE_NHR) {
-            // SoleNHR（CcuSchedAllReduceSoleNHR）单帧布局见 KfcAllReduceSoleNhrParamIndex
-            // （[0]=INPUT 兼作哨兵；die 切分/分片尺寸/末片尺寸由 AIV prepare 写入；token 走 srvCtx.token）。
-            CcuKernelKfcAllReduceNHR1DMem2MemKernel(
-                param[KFC_AR_SOLE_NHR_INPUT], param[KFC_AR_SOLE_NHR_OUTPUT], srvCtx.token,
-                param[KFC_AR_SOLE_NHR_IS_INPUT_OUTPUT_EQUAL], param[KFC_AR_SOLE_NHR_DIE0_SIZE],
-                param[KFC_AR_SOLE_NHR_DIE1_SIZE], param[KFC_AR_SOLE_NHR_DIE0_SLICE_SIZE],
-                param[KFC_AR_SOLE_NHR_DIE1_SLICE_SIZE], param[KFC_AR_SOLE_NHR_DIE0_LAST_SLICE_SIZE],
-                param[KFC_AR_SOLE_NHR_DIE1_LAST_SLICE_SIZE], srvCtx.arg->channels, srvCtx.arg->channelCount,
-                static_cast<uint32_t>(srvCtx.arg->rankSize), srvCtx.arg->rankId, srvCtx.arg->axisId,
-                srvCtx.arg->axisSize, srvCtx.arg->opParam.DataDes.dataType, srvCtx.arg->opParam.DataDes.outputType,
-                srvCtx.arg->opParam.reduceType, srvCtx.arg->nhrStepInfoVector, srvCtx.arg->nhrRank2ChannelIdx);
-        } else {
-            CcuKfcAllReduceMesh1DMem2MemKernel(
-                param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], srvCtx.token, param[HBM_PARAM_IDX_3],
-                param[HBM_PARAM_IDX_4], param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_6], param[HBM_PARAM_IDX_7],
-                param[HBM_PARAM_IDX_8], param[HBM_PARAM_IDX_9], param[HBM_PARAM_IDX_10], param[HBM_PARAM_IDX_11],
-                param[HBM_PARAM_IDX_12], param[HBM_PARAM_IDX_13], param[HBM_PARAM_IDX_14], param[HBM_PARAM_IDX_15],
-                param[HBM_PARAM_IDX_16], param[HBM_PARAM_IDX_17], param[HBM_PARAM_IDX_18], param[HBM_PARAM_IDX_19],
-                param[HBM_PARAM_IDX_20], param[HBM_PARAM_IDX_21], param[HBM_PARAM_IDX_22], param[HBM_PARAM_IDX_23],
-                param[HBM_PARAM_IDX_24], param[HBM_PARAM_IDX_25], srvCtx.arg->channels, srvCtx.arg->channelCount,
-                static_cast<uint32_t>(srvCtx.arg->rankSize), srvCtx.arg->rankId, srvCtx.arg->opParam.DataDes.dataType,
-                srvCtx.arg->opParam.DataDes.outputType, srvCtx.arg->opParam.reduceType);
-        }
-    } else if (srvCtx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALLV) {
-        CcuAlltoAllVMesh1DKernel(
-            param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], srvCtx.token, param[HBM_PARAM_IDX_3],
-            param[HBM_PARAM_IDX_4], param[HBM_PARAM_IDX_9], param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_6],
-            param[HBM_PARAM_IDX_7], param[HBM_PARAM_IDX_8], srvCtx.arg->channels, srvCtx.arg->channelCount,
-            static_cast<uint32_t>(srvCtx.arg->rankSize), srvCtx.arg->rankId);
-    } else if (srvCtx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALL) {
-        CcuAlltoAllMesh1DKernel(
-            param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], srvCtx.token, param[HBM_PARAM_IDX_3],
-            param[HBM_PARAM_IDX_4], param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_6], param[HBM_PARAM_IDX_7],
-            param[HBM_PARAM_IDX_8], param[HBM_PARAM_IDX_9], param[HBM_PARAM_IDX_10], srvCtx.arg->channels,
-            srvCtx.arg->channelCount, static_cast<uint32_t>(srvCtx.arg->rankSize), srvCtx.arg->rankId,
-            srvCtx.arg->loadFromMem);
+    const uint32_t goSizeBase = (ctx.arg->axisId == 0U) ? KFC_AG_SOLE_NHR_GO_D0_SIZE_0 : KFC_AG_SOLE_NHR_GO_D1_SIZE_0;
+    return CcuKernelKfcAllGatherNHR1DMem2MemKernel(
+        param[KFC_AG_SOLE_NHR_INPUT], param[KFC_AG_SOLE_NHR_OUTPUT], ctx.token, param[KFC_AG_SOLE_NHR_DIE0_SIZE],
+        param[KFC_AG_SOLE_NHR_DIE1_SIZE], param[KFC_AG_SOLE_NHR_OUTPUT_SLICE_STRIDE], param[goSizeBase],
+        param[goSizeBase + 1U], param[goSizeBase + 2U], param[goSizeBase + 3U], ctx.arg->channels,
+        ctx.arg->channelCount, static_cast<uint32_t>(ctx.arg->rankSize), ctx.arg->rankId, ctx.arg->axisId,
+        ctx.arg->nhrStepInfoVector, ctx.arg->nhrRank2ChannelIdx);
+}
+
+static CcuResult DispatchAllGatherSubKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& ctx)
+{
+    if (ctx.arg->role == KfcServerRole::ALL_GATHER_SOLE_NHR) {
+        return DispatchAllGatherSoleNhrKernel(param, ctx);
     }
+    return CcuKfcAllGatherMesh1DMem2MemKernel(
+        param[KFC_CONCURRENT_AG_MESH_INPUT], param[KFC_CONCURRENT_AG_MESH_OUTPUT], ctx.token,
+        param[KFC_CONCURRENT_AG_MESH_OUTPUT_OFFSET], param[KFC_CONCURRENT_AG_MESH_SLICE_SIZE],
+        param[KFC_CONCURRENT_AG_MESH_GO_SIZE_0], param[KFC_CONCURRENT_AG_MESH_GO_SIZE_1],
+        param[KFC_CONCURRENT_AG_MESH_GO_SIZE_2], param[KFC_CONCURRENT_AG_MESH_GO_SIZE_3],
+        param[KFC_CONCURRENT_AG_MESH_CURRENT_RANK_SLICE_INPUT_OFFSET], param[KFC_CONCURRENT_AG_MESH_REPEAT_NUM_INV],
+        param[KFC_CONCURRENT_AG_MESH_INPUT_REPEAT_STRIDE], param[KFC_CONCURRENT_AG_MESH_OUTPUT_REPEAT_STRIDE],
+        param[KFC_CONCURRENT_AG_MESH_LAST_SLICE_SIZE], param[KFC_CONCURRENT_AG_MESH_INPUT_OUTPUT_EQUAL],
+        ctx.arg->channels, ctx.arg->channelCount, static_cast<uint32_t>(ctx.arg->rankSize), ctx.arg->rankId);
+}
+
+static CcuResult DispatchReduceScatterSubKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& ctx)
+{
+    if (ctx.arg->opParam.algName != nullptr &&
+        std::strcmp(ctx.arg->opParam.algName, KFC_REDUCE_SCATTER_PEER_ONLY_ALG_NAME) == 0) {
+        return CcuReduceScatterMeshMem2Mem1DPeerOnlyKernel(
+            param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], ctx.token, param[HBM_PARAM_IDX_4], param[HBM_PARAM_IDX_5],
+            param[HBM_PARAM_IDX_7], param[HBM_PARAM_IDX_8], ctx.arg->channels, ctx.arg->channelCount,
+            static_cast<uint32_t>(ctx.arg->rankSize), ctx.arg->rankId, ctx.arg->opParam.DataDes.dataType,
+            ctx.arg->opParam.reduceType);
+    }
+    return CcuReduceScatterMesh1DMem2MemKernel(
+        param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], ctx.token, param[HBM_PARAM_IDX_3], param[HBM_PARAM_IDX_4],
+        param[HBM_PARAM_IDX_KFC_CHUNK_SIZE], param[HBM_PARAM_IDX_KFC_CHUNK_LOOP_NUM],
+        param[HBM_PARAM_IDX_KFC_TAIL_SIZE], param[HBM_PARAM_IDX_KFC_FULL_GO_ADDR_OFFSET],
+        param[HBM_PARAM_IDX_KFC_FULL_GO_LOOP_PARAM], param[HBM_PARAM_IDX_KFC_FULL_GO_PARALLEL_PARAM],
+        param[HBM_PARAM_IDX_KFC_FULL_GO_RESIDUAL], param[HBM_PARAM_IDX_KFC_TAIL_GO_ADDR_OFFSET],
+        param[HBM_PARAM_IDX_KFC_TAIL_GO_LOOP_PARAM], param[HBM_PARAM_IDX_KFC_TAIL_GO_PARALLEL_PARAM],
+        param[HBM_PARAM_IDX_KFC_TAIL_GO_RESIDUAL], ctx.arg->channels, ctx.arg->channelCount,
+        static_cast<uint32_t>(ctx.arg->rankSize), ctx.arg->rankId, ctx.arg->opParam.DataDes.dataType,
+        ctx.arg->opParam.DataDes.outputType, ctx.arg->opParam.reduceType);
+}
+
+// SoleNHR（CcuSchedAllReduceSoleNHR）单帧布局见 KfcAllReduceSoleNhrParamIndex
+// （[0]=INPUT 兼作哨兵；die 切分/分片尺寸/末片尺寸由 AIV prepare 写入；token 走 ctx.token）。
+static CcuResult DispatchAllReduceSoleNhrKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& ctx)
+{
+    return CcuKernelKfcAllReduceNHR1DMem2MemKernel(
+        param[KFC_AR_SOLE_NHR_INPUT], param[KFC_AR_SOLE_NHR_OUTPUT], ctx.token,
+        param[KFC_AR_SOLE_NHR_IS_INPUT_OUTPUT_EQUAL], param[KFC_AR_SOLE_NHR_DIE0_SIZE],
+        param[KFC_AR_SOLE_NHR_DIE1_SIZE], param[KFC_AR_SOLE_NHR_DIE0_SLICE_SIZE],
+        param[KFC_AR_SOLE_NHR_DIE1_SLICE_SIZE], param[KFC_AR_SOLE_NHR_DIE0_LAST_SLICE_SIZE],
+        param[KFC_AR_SOLE_NHR_DIE1_LAST_SLICE_SIZE], ctx.arg->channels, ctx.arg->channelCount,
+        static_cast<uint32_t>(ctx.arg->rankSize), ctx.arg->rankId, ctx.arg->axisId, ctx.arg->axisSize,
+        ctx.arg->opParam.DataDes.dataType, ctx.arg->opParam.DataDes.outputType, ctx.arg->opParam.reduceType,
+        ctx.arg->nhrStepInfoVector, ctx.arg->nhrRank2ChannelIdx);
+}
+
+static CcuResult DispatchAllReduceSubKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& ctx)
+{
+    if (ctx.arg->role == KfcServerRole::ALL_REDUCE_SOLE_NHR) {
+        return DispatchAllReduceSoleNhrKernel(param, ctx);
+    }
+    return CcuKfcAllReduceMesh1DMem2MemKernel(
+        param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], ctx.token, param[HBM_PARAM_IDX_3], param[HBM_PARAM_IDX_4],
+        param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_6], param[HBM_PARAM_IDX_7], param[HBM_PARAM_IDX_8],
+        param[HBM_PARAM_IDX_9], param[HBM_PARAM_IDX_10], param[HBM_PARAM_IDX_11], param[HBM_PARAM_IDX_12],
+        param[HBM_PARAM_IDX_13], param[HBM_PARAM_IDX_14], param[HBM_PARAM_IDX_15], param[HBM_PARAM_IDX_16],
+        param[HBM_PARAM_IDX_17], param[HBM_PARAM_IDX_18], param[HBM_PARAM_IDX_19], param[HBM_PARAM_IDX_20],
+        param[HBM_PARAM_IDX_21], param[HBM_PARAM_IDX_22], param[HBM_PARAM_IDX_23], param[HBM_PARAM_IDX_24],
+        param[HBM_PARAM_IDX_25], ctx.arg->channels, ctx.arg->channelCount, static_cast<uint32_t>(ctx.arg->rankSize),
+        ctx.arg->rankId, ctx.arg->opParam.DataDes.dataType, ctx.arg->opParam.DataDes.outputType,
+        ctx.arg->opParam.reduceType);
+}
+
+static CcuResult DispatchKfcSubKernel(ccu::Array<ccu::Variable>& param, KfcServerContext& ctx)
+{
+    if (ctx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLGATHER) {
+        return DispatchAllGatherSubKernel(param, ctx);
+    }
+    if (ctx.arg->opParam.opType == HcclCMDType::HCCL_CMD_REDUCE_SCATTER) {
+        return DispatchReduceScatterSubKernel(param, ctx);
+    }
+    if (ctx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLREDUCE) {
+        return DispatchAllReduceSubKernel(param, ctx);
+    }
+    if (ctx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALLV) {
+        return CcuAlltoAllVMesh1DKernel(
+            param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], ctx.token, param[HBM_PARAM_IDX_3], param[HBM_PARAM_IDX_4],
+            param[HBM_PARAM_IDX_9], param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_6], param[HBM_PARAM_IDX_7],
+            param[HBM_PARAM_IDX_8], ctx.arg->channels, ctx.arg->channelCount, static_cast<uint32_t>(ctx.arg->rankSize),
+            ctx.arg->rankId);
+    }
+    if (ctx.arg->opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALL) {
+        return CcuAlltoAllMesh1DKernel(
+            param[HBM_PARAM_IDX_1], param[HBM_PARAM_IDX_2], ctx.token, param[HBM_PARAM_IDX_3], param[HBM_PARAM_IDX_4],
+            param[HBM_PARAM_IDX_5], param[HBM_PARAM_IDX_6], param[HBM_PARAM_IDX_7], param[HBM_PARAM_IDX_8],
+            param[HBM_PARAM_IDX_9], param[HBM_PARAM_IDX_10], ctx.arg->channels, ctx.arg->channelCount,
+            static_cast<uint32_t>(ctx.arg->rankSize), ctx.arg->rankId, ctx.arg->loadFromMem);
+    }
+    return CCU_SUCCESS;
 }
 
 CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
