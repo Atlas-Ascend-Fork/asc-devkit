@@ -523,6 +523,7 @@ update_version_info_version() {
         cp -f "$pkg_version_path" "$default_dir"
         log "INFO" "Base version set successfully!"
     fi
+    chmod_single_dir "$default_dir/version.info" 640 file >> /dev/null 2>&1
 }
 
 log_base_version() {
