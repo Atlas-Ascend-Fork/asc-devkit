@@ -1123,7 +1123,9 @@ __aicore__ inline void MakeBarrierImpl(uint8_t groupID, uint16_t arriveNum)
 {
 #if defined(ASCENDC_CPU_DEBUG)
     ASCENDC_ASSERT((groupID > GROUP_SIZE), {
-        KERNEL_LOG(KERNEL_ERROR, "groupID should be less than GROUP_SIZE (%zu)", GROUP_SIZE);
+        KERNEL_LOG(
+            KERNEL_ERROR, "groupID (%u) should be less than GROUP_SIZE (%u)", static_cast<uint32_t>(groupID),
+            GROUP_SIZE);
     });
 #else
     GroupBarrier<Scope> bar(groupID, arriveNum);
