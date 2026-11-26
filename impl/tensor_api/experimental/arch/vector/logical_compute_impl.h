@@ -23,6 +23,73 @@
 namespace asc {
 namespace te {
 namespace experimental {
+namespace detail {
+
+template <uint32_t version, typename DataType, typename ShiftType>
+struct shift_type_check;
+
+template <typename DataType, typename ShiftType>
+struct shift_type_check<arch_version::v3510, DataType, ShiftType> {
+    __simd_callee__ static constexpr void check()
+    {
+        static_assert(
+            (AscendC::Std::is_one_of_v<DataType, int8_t, uint8_t> && AscendC::Std::is_same_v<ShiftType, int8_t>) ||
+                (AscendC::Std::is_one_of_v<DataType, int16_t, uint16_t> &&
+                 AscendC::Std::is_same_v<ShiftType, int16_t>) ||
+                (AscendC::Std::is_one_of_v<DataType, int32_t, uint32_t> && AscendC::Std::is_same_v<ShiftType, int32_t>),
+            "3510 register shift supports these (DataType, ShiftType) pairs: "
+            "(int8_t/uint8_t, int8_t), (int16_t/uint16_t, int16_t), (int32_t/uint32_t, int32_t)");
+    }
+};
+
+template <typename DataType, typename ShiftType>
+struct shift_type_check<arch_version::v9201, DataType, ShiftType> {
+    __simd_callee__ static constexpr void check()
+    {
+        static_assert(
+            (AscendC::Std::is_one_of_v<DataType, int8_t, uint8_t> && AscendC::Std::is_same_v<ShiftType, uint8_t>) ||
+                (AscendC::Std::is_one_of_v<DataType, int16_t, uint16_t> &&
+                 AscendC::Std::is_same_v<ShiftType, uint16_t>) ||
+                (AscendC::Std::is_one_of_v<DataType, int32_t, uint32_t> &&
+                 AscendC::Std::is_same_v<ShiftType, uint32_t>),
+            "9201 register shift supports these (DataType, ShiftType) pairs: "
+            "(int8_t/uint8_t, uint8_t), (int16_t/uint16_t, uint16_t), (int32_t/uint32_t, uint32_t)");
+    }
+};
+
+template <uint32_t version, typename DataType, typename ShiftType>
+struct shift_scalar_type_check;
+
+template <typename DataType, typename ShiftType>
+struct shift_scalar_type_check<arch_version::v3510, DataType, ShiftType> {
+    using scalar_type = int16_t;
+
+    __simd_callee__ static constexpr void check()
+    {
+        static_assert(
+            AscendC::Std::is_one_of_v<DataType, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t>,
+            "3510 scalar shift requires an 8-, 16-, or 32-bit integer register element");
+    }
+};
+
+template <typename DataType, typename ShiftType>
+struct shift_scalar_type_check<arch_version::v9201, DataType, ShiftType> {
+    using scalar_type = ShiftType;
+
+    __simd_callee__ static constexpr void check()
+    {
+        static_assert(
+            (AscendC::Std::is_one_of_v<DataType, int8_t, uint8_t, int16_t, uint16_t> &&
+             AscendC::Std::is_same_v<ShiftType, uint16_t>) ||
+                (AscendC::Std::is_one_of_v<DataType, int32_t, uint32_t> &&
+                 AscendC::Std::is_same_v<ShiftType, uint32_t>),
+            "9201 scalar shift supports these (DataType, ShiftType) pairs: "
+            "(int8_t/uint8_t/int16_t/uint16_t, uint16_t), (int32_t/uint32_t, uint32_t)");
+    }
+};
+
+} // namespace detail
+
 template <typename T>
 __simd_callee__ inline reg_tensor<T> operator!(const reg_tensor<T>& src)
 {
@@ -66,22 +133,21 @@ __simd_callee__ inline reg_tensor<T> operator^(const reg_tensor<T>& src0, const 
 template <typename T, typename ShiftType>
 __simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const reg_tensor<ShiftType>& shift)
 {
-    static_assert(detail::supports_shift_v<T>, "operator<< does not support this element type");
-    static_assert(
-        detail::supports_shift_pair_v<T, ShiftType>,
-        "register operator<< requires a signed shift register of the same width");
+    detail::shift_type_check<current_arch_version, T, ShiftType>::check();
     reg_tensor<T> dst;
     asc_shiftleft(dst.reg, src.reg, shift.reg, src.mask);
     dst.mask = src.mask;
     return dst;
 }
 
-template <typename T>
-__simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const int16_t& shift)
+template <typename T, typename ShiftType>
+__simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const ShiftType& shift)
 {
-    static_assert(detail::supports_shift_v<T>, "operator<< does not support this element type");
+    using shift_traits = detail::shift_scalar_type_check<current_arch_version, T, ShiftType>;
+    shift_traits::check();
+    const typename shift_traits::scalar_type& shiftCount = shift;
     reg_tensor<T> dst;
-    asc_shiftleft_scalar(dst.reg, src.reg, shift, src.mask);
+    asc_shiftleft_scalar(dst.reg, src.reg, shiftCount, src.mask);
     dst.mask = src.mask;
     return dst;
 }
@@ -89,22 +155,21 @@ __simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const 
 template <typename T, typename ShiftType>
 __simd_callee__ inline reg_tensor<T> operator>>(const reg_tensor<T>& src, const reg_tensor<ShiftType>& shift)
 {
-    static_assert(detail::supports_shift_v<T>, "operator>> does not support this element type");
-    static_assert(
-        detail::supports_shift_pair_v<T, ShiftType>,
-        "register operator>> requires a signed shift register of the same width");
+    detail::shift_type_check<current_arch_version, T, ShiftType>::check();
     reg_tensor<T> dst;
     asc_shiftright(dst.reg, src.reg, shift.reg, src.mask);
     dst.mask = src.mask;
     return dst;
 }
 
-template <typename T>
-__simd_callee__ inline reg_tensor<T> operator>>(const reg_tensor<T>& src, const int16_t& shift)
+template <typename T, typename ShiftType>
+__simd_callee__ inline reg_tensor<T> operator>>(const reg_tensor<T>& src, const ShiftType& shift)
 {
-    static_assert(detail::supports_shift_v<T>, "operator>> does not support this element type");
+    using shift_traits = detail::shift_scalar_type_check<current_arch_version, T, ShiftType>;
+    shift_traits::check();
+    const typename shift_traits::scalar_type& shiftCount = shift;
     reg_tensor<T> dst;
-    asc_shiftright_scalar(dst.reg, src.reg, shift, src.mask);
+    asc_shiftright_scalar(dst.reg, src.reg, shiftCount, src.mask);
     dst.mask = src.mask;
     return dst;
 }

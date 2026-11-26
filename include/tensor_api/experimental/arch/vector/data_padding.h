@@ -30,9 +30,10 @@ namespace experimental {
  * @brief Fills masked elements of a register tensor with a scalar value.
  *
  * @override_id te_experimental_fill__const_T_R_const_reg_tensor_bool_R__template_N_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam N Number of register tensors to fill. Only 1 is supported.
- * @tparam T Element type of the register tensor.
+ * @tparam T Element type; must be uint8_t, int8_t, fp8_e4m3fn_t, fp8_e8m0_t, fp8_e5m2_t, uint16_t, int16_t, half,
+ * bfloat16_t, uint32_t, int32_t, or float.
  * @return A register tensor containing the filled elements and the input mask.
  * @param [in] value Scalar value copied to each enabled element.
  * @param [in] mask Mask that specifies the elements to fill.
@@ -47,7 +48,7 @@ __simd_callee__ inline reg_tensor<T> fill(const T& value, const reg_tensor<bool>
  * @brief Broadcasts the selected element of a source register tensor to masked elements of a new register tensor.
  *
  * @override_id te_experimental_fill__const_reg_tensor_T_R_const_reg_tensor_bool_R__template_part_N_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam part Source element position to broadcast. The low or high element is supported.
  * @tparam N Number of register tensors to fill. Only 1 is supported.
  * @tparam T Element type of the register tensor.
@@ -56,6 +57,7 @@ __simd_callee__ inline reg_tensor<T> fill(const T& value, const reg_tensor<bool>
  * @param [in] mask Mask that specifies the elements to fill.
  * @note The active-lane mask is taken from mask.reg. A value of 1 selects the corresponding element; a value of 0
  * excludes it. Unselected elements are set to zero. The result preserves the active-lane mask.
+ * @note src.mask and mask.mask do not participate. The selected source element is read regardless of its mask bit.
  */
 template <high_low_part part = high_low_part::low, size_t N = 1, typename T>
 __simd_callee__ inline reg_tensor<T> fill(const reg_tensor<T>& src, const reg_tensor<bool>& mask = all_mask<T>());
@@ -65,7 +67,7 @@ __simd_callee__ inline reg_tensor<T> fill(const reg_tensor<T>& src, const reg_te
  * @brief Fills masked elements of a destination register tensor with a scalar value.
  *
  * @override_id te_experimental_fill__reg_tensor_T_R_const_T_R_const_reg_tensor_bool_R__template_N_Mode_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam N Number of register tensors to fill. Only 1 is supported.
  * @tparam Mode Mask merge mode. In zeroing mode, unselected elements are set to zero. In merging mode, unselected
  * elements retain their original values in dst.
@@ -88,7 +90,7 @@ __simd_callee__ inline reg_tensor<T> fill(
  *
  * @override_id
  * te_experimental_fill__reg_tensor_T_R_const_reg_tensor_T_R_const_reg_tensor_bool_R__template_part_Mode_N_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam part Source element position to broadcast. The low or high element is supported.
  * @tparam Mode Mask merge mode. In zeroing mode, unselected elements are set to zero. In merging mode, unselected
  * elements retain their original values in dst.
@@ -100,6 +102,7 @@ __simd_callee__ inline reg_tensor<T> fill(
  * @param [in] mask Mask that specifies the elements to fill.
  * @note The active-lane mask is taken from mask.reg. A value of 1 selects the corresponding element; a value of 0
  * applies the behavior specified by Mode. The result retains the original active-lane mask of dst.
+ * @note src.mask and mask.mask do not participate. The selected source element is read regardless of its mask bit.
  */
 template <high_low_part part = high_low_part::low, merge_mode Mode = merge_mode::zeroing, size_t N = 1, typename T>
 __simd_callee__ inline reg_tensor<T> fill(
@@ -108,7 +111,7 @@ __simd_callee__ inline reg_tensor<T> fill(
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/data_padding_impl.h"
 #endif
 

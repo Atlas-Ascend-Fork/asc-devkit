@@ -32,7 +32,7 @@ namespace experimental {
  * @brief Extracts bits from a selected data block of a register tensor and expands them into a register mask.
  *
  * @override_id te_experimental_move_mask__const_reg_tensor_T_R__template_Offset_T
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register mask containing the extracted and expanded bits.
  * @note Offset selects the source data block. Its valid range is [0, 15] for uint16_t and [0, 31] for uint32_t.
  * @note T must be uint16_t or uint32_t.
@@ -46,7 +46,7 @@ __simd_callee__ inline reg_tensor<bool> move_mask(const reg_tensor<T>& src);
  * @brief Copies active register elements selected by the source register tensor's mask in merging mode.
  *
  * @override_id te_experimental_move__reg_tensor_T_R_const_reg_tensor_T_R__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @return The destination register tensor after the copy. Its mask remains unchanged.
  * @note T must be one of uint8_t, int8_t, uint16_t, int16_t, half, bfloat16_t, uint32_t, int32_t, or float.
  * @param [in,out] dst Destination register tensor. Inactive elements and its mask retain their original values.
@@ -60,7 +60,7 @@ __simd_callee__ inline reg_tensor<T> move(reg_tensor<T>& dst, const reg_tensor<T
  * @brief Copies active bits selected by the source register tensor's mask in zeroing mode.
  *
  * @override_id te_experimental_move__const_reg_tensor_bool_R
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register tensor containing the copied bits. Inactive bits are set to zero, and its mask is copied from
  * src.mask.
  * @param [in] src Source register tensor. Its mask selects the active bits to copy.
@@ -70,7 +70,7 @@ __simd_callee__ inline reg_tensor<bool> move(const reg_tensor<bool>& src);
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/reg_data_copy_impl.h"
 #endif
 

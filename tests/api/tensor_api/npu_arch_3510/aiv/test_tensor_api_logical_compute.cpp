@@ -21,6 +21,48 @@ using namespace asc::te::experimental;
 template <typename T>
 using reg_type = asc::te::experimental::reg_tensor<T>;
 
+template <typename DataType, typename SignedShiftType, typename UnsignedShiftType>
+void TestShiftTypeCheck()
+{
+    using asc::te::arch_version;
+    using asc::te::experimental::detail::shift_type_check;
+    shift_type_check<arch_version::v3510, DataType, SignedShiftType>::check();
+    shift_type_check<arch_version::v9201, DataType, UnsignedShiftType>::check();
+}
+
+TEST(test_tensor_api_logical_compute, ShiftTypeCheckByArch)
+{
+    TestShiftTypeCheck<int8_t, int8_t, uint8_t>();
+    TestShiftTypeCheck<uint8_t, int8_t, uint8_t>();
+    TestShiftTypeCheck<int16_t, int16_t, uint16_t>();
+    TestShiftTypeCheck<uint16_t, int16_t, uint16_t>();
+    TestShiftTypeCheck<int32_t, int32_t, uint32_t>();
+    TestShiftTypeCheck<uint32_t, int32_t, uint32_t>();
+}
+
+template <typename DataType, typename UnsignedShiftType>
+void TestScalarShiftTypeCheck()
+{
+    using asc::te::arch_version;
+    using asc::te::experimental::detail::shift_scalar_type_check;
+    using shift_3510 = shift_scalar_type_check<arch_version::v3510, DataType, int32_t>;
+    using shift_9201 = shift_scalar_type_check<arch_version::v9201, DataType, UnsignedShiftType>;
+    static_assert(AscendC::Std::is_same_v<typename shift_3510::scalar_type, int16_t>);
+    static_assert(AscendC::Std::is_same_v<typename shift_9201::scalar_type, UnsignedShiftType>);
+    shift_3510::check();
+    shift_9201::check();
+}
+
+TEST(test_tensor_api_logical_compute, ScalarShiftTypeCheckByArch)
+{
+    TestScalarShiftTypeCheck<int8_t, uint16_t>();
+    TestScalarShiftTypeCheck<uint8_t, uint16_t>();
+    TestScalarShiftTypeCheck<int16_t, uint16_t>();
+    TestScalarShiftTypeCheck<uint16_t, uint16_t>();
+    TestScalarShiftTypeCheck<int32_t, uint32_t>();
+    TestScalarShiftTypeCheck<uint32_t, uint32_t>();
+}
+
 template <typename T>
 __aicore__ inline void TestLogicalNot()
 {
@@ -66,6 +108,9 @@ __aicore__ inline void TestShiftLeft()
 
     auto reg_dst = src << shift;
     auto scalar_dst = src << scalar_shift;
+    int shiftCount = 1;
+    EXPECT_EQ((src << 1).mask, src.mask);
+    EXPECT_EQ((src << shiftCount).mask, src.mask);
     static_assert(AscendC::Std::is_same_v<decltype(reg_dst), reg_type<T>>);
     static_assert(AscendC::Std::is_same_v<decltype(scalar_dst), reg_type<T>>);
     EXPECT_EQ(reg_dst.mask, src.mask);
@@ -82,6 +127,9 @@ __aicore__ inline void TestShiftRight()
 
     auto reg_dst = src >> shift;
     auto scalar_dst = src >> scalar_shift;
+    int shiftCount = 1;
+    EXPECT_EQ((src >> 1).mask, src.mask);
+    EXPECT_EQ((src >> shiftCount).mask, src.mask);
     static_assert(AscendC::Std::is_same_v<decltype(reg_dst), reg_type<T>>);
     static_assert(AscendC::Std::is_same_v<decltype(scalar_dst), reg_type<T>>);
     EXPECT_EQ(reg_dst.mask, src.mask);

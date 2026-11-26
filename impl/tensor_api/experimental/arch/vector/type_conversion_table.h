@@ -380,7 +380,7 @@ ASC_REG_CAST_OP(int32_t, half, one, ceil, unknown, asc_half2int32_ru);
 ASC_REG_CAST_OP(int32_t, half, zero, trunc, unknown, asc_half2int32_rz);
 ASC_REG_CAST_OP(int32_t, half, one, trunc, unknown, asc_half2int32_rz);
 #if !defined(ASCENDC_CPU_DEBUG)
-#if (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)) || defined(__ASC_NPU_HOST__)
+#if (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510 || __NPU_ARCH__ == 9201)) || defined(__ASC_NPU_HOST__)
 
 // float -> hifloat8_t
 ASC_REG_CAST_OP(hifloat8_t, float, zero, round, not_sat, asc_float2hif8_rna);
@@ -568,6 +568,40 @@ ASC_REG_CAST_OP(fp4x2_e2m1_t, bfloat16_t, one, trunc, unknown, asc_bfloat162e2m1
 ASC_REG_CAST_OP(fp4x2_e2m1_t, bfloat16_t, two, trunc, unknown, asc_bfloat162e2m1x2_rz);
 ASC_REG_CAST_OP(fp4x2_e2m1_t, bfloat16_t, three, trunc, unknown, asc_bfloat162e2m1x2_rz);
 #endif
+#endif
+
+#if !defined(ASCENDC_CPU_DEBUG) && __NPU_ARCH__ == 9201 && ASC_DEVKIT_VERSION_NUM >= 90300000
+
+ASC_REG_CAST_OP(fp8_e4m3fn_t, half, zero, rint, not_sat, asc_half2e4m3_rn);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, half, one, rint, not_sat, asc_half2e4m3_rn);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, half, zero, rint, sat, asc_half2e4m3_rn_sat);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, half, one, rint, sat, asc_half2e4m3_rn_sat);
+ASC_REG_CAST_OP(fp8_e5m2_t, half, zero, rint, not_sat, asc_half2e5m2_rn);
+ASC_REG_CAST_OP(fp8_e5m2_t, half, one, rint, not_sat, asc_half2e5m2_rn);
+ASC_REG_CAST_OP(fp8_e5m2_t, half, zero, rint, sat, asc_half2e5m2_rn_sat);
+ASC_REG_CAST_OP(fp8_e5m2_t, half, one, rint, sat, asc_half2e5m2_rn_sat);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, bfloat16_t, zero, rint, not_sat, asc_bfloat162e4m3_rn);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, bfloat16_t, one, rint, not_sat, asc_bfloat162e4m3_rn);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, bfloat16_t, zero, rint, sat, asc_bfloat162e4m3_rn_sat);
+ASC_REG_CAST_OP(fp8_e4m3fn_t, bfloat16_t, one, rint, sat, asc_bfloat162e4m3_rn_sat);
+ASC_REG_CAST_OP(fp8_e5m2_t, bfloat16_t, zero, rint, not_sat, asc_bfloat162e5m2_rn);
+ASC_REG_CAST_OP(fp8_e5m2_t, bfloat16_t, one, rint, not_sat, asc_bfloat162e5m2_rn);
+ASC_REG_CAST_OP(fp8_e5m2_t, bfloat16_t, zero, rint, sat, asc_bfloat162e5m2_rn_sat);
+ASC_REG_CAST_OP(fp8_e5m2_t, bfloat16_t, one, rint, sat, asc_bfloat162e5m2_rn_sat);
+ASC_REG_CAST_OP(fp8_e6m2_t, bfloat16_t, zero, rint, unknown, asc_bfloat162e6m2_rn);
+ASC_REG_CAST_OP(fp8_e6m2_t, bfloat16_t, one, rint, unknown, asc_bfloat162e6m2_rn);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, zero, ceil, not_sat, asc_bfloat162e8m0_ru);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, one, ceil, not_sat, asc_bfloat162e8m0_ru);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, zero, ceil, sat, asc_bfloat162e8m0_ru_sat);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, one, ceil, sat, asc_bfloat162e8m0_ru_sat);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, zero, trunc, not_sat, asc_bfloat162e8m0_rz);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, one, trunc, not_sat, asc_bfloat162e8m0_rz);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, zero, trunc, sat, asc_bfloat162e8m0_rz_sat);
+ASC_REG_CAST_OP(fp8_e8m0_t, bfloat16_t, one, trunc, sat, asc_bfloat162e8m0_rz_sat);
+ASC_REG_CAST_OP(bfloat16_t, fp8_e6m2_t, zero, unknown, unknown, asc_e6m22bfloat16);
+ASC_REG_CAST_OP(bfloat16_t, fp8_e6m2_t, one, unknown, unknown, asc_e6m22bfloat16);
+ASC_REG_CAST_OP(bfloat16_t, fp8_e8m0_t, zero, unknown, unknown, asc_e8m02bfloat16);
+ASC_REG_CAST_OP(bfloat16_t, fp8_e8m0_t, one, unknown, unknown, asc_e8m02bfloat16);
 #endif
 
 } // namespace detail

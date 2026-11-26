@@ -32,7 +32,7 @@ namespace experimental {
  * @brief Loads data from a UB tensor at the specified coordinate into one or two register tensors.
  *
  * @override_id te_experimental_load__const_Tensor_R_const_Coord_R__template_sideband_mode_Tensor_Coord
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register pair for deintlv mode; otherwise, a register tensor.
  * @param [in] tensor Source tensor located in UB.
  * @param [in] coord Coordinate of the first source element.
@@ -45,7 +45,7 @@ __simd_callee__ inline auto load(const Tensor& tensor, const Coord& coord);
  * @brief Loads data from the beginning of a UB tensor into one or two register tensors.
  *
  * @override_id te_experimental_load__const_Tensor_R__template_sideband_mode_Tensor
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register pair for deintlv mode; otherwise, a register tensor.
  * @param [in] tensor Source tensor located in UB.
  */
@@ -57,7 +57,7 @@ __simd_callee__ inline auto load(const Tensor& tensor);
  * @brief Loads packed mask bits from a UB tensor at the specified coordinate.
  *
  * @override_id te_experimental_load__const_Tensor_R_const_Coord_R__template_RegDataType_sideband_mode_Tensor_Coord
- * @archs 3510
+ * @archs 3510, 9201
  * @return A Boolean register tensor containing the loaded mask bits in its reg member.
  * @param [in] tensor Source uint32_t tensor located in UB.
  * @param [in] coord Coordinate of the first source word.
@@ -77,7 +77,7 @@ __simd_callee__ inline auto load(const Tensor& tensor, const Coord& coord);
  * @brief Loads packed mask bits from the beginning of a UB tensor.
  *
  * @override_id te_experimental_load__const_Tensor_R__template_RegDataType_sideband_mode_Tensor
- * @archs 3510
+ * @archs 3510, 9201
  * @return A Boolean register tensor containing the loaded mask bits in its reg member.
  * @param [in] tensor Source uint32_t tensor located in UB.
  * @note RegDataType must be bool. Supported modes are direct, upsample, and downsample.
@@ -94,7 +94,7 @@ __simd_callee__ inline auto load(const Tensor& tensor);
  * @brief Loads and broadcasts data from a UB tensor at the specified coordinate.
  *
  * @override_id te_experimental_load_broadcast__const_Tensor_R_const_Coord_R__template_brc_mode_Tensor_Coord
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register tensor populated according to the selected broadcast mode.
  * @param [in] tensor Source tensor located in UB.
  * @param [in] coord Coordinate of the first source element.
@@ -111,7 +111,7 @@ __simd_callee__ inline auto load_broadcast(const Tensor& tensor, const Coord& co
  * @brief Loads and broadcasts data from the beginning of a UB tensor.
  *
  * @override_id te_experimental_load_broadcast__const_Tensor_R__template_brc_mode_Tensor
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register tensor populated according to the selected broadcast mode.
  * @param [in] tensor Source tensor located in UB.
  * @note The source tensor element type must be supported by brc_mode. An int4b_t source
@@ -128,7 +128,7 @@ __simd_callee__ inline auto load_broadcast(const Tensor& tensor);
  *
  * @override_id
  * te_experimental_load_gather__const_Tensor_R_const_Coord_R_const_reg_tensor_Index_const_reg_tensor_bool_R__template_mode_Tensor_Coord_Index
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register tensor containing the gathered data.
  * @param [in] tensor Source tensor located in UB.
  * @param [in] coord Coordinate used as the base source position.
@@ -149,7 +149,7 @@ __simd_callee__ inline auto load_gather(
  *
  * @override_id
  * te_experimental_load_gather__const_Tensor_R_const_reg_tensor_Index_const_reg_tensor_bool_R__template_mode_Tensor_Index
- * @archs 3510
+ * @archs 3510, 9201
  * @return A register tensor containing the gathered data.
  * @param [in] tensor Source tensor located in UB.
  * @param [in] index Register tensor containing the source offsets.
@@ -205,7 +205,7 @@ private:
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201 && ASC_DEVKIT_VERSION_NUM >= 90300000))
 #include "impl/tensor_api/experimental/arch/vector/reg_data_load_impl.h"
 #endif
 

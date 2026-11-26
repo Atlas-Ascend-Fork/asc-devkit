@@ -32,7 +32,7 @@ namespace experimental {
  * @brief Converts the active elements of a register tensor to another element type.
  *
  * @override_id te_experimental_cast__const_reg_tensor_SrcType_R__template_DstType_opt_SrcType
- * @archs 3510
+ * @archs 3510, 9201
  * @return The converted register tensor with the source mask preserved.
  * @note Source and destination element types must differ. Supported option combinations are architecture-dependent.
  * @param [in] src Source register tensor.
@@ -45,7 +45,7 @@ __simd_callee__ inline reg_tensor<DstType> cast(const reg_tensor<SrcType>& src);
  * @brief Rounds each active register element using the selected mode.
  *
  * @override_id te_experimental_trunc__const_reg_tensor_T_R__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @return The rounded register tensor with the source mask preserved.
  * @note Supported element types are half, bfloat16_t, and float. The default mode is trunc.
  * @tparam Mode Rounding mode: trunc, round, rint, ceil, or floor.
@@ -58,7 +58,7 @@ __simd_callee__ inline reg_tensor<T> trunc(const reg_tensor<T>& src);
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/type_conversion_impl.h"
 #endif
 

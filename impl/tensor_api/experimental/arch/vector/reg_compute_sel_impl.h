@@ -54,6 +54,19 @@ struct pack_dst_type<int32_t> {
     using type = uint16_t;
 };
 
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201) && defined(ASC_DEVKIT_VERSION_NUM) && \
+    (ASC_DEVKIT_VERSION_NUM >= 90300000)
+template <>
+struct pack_dst_type<uint64_t> {
+    using type = uint32_t;
+};
+
+template <>
+struct pack_dst_type<int64_t> {
+    using type = uint32_t;
+};
+#endif
+
 template <typename T>
 using pack_dst_t = typename pack_dst_type<T>::type;
 
@@ -152,8 +165,9 @@ __simd_callee__ inline decltype(auto) pack(reg_tensor<T> src)
         part == high_low_part::low || part == high_low_part::high,
         "pack only supports high_low_part::low and high_low_part::high");
     static_assert(
-        detail::is_pack_support_type_v<T>, "pack with reg_tensor<T> only supports "
-                                           "bool, uint16_t, int16_t, uint32_t and int32_t.");
+        detail::is_pack_support_type_v<T>,
+        "pack with reg_tensor<T> only supports bool, uint16_t, int16_t, uint32_t and int32_t; "
+        "uint64_t and int64_t additionally require 9201 and devkit version 90300000 or later.");
 
     using dst_type = detail::pack_dst_t<T>;
     reg_tensor<dst_type> dst;

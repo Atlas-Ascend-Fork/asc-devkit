@@ -16,6 +16,7 @@
 #ifndef INCLUDE_TENSOR_API_EXPERIMENTAL_ARCH_VECTOR_LOGICAL_COMPUTE_H
 #define INCLUDE_TENSOR_API_EXPERIMENTAL_ARCH_VECTOR_LOGICAL_COMPUTE_H
 
+#include "version/asc_devkit_version.h"
 #include "tensor_api/tensor/tensor_interface.h"
 #include "tensor_api/experimental/arch/vector/reg_tensor.h"
 
@@ -28,7 +29,7 @@ namespace experimental {
  * @brief Returns the element-wise bitwise complement of the source register under src.mask.
  *
  * @override_id te_experimental_operator_logical_not__const_reg_tensor_T_R__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @param [in] src Source operand.
  */
 template <typename T>
@@ -39,7 +40,7 @@ __simd_callee__ inline reg_tensor<T> operator!(const reg_tensor<T>& src);
  * @brief Returns element-wise bitwise AND results of the operands.
  *
  * @override_id te_experimental_operator_and__const_reg_tensor_T_R_const_reg_tensor_T_R__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @param [in] src0 First source operand.
  * @param [in] src1 Second source operand.
  */
@@ -51,7 +52,7 @@ __simd_callee__ inline reg_tensor<T> operator&(const reg_tensor<T>& src0, const 
  * @brief Returns element-wise bitwise OR results of the operands.
  *
  * @override_id te_experimental_operator_or__const_reg_tensor_T_R_const_reg_tensor_T_R__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @param [in] src0 First source operand.
  * @param [in] src1 Second source operand.
  */
@@ -63,7 +64,7 @@ __simd_callee__ inline reg_tensor<T> operator|(const reg_tensor<T>& src0, const 
  * @brief Returns element-wise bitwise XOR results of the operands.
  *
  * @override_id te_experimental_operator_xor__const_reg_tensor_T_R_const_reg_tensor_T_R__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @param [in] src0 First source operand.
  * @param [in] src1 Second source operand.
  */
@@ -73,48 +74,54 @@ __simd_callee__ inline reg_tensor<T> operator^(const reg_tensor<T>& src0, const 
 /**
  * @ingroup tensor_api.experimental.reg_compute.reg_logic
  * @override_id te_experimental_operator_shl__const_reg_tensor_T_R_const_reg_tensor_ShiftType_R__template_T_ShiftType
- * @archs 3510
+ * @archs 3510, 9201
+ * @note On 9201 this overload requires CANN 9.3 or later.
  * @param [in] src Source operand.
- * @param [in] shift Shift.
+ * @param [in] shift Shift register of the same element width as src: signed on 3510, unsigned on 9201.
  */
 template <typename T, typename ShiftType>
 __simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const reg_tensor<ShiftType>& shift);
 
 /**
  * @ingroup tensor_api.experimental.reg_compute.reg_logic
- * @override_id te_experimental_operator_shl__const_reg_tensor_T_R_const_int16_t_R__template_T
- * @archs 3510
+ * @override_id te_experimental_operator_shl__const_reg_tensor_T_R_const_ShiftType_R__template_T_ShiftType
+ * @archs 3510, 9201
+ * @note On 9201 this overload requires CANN 9.3 or later.
  * @param [in] src Source operand.
- * @param [in] shift Shift.
+ * @param [in] shift Scalar shift count. On 3510 it is converted to int16_t. On 9201 use uint16_t for
+ * 8- or 16-bit elements and uint32_t for 32-bit elements.
  */
-template <typename T>
-__simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const int16_t& shift);
+template <typename T, typename ShiftType>
+__simd_callee__ inline reg_tensor<T> operator<<(const reg_tensor<T>& src, const ShiftType& shift);
 
 /**
  * @ingroup tensor_api.experimental.reg_compute.reg_logic
  * @override_id te_experimental_operator_shr__const_reg_tensor_T_R_const_reg_tensor_ShiftType_R__template_T_ShiftType
- * @archs 3510
+ * @archs 3510, 9201
+ * @note On 9201 this overload requires CANN 9.3 or later.
  * @param [in] src Source operand.
- * @param [in] shift Shift.
+ * @param [in] shift Shift register of the same element width as src: signed on 3510, unsigned on 9201.
  */
 template <typename T, typename ShiftType>
 __simd_callee__ inline reg_tensor<T> operator>>(const reg_tensor<T>& src, const reg_tensor<ShiftType>& shift);
 
 /**
  * @ingroup tensor_api.experimental.reg_compute.reg_logic
- * @override_id te_experimental_operator_shr__const_reg_tensor_T_R_const_int16_t_R__template_T
- * @archs 3510
+ * @override_id te_experimental_operator_shr__const_reg_tensor_T_R_const_ShiftType_R__template_T_ShiftType
+ * @archs 3510, 9201
+ * @note On 9201 this overload requires CANN 9.3 or later.
  * @param [in] src Source operand.
- * @param [in] shift Shift.
+ * @param [in] shift Scalar shift count. On 3510 it is converted to int16_t. On 9201 use uint16_t for
+ * 8- or 16-bit elements and uint32_t for 32-bit elements.
  */
-template <typename T>
-__simd_callee__ inline reg_tensor<T> operator>>(const reg_tensor<T>& src, const int16_t& shift);
+template <typename T, typename ShiftType>
+__simd_callee__ inline reg_tensor<T> operator>>(const reg_tensor<T>& src, const ShiftType& shift);
 
 } // namespace experimental
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510 || (__NPU_ARCH__ == 9201 && ASC_DEVKIT_VERSION_NUM >= 90300000))
 #include "impl/tensor_api/experimental/arch/vector/logical_compute_impl.h"
 #endif
 

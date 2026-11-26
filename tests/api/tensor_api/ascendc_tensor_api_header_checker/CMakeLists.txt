@@ -1,7 +1,24 @@
+# ----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# ----------------------------------------------------------------------------------------------------------
+
 cmake_minimum_required(VERSION 3.16)
 project(TensorApiHeaderChecker)
 
-set(INCLUDE_PATHS ${ASCENDC_DIR})
+if(NOT ASCEND_CANN_PACKAGE_PATH)
+    set(ASCEND_CANN_PACKAGE_PATH "$ENV{ASCEND_HOME_PATH}")
+endif()
+set(INCLUDE_PATHS ${ASCENDC_DIR}/include ${ASCENDC_DIR})
+if(ASCEND_CANN_PACKAGE_PATH)
+    list(APPEND INCLUDE_PATHS "${ASCEND_CANN_PACKAGE_PATH}/asc/include"
+        "${ASCEND_CANN_PACKAGE_PATH}/asc" "${ASCEND_CANN_PACKAGE_PATH}/include")
+endif()
 
 if (TARGET tikcfw_headers)
     message(STATUS "tikcfw_headers target exists, gathering its include dirs")
@@ -34,8 +51,22 @@ if(tikicpulib_FOUND)
     endif()
 endif()
 
-# 格式: "Arch|Define1|Define2|..."
 set(ARCH_LIST 3510)
+# Use the first version header the compiler would see. Without a known version, keep the 3510 checks.
+foreach(INC IN LISTS INCLUDE_PATHS)
+    set(VERSION_HEADER "${INC}/version/asc_devkit_version.h")
+    if(NOT EXISTS "${VERSION_HEADER}" OR IS_DIRECTORY "${VERSION_HEADER}")
+        continue()
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${VERSION_HEADER}")
+    file(STRINGS "${VERSION_HEADER}" VERSION_DEFINE LIMIT_COUNT 1
+        REGEX "^[ \t]*#[ \t]*define[ \t]+ASC_DEVKIT_VERSION_NUM[ \t]+[0-9]+[ \t]*($|//|/\\*)")
+    string(REGEX MATCH "[0-9]+" DEVKIT_VERSION_NUM "${VERSION_DEFINE}")
+    if(DEVKIT_VERSION_NUM AND DEVKIT_VERSION_NUM GREATER_EQUAL 90300000)
+        list(APPEND ARCH_LIST 9201)
+    endif()
+    break()
+endforeach()
 
 # ==========================================
 # 测试文件
@@ -85,6 +116,14 @@ function(create_check_targets MODE_SUFFIX MODE_DEFINES)
 
     # 遍历所有文件和所有配置
     foreach(TEST_FILE ${ALL_TEST_FILES})
+        set(CHECK_FLAGS ${COMPILER_FLAGS})
+        if(TEST_FILE MATCHES "\\.verify\\.cpp$")
+            # Diagnostic tests include the module directly and must fail for the expected reason.
+            if(MODE_SUFFIX STREQUAL "")
+                continue()
+            endif()
+            list(APPEND CHECK_FLAGS -Xclang -verify -Xclang -verify-ignore-unexpected=note)
+        endif()
         # 获取相对路径用于生成唯一的 Target 名字
         file(RELATIVE_PATH REL_TEST_FILE ${ASCENDC_DIR} ${TEST_FILE})
 
@@ -98,7 +137,7 @@ function(create_check_targets MODE_SUFFIX MODE_DEFINES)
             # 创建子 Target
             set(TARGET_NAME "tensor_api_check_npu${MODE_SUFFIX}_${ARCH}_${TEST_FILE_ID}")
             add_custom_target(${TARGET_NAME}
-                COMMAND ${COMPILER} ${COMPILER_FLAGS} ${INC_FLAGS} ${MODE_DEFINES}
+                COMMAND ${COMPILER} ${CHECK_FLAGS} ${INC_FLAGS} ${MODE_DEFINES}
                     -fsyntax-only ${TEST_FILE} ${ARCH_FLAG}
                 COMMENT "Checking host (${COMPILER_TYPE})${MODE_SUFFIX} ${ARCH} ${REL_TEST_FILE}"
                 VERBATIM
