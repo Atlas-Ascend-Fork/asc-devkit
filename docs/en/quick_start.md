@@ -209,6 +209,9 @@ The following are basic dependencies for compiling the source code and compiling
 - pkg-config >= 0.29.0
 - patch
 
+> [!CAUTION] Possible compilation errors
+> In this repository, some operator samples under `examples` and call examples in the API manual use the `half` type on the `host` side. This type has only been supported since GCC 12.0.0, so in environments running a GCC version lower than 12.0.0, compilation errors may occur when building the related content.
+
 ### ⚡ Compile and Install<a name="compile&install"></a>
 
 1. Compile

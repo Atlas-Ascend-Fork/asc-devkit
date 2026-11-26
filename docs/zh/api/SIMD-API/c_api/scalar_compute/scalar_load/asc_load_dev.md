@@ -87,7 +87,4 @@ PIPE_S
 
 ## 调用示例
 
-```cpp
-// addr是外部输入的GM地址，类型为__gm__ int32_t*。
-int32_t value = asc_load_dev(addr);
-```
+具体调用示例请参考[asc_sync_data_barrier调用示例](../../sync/intra_core_sync/asc_sync_data_barrier.md)。

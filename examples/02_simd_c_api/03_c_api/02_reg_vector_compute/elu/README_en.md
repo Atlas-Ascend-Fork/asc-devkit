@@ -4,11 +4,11 @@
 
 This example implements the ELU (Exponential Linear Unit) activation operator using the C API, mainly calling the `asc_exp`, `asc_mul_scalar` and `asc_select` APIs.
 
-## Supported Products and CANN Versions
+## Supported Products and Software Versions
 
-| Product | CANN Version |
-| --- | --- |
-| Ascend 950PR&950DT products | >= CANN 9.0.0 |
+| Product | CANN Version | GCC Version |
+| --- | --- | --- |
+| Ascend 950PR&950DT products | >= CANN 9.0.0 | >= 12.0.0 |
 
 ## Directory Structure
 
