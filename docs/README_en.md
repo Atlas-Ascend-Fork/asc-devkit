@@ -11,11 +11,13 @@ Key directory structure is as follows:
 │   ├── figures                    # Image directory
 │   ├── guide                      # Ascend C operator develop guide
 │   ├── vitepress                      # docs build directory
+│   ├── asc_api_writing_guidelines.md  # Ascend C API writing guidelines
 │   ├── asc_doc_design_rules.md        # Ascend C documentation design rules
 │   ├── asc_how_to_choose_api.md       # Ascend C Multi-Level Programming Interface Selection Guide
 │   └── quick_start.md                 # Quick start documentation
 ├── en                                 # English documentation directory
 │   ├── contributing                   # Contribution guide directory (API contribution guides, code contribution standards, etc.)
+│   ├── asc_api_writing_guidelines.md  # Ascend C API writing guidelines
 │   ├── asc_doc_design_rules.md        # Ascend C documentation design rules
 │   ├── asc_how_to_choose_api.md       # Ascend C Multi-Level Programming Interface Selection Guide
 │   └── quick_start.md                 # Quick start documentation
