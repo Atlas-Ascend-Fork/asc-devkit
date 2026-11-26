@@ -213,20 +213,10 @@ Execute the following steps in this sample's root directory.
   python3 ../scripts/verify_result.py output/output.bin output/golden.bin   # Verify results
   ```
 
-  For CPU debug or NPU simulation modes, add `-DCMAKE_ASC_RUN_MODE=cpu` or `-DCMAKE_ASC_RUN_MODE=sim`:
-
-  ```bash
-  cmake -DCMAKE_ASC_RUN_MODE=cpu -DCMAKE_ASC_ARCHITECTURES=dav-2201 ..;make -j; # CPU debug mode
-  cmake -DCMAKE_ASC_RUN_MODE=sim -DCMAKE_ASC_ARCHITECTURES=dav-2201 ..;make -j; # NPU simulation mode
-  ```
-
-  > **Note:** Run `rm CMakeCache.txt` in the build directory before switching build modes.
-
 - Build Options
 
   | Option | Values | Description |
   |------|--------|------|
-  | `CMAKE_ASC_RUN_MODE` | `npu` (default), `cpu`, `sim` | Run mode: NPU, CPU debug, or NPU simulation |
   | `CMAKE_ASC_ARCHITECTURES` | `dav-2201` (default), `dav-3510` | dav-2201 for Atlas A2 products and Atlas A3 products, dav-3510 for Ascend 950 series |
   | `SCENARIO_NUM` | `1` (default), `2` | Scenario: 1 (no preload), 2 (with preload) |
 
