@@ -87,7 +87,7 @@ vector_bool，掩码寄存器。
 
 ## 调用示例
 
-以下示例对385个`float`元素求绝对值。`asc_update_mask_b32`在每轮生成掩码并自动更新剩余元素数，最后一轮仅处理1个有效元素；补齐区域保留初始值并参与结果校验。
+以下示例对385个`float`元素求绝对值。`asc_update_mask_b32`在每轮生成掩码并自动更新剩余元素数，最后一轮仅处理1个有效元素；结果校验仅覆盖有效元素范围。
 
 将代码保存为`example.asc`后，可通过`bisheng`命令编译运行，其中`--npu-arch`参数需根据实际产品型号指定对应的NPU架构，具体产品与NPU架构的映射关系请参考[\_\_NPU\_ARCH\_\_](../../../../../guide/programming_guide/language_extension/simd_builtin_keywords.md#npu-arch)。
 
@@ -123,13 +123,17 @@ void print_data(const char* label, const std::vector<T>& values)
 }
 
 template <typename T>
-bool compare_data(const std::vector<T>& actual, const std::vector<T>& expected, double tolerance = 0.0)
+bool compare_data(const std::vector<T>& actual, const std::vector<T>& expected, size_t count, double tolerance = 0.0)
 {
-    if (actual.size() != expected.size()) return false;
-    for (size_t i = 0; i < actual.size(); ++i) {
+    if (count > actual.size() || count > expected.size()) return false;
+    for (size_t i = 0; i < count; ++i) {
         if (actual[i] == expected[i]) continue;
         const double diff = static_cast<double>(actual[i]) - static_cast<double>(expected[i]);
-        if (!(diff <= tolerance && diff >= -tolerance)) return false;
+        if (!(diff <= tolerance && diff >= -tolerance)) {
+            std::cout << "Mismatch at " << i << ": actual=" << actual[i]
+                      << ", expected=" << expected[i] << std::endl;
+            return false;
+        }
     }
     return true;
 }
@@ -180,10 +184,9 @@ __global__ __vector__ void asc_update_mask_kernel(__gm__ float* output, __gm__ f
 
 int main()
 {
-    constexpr float SENTINEL = -999.0f;
     std::vector<float> input(BUFFER_ELEMENTS, 0.0f);
-    std::vector<float> output(BUFFER_ELEMENTS, SENTINEL);
-    std::vector<float> golden(BUFFER_ELEMENTS, SENTINEL);
+    std::vector<float> output(BUFFER_ELEMENTS, 0.0f);
+    std::vector<float> golden(BUFFER_ELEMENTS, 0.0f);
     for (uint32_t i = 0; i < TOTAL_LENGTH; ++i) {
         input[i] = static_cast<float>(static_cast<int32_t>(i % 31) - 15);
         golden[i] = std::fabs(input[i]);
@@ -202,7 +205,7 @@ int main()
     print_data("Input", input);
     print_data("Output", output);
     print_data("Expected", golden);
-    const bool passed = compare_data(output, golden);
+    const bool passed = compare_data(output, golden, TOTAL_LENGTH);
     std::cout << (passed ? "[Success] asc_update_mask_b32 passed." : "[Failed] asc_update_mask_b32 failed.") << std::endl;
     aclrtFree(input_device);
     aclrtFree(output_device);

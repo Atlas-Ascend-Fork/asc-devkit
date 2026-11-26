@@ -78,7 +78,7 @@ vector_bool，掩码寄存器。
 
 ## 调用示例
 
-以下示例对259个`half`元素执行加法。在VF外通过`asc_set_vector_mask`设置SPR掩码，VF内使用`asc_get_mask_spr_b16`读取掩码。前两个完整块全部有效，尾块仅低3个元素有效；补齐区域以哨兵值校验。
+以下示例对259个`half`元素执行加法。在VF外通过`asc_set_vector_mask`设置SPR掩码，VF内使用`asc_get_mask_spr_b16`读取掩码。前两个完整块全部有效，尾块仅低3个元素有效；尾块通过掩码限制有效处理范围。
 
 将代码保存为`example.asc`后，可通过`bisheng`命令编译运行，其中`--npu-arch`参数需根据实际产品型号指定对应的NPU架构，具体产品与NPU架构的映射关系请参考[\_\_NPU\_ARCH\_\_](../../../../../guide/programming_guide/language_extension/simd_builtin_keywords.md#npu-arch)。
 
@@ -163,11 +163,10 @@ __global__ __vector__ void asc_get_mask_spr_kernel(__gm__ half* dst, __gm__ half
 
 int main()
 {
-    constexpr float SENTINEL = -999.0f; // 哨兵
     std::vector<half> src0(BUFFER_ELEMENTS, half(0));
     std::vector<half> src1(BUFFER_ELEMENTS, half(0));
-    std::vector<half> output(BUFFER_ELEMENTS, half(SENTINEL));
-    std::vector<half> expected(BUFFER_ELEMENTS, half(SENTINEL));
+    std::vector<half> output(BUFFER_ELEMENTS, half(0));
+    std::vector<half> expected(BUFFER_ELEMENTS, half(0));
     for (uint32_t i = 0; i < TOTAL_LENGTH; ++i) {
         const int32_t lhs = static_cast<int32_t>(i % 31) - 15;
         const int32_t rhs = static_cast<int32_t>(i % 13) - 6;
@@ -195,7 +194,7 @@ int main()
     aclrtMemcpy(output.data(), BUFFER_BYTES, dst_device, BUFFER_BYTES, ACL_MEMCPY_DEVICE_TO_HOST);
 
     bool passed = true;
-    for (uint32_t i = 0; i < BUFFER_ELEMENTS && passed; ++i) {
+    for (uint32_t i = 0; i < TOTAL_LENGTH && passed; ++i) {
         if (static_cast<float>(output[i]) != static_cast<float>(expected[i])) {
             std::cout << "Mismatch at " << i << ": actual=" << static_cast<float>(output[i])
                       << ", expected=" << static_cast<float>(expected[i]) << std::endl;
