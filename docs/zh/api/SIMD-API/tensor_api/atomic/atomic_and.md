@@ -66,7 +66,7 @@ PIPE_S
 
 ## 约束说明
 
-- 本接口运行在标量流水（`PIPE_S`）上。若本接口与`PIPE_MTE2`或`PIPE_MTE3`上的数据搬运指令访问同一Global Memory地址，且执行顺序影响结果，编译器无法自动完成跨流水同步，调用方需要根据实际情况手动插入同步。
+- 本接口运行在标量流水（`PIPE_S`）上。若本接口与`PIPE_MTE2`或`PIPE_MTE3`上的数据搬运指令访问同一Global Memory地址，且执行顺序影响结果，编译器无法自动完成跨流水同步，调用方需按实际依赖插入[sync_pipe](../sync/sync_pipe.md)。
 - 本接口访问Global Memory时绕过DCache，不维护缓存一致性。若其他核或其他通路通过缓存访问同一Global Memory地址，调用方需使用[datacache_clean_and_invalid_line](../cache_control/datacache_clean_and_invalid_line.md)清理并失效对应Cache Line，并使用[sync_data_barrier](../sync/data_barrier.md)保证相关访存操作的执行顺序和数据可见性。
 
 ## 调用示例
