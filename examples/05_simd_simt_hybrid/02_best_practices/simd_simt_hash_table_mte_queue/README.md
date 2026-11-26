@@ -93,7 +93,11 @@ $$
 
 ## 样例实现
 
-性能对比以msOpProf输出的`Task Duration(μs)`为准。
+### 性能指标说明
+
+| 指标 | 说明 |
+|:---|:---|
+| Task Duration(μs) | Task整体耗时，包含调度到加速器的时间、加速器上的执行时间以及响应结束时间 |
 
 ### Case 0：SIMT Warp直接写value
 

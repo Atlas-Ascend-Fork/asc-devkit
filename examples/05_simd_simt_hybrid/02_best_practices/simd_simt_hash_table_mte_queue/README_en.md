@@ -93,7 +93,11 @@ The sample parameters are as follows:
 
 ## Sample Implementation
 
-The performance comparison uses `Task Duration(μs)` in the msOpProf output.
+### Performance Metrics
+
+| Metric | Description |
+|:---|:---|
+| Task Duration(μs) | Overall Task latency, including the time to dispatch to the accelerator, the execution time on the accelerator, and the response completion time |
 
 ### Case 0: Direct Value Writes by a SIMT Warp
 

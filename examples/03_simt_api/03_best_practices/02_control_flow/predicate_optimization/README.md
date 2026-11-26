@@ -21,7 +21,9 @@
 │   ├── README_en.md                // 英文样例说明文档
 ```
 
-## 基础知识说明
+## 样例描述
+
+### 基础知识说明
 
 - **Warp与分支发散（Warp Divergence）**
 
@@ -56,7 +58,7 @@
 
 出现warp divergence时，各分支只能串行执行，执行某一分支时，未进入该分支的线程被活跃线程掩码屏蔽、空转等待；硬件将汇合点地址与各方向的活跃线程掩码压入分支栈，全部分支执行完毕后在汇合点重新汇合。predicate优化可以消除跳转和分支栈开销，提高算子性能。
 
-## hlog10样例描述
+### hlog10样例描述
 
 - 样例功能
 
@@ -70,14 +72,28 @@
   <tr><td rowspan="1" align="center">核函数名</td><td colspan="4" align="center">hlog10_early_return_kernel / hlog10_predicate_kernel</td></tr>
   </table>
 
-## hlog10样例实现
+### j0f样例描述
 
-| Case | 实现特点 | 使用的核函数 | 分支链处理方式 |
-|--------|---------------------------------------------------|--------------------|---------------------|
-| Case 0 | 使用提前return的方法处理特殊值 | hlog10_early_return_kernel | 基线版本divergence |
-| Case 1 | 使用临时变量处理特殊值，最后统一return | hlog10_predicate_kernel | predicate优化 |
+- 样例功能
 
-各Case默认启动8个block，每个block 1024个线程，每个线程处理一个元素。
+  以[j0f](../../../../../docs/zh/api/SIMT-API/math_functions/float_math_functions/j0f.md)接口为例。j0f接口计算输入数据第一类零阶贝塞尔函数。接口按输入数据绝对值分三段计算，并对两个特殊值进行单独处理。
+
+- 样例规格：
+  <table>
+  <tr><td rowspan="1" align="center">样例类型(OpType)</td><td colspan="4" align="center">j0f</td></tr>
+  <tr><td rowspan="3" align="center">样例输入/输出</td><td align="center">name</td><td align="center">shape</td><td align="center">data type</td><td align="center">format</td></tr>
+  <tr><td align="center">input / output</td><td align="center">[8192]</td><td align="center">float</td><td align="center">ND</td></tr>
+  <tr><td rowspan="1" align="center">核函数名</td><td colspan="4" align="center">j0f_early_return_kernel / j0f_unified_return_kernel / j0f_hybrid_return_kernel</td></tr>
+  </table>
+
+  case2与case3在input2上对比divergence基线与predicate优化的性能；case4按分支命中情况构造两批输入，通过对比不同命中率下的性能数据探索predicate优化的适用边界：
+
+  | 输入数据 | 数据范围 |
+  | --- | --- |
+  | input1 | 在实数域随机取值，并包含特殊值 |
+  | input2 | 在`[-1.0e13f,1.0e13f]`范围内随机取值 |
+
+## 样例实现
 
 ### 性能指标说明
 
@@ -88,7 +104,16 @@
 
 为防止warp调度带来影响，execute cycle采集时配置为1个block、32个线程。
 
-### Case 0: hlog10分支链divergence版本
+### hlog10样例实现
+
+| Case | 实现特点 | 使用的核函数 | 分支链处理方式 |
+|--------|---------------------------------------------------|--------------------|---------------------|
+| Case 0 | 使用提前return的方法处理特殊值 | hlog10_early_return_kernel | 基线版本divergence |
+| Case 1 | 使用临时变量处理特殊值，最后统一return | hlog10_predicate_kernel | predicate优化 |
+
+各Case默认启动8个block，每个block 1024个线程，每个线程处理一个元素。
+
+#### Case 0: hlog10分支链divergence版本
 
 **实现方式**：通过提前return的方式处理精度异常的特殊值。
 
@@ -161,7 +186,7 @@ __aicore__ inline half hlog10(half x)
 
 接口中有6层分支判断会产生divergence，带来额外的跳转与分支栈开销。
 
-### Case 1: hlog10分支链predicate优化版本
+#### Case 1: hlog10分支链predicate优化版本
 
 **实现方式**：先完整执行正常值路径得到临时变量temp，然后逐级覆盖临时变量处理精度异常的特殊值。
 
@@ -216,28 +241,7 @@ __aicore__ inline half hlog10(half x)
 
 后续样例将对不同命中率的分支采用不同处理方式，展示predicate优化的适用范围。
 
-## j0f样例描述
-
-- 样例功能
-
-  以[j0f](../../../../../docs/zh/api/SIMT-API/math_functions/float_math_functions/j0f.md)接口为例。j0f接口计算输入数据第一类零阶贝塞尔函数。接口按输入数据绝对值分三段计算，并对两个特殊值进行单独处理。
-
-- 样例规格：
-  <table>
-  <tr><td rowspan="1" align="center">样例类型(OpType)</td><td colspan="4" align="center">j0f</td></tr>
-  <tr><td rowspan="3" align="center">样例输入/输出</td><td align="center">name</td><td align="center">shape</td><td align="center">data type</td><td align="center">format</td></tr>
-  <tr><td align="center">input / output</td><td align="center">[8192]</td><td align="center">float</td><td align="center">ND</td></tr>
-  <tr><td rowspan="1" align="center">核函数名</td><td colspan="4" align="center">j0f_early_return_kernel / j0f_unified_return_kernel / j0f_hybrid_return_kernel</td></tr>
-  </table>
-
-  case2与case3在input2上对比divergence基线与predicate优化的性能；case4按分支命中情况构造两批输入，通过对比不同命中率下的性能数据探索predicate优化的适用边界：
-
-  | 输入数据 | 数据范围 |
-  | --- | --- |
-  | input1 | 在实数域随机取值，并包含特殊值 |
-  | input2 | 在`[-1.0e13f,1.0e13f]`范围内随机取值 |
-
-## j0f样例实现
+### j0f样例实现
 
 | Case | 实现特点 | 使用的核函数 | 分支链处理方式 |
 |--------|---------------------------------------------------|--------------------|---------------------|
@@ -247,7 +251,7 @@ __aicore__ inline half hlog10(half x)
 
 本组各Case的性能指标含义与采集方式同上，参见[性能指标说明](#性能指标说明)。
 
-### Case 2: j0f分支链divergence版本
+#### Case 2: j0f分支链divergence版本
 
 **实现方式**：通过提前return的方式处理每一个分支。
 
@@ -283,7 +287,7 @@ __aicore__ inline float j0f(float x)
 
 input2取值范围为`[-1.0e13f,1.0e13f]`，各线程只执行命中方向的分支体，未命中的分支仍产生跳转与分支栈开销，execute cycle为1139。
 
-### Case 3: j0f分支链计算后统一return版本
+#### Case 3: j0f分支链计算后统一return版本
 
 **实现方式**：使用临时变量存储中间结果，各分支命中时覆盖临时变量值，最后统一return。
 
@@ -321,7 +325,7 @@ __aicore__ inline float j0f(float x)
 - 相比Case 2的1139，execute cycle升至2930，aiv_total_cycles从2837.75升至18512.38。Case 3显著慢于基线，原因在于统一return后大量线程做了无用计算，造成性能损耗。
 - 对比Case 2与Case 3可知，warp divergence出现时，predicate优化并非总能带来性能收益。Case 4在此基础上引入分支命中情况，探究predicate优化的适用边界。
 
-### Case 4: j0f分支链高命中率分支提前return，低命中率分支predicate优化版本
+#### Case 4: j0f分支链高命中率分支提前return，低命中率分支predicate优化版本
 
 **实现方式**：使用提前return处理高命中率分支，用临时变量暂存低命中率分支的计算结果，引导编译器对低命中率分支进行predicate优化。
 
