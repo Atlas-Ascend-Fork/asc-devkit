@@ -1904,11 +1904,9 @@ static HcclResult QueryAssignedCcuInstanceEntity(HcclComm comm, void*& insEntity
 // plan_kernel_resources 校验口径一致），再逐类型 HcommCcuInsResDescSetNum 写回 hcomm desc，调用方
 // （AccumulateKernelRes）感知与基线完全同构。CCU_THREAD（外部枚举值 5）经 hcomm 内部 converter 映射
 // ResType::MISSION，与基线 SetNum(MISSION) 语义等价；INVALID=-1 不可作下标，从 0 起遍历。
-// 翻译器固定占用（同 register_start 扣减口径，XN 144 / CKE 32 / GSA 48）经 translatorResNum 出参
-// 透传，由调用方聚合时取 max 后按 die 加一次，避免多 kernel 聚合重复计入。
 static HcclResult AsccommKernelQueryResReq(
     void* insEntity, const char* kernelFuncName, const void* kernelFunc, const void** kernelArgs, uint32_t argNum,
-    uint32_t dieId, HcommCcuResDescHandle resDesc, uint32_t translatorResNum[ASCCOMM_CCU_RES_DESC_TYPE_COUNT])
+    uint32_t dieId, HcommCcuResDescHandle resDesc)
 {
     CHK_PRT_RET(insEntity == nullptr, HCCL_ERROR("[AsccommKernelQueryResReq] insEntity is nullptr."), HCCL_E_PTR);
     asccomm_ccu_res_desc desc{};
@@ -1930,9 +1928,6 @@ static HcclResult AsccommKernelQueryResReq(
                 "[AsccommKernelQueryResReq] HcommCcuInsResDescSetNum type[%u] failed, kernel[%s]: ccuRet -> %d", type,
                 kernelFuncName == nullptr ? "nullptr" : kernelFuncName, setRet),
             ConvertCcuToHccl(setRet));
-    }
-    for (uint32_t type = 0; type < ASCCOMM_CCU_RES_DESC_TYPE_COUNT; type++) {
-        translatorResNum[type] = desc.translatorResNum[type];
     }
     return HCCL_SUCCESS;
 }
@@ -1960,12 +1955,10 @@ static HcclResult CollectKernelResByType(
 }
 
 // 查询单个 kernel 的资源需求（asc-comm/V1 通路）：AsccommKernelQueryResReq 走 asc-comm 回放（与
-// 注册同数据面，hcomm 摸底的回放上下文与 asc-comm kernel 不兼容）。insEntity 为摸底借用的实例快照；
-// translatorResNum 随查询透传 asc-comm 翻译器固定占用（与 kernel 无关，逐次覆写同值），由调用方聚合。
+// 注册同数据面，hcomm 摸底的回放上下文与 asc-comm kernel 不兼容）。insEntity 为摸底借用的实例快照。
 static HcclResult AccumulateKernelRes(
     const CcuKernelInfo& kernelInfo,
-    std::map<uint32_t, std::map<u32, std::map<HcommCcuResType, uint32_t>>>& groupedResMap, void* insEntity,
-    uint32_t translatorResNum[ASCCOMM_CCU_RES_DESC_TYPE_COUNT])
+    std::map<uint32_t, std::map<u32, std::map<HcommCcuResType, uint32_t>>>& groupedResMap, void* insEntity)
 {
     HcommCcuResDescHandle kernelDesc = 0;
     CcuResult createRet = HcommCcuInsResDescCreate(kernelInfo.dieId, &kernelDesc);
@@ -1980,7 +1973,7 @@ static HcclResult AccumulateKernelRes(
     constexpr uint32_t kernelArgNum = 1;
     HcclResult queryRet = AsccommKernelQueryResReq(
         insEntity, kernelInfo.kernelFuncName, kernelInfo.kernelFunc, kernelArgs, kernelArgNum, kernelInfo.dieId,
-        kernelDesc, translatorResNum);
+        kernelDesc);
     if (queryRet != HCCL_SUCCESS) {
         HCCL_ERROR("[AccumulateKernelRes] AsccommKernelQueryResReq failed: ret -> %d", queryRet);
         HcommCcuInsResDescDestroy(kernelDesc);
@@ -2250,18 +2243,16 @@ static HcclResult PadEnabledDies(std::map<uint32_t, std::map<u32, std::map<Hcomm
 }
 
 // 聚合所有 kernel 的资源需求到 reqDescs（按 dieId 分组，asc-comm/V1 通路）。
-// 聚合规则：同 (dieId, resGroup) 内逐 kernel 相加、同 dieId 不同 resGroup 之间取最大；
-// 翻译器固定占用（translatorResNum，随 asccomm 摸底透传）在取 max 后按 die 加一次，
-// 使按需建实例与复用容量比对都覆盖翻译器占用（asccomm 摸底结果只含 kernel 自身需求）。
+// 聚合规则：同 (dieId, resGroup) 内逐 kernel 相加、同 dieId 不同 resGroup 之间取最大。
+// Translator 属于 instance 侧专用资源，不参与 kernel 需求聚合。
 static HcclResult BuildAggregatedResReq(AlgResourceRequest& resRequest, ResDescByDie& reqDescs, void* insEntity)
 {
     u32 totalKernelNum = resRequest.ccuKernelInfos.size();
     HCCL_INFO("[BuildAggregatedResReq] start, kernelNum[%u].", totalKernelNum);
 
     std::map<uint32_t, std::map<u32, std::map<HcommCcuResType, uint32_t>>> groupedResMap;
-    uint32_t translatorResNum[ASCCOMM_CCU_RES_DESC_TYPE_COUNT] = {};
     for (u32 i = 0; i < totalKernelNum; i++) {
-        CHK_RET(AccumulateKernelRes(resRequest.ccuKernelInfos[i], groupedResMap, insEntity, translatorResNum));
+        CHK_RET(AccumulateKernelRes(resRequest.ccuKernelInfos[i], groupedResMap, insEntity));
     }
     CHK_RET(PadEnabledDies(groupedResMap));
 
@@ -2283,9 +2274,6 @@ static HcclResult BuildAggregatedResReq(AlgResourceRequest& resRequest, ResDescB
                 if (it != groupEntry.second.end() && it->second > maxNum)
                     maxNum = it->second;
             }
-            // asc-comm register_start 的翻译器固定扣减计入需求；注：多 resGroup 轮次与多算子的
-            // 翻译器累积扣减（A1）由 asc-comm 侧每轮对账（B1）修复。
-            maxNum += translatorResNum[static_cast<uint32_t>(resType)];
             CcuResult setRet = HcommCcuInsResDescSetNum(reqDesc, resType, maxNum);
             if (setRet != CCU_SUCCESS) {
                 HCCL_ERROR("[BuildAggregatedResReq] HcommCcuInsResDescSetNum failed: ccuRet -> %d", setRet);
