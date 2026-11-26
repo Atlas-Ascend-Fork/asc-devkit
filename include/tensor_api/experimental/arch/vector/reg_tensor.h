@@ -20,7 +20,7 @@
 #ifndef INCLUDE_TENSOR_API_EXPERIMENTAL_ARCH_VECTOR_REG_TENSOR_H
 #define INCLUDE_TENSOR_API_EXPERIMENTAL_ARCH_VECTOR_REG_TENSOR_H
 
-#include "tensor_api/utils/utils.h"
+#include "tensor_api/tensor/tensor_interface.h"
 #include "impl/tensor_api/experimental/arch/vector/type_get.h"
 
 namespace asc {
@@ -44,7 +44,7 @@ struct reg_tensor {
      * @brief Default-constructs a register tensor.
      *
      * @override_id te_experimental_reg_tensor_reg_tensor__void
-     * @archs 3510
+     * @archs 3510, 9201
      */
     __simd_callee__ reg_tensor() = default;
 
@@ -53,7 +53,7 @@ struct reg_tensor {
      * @brief Constructs a register tensor with the specified active-lane mask.
      *
      * @override_id te_experimental_reg_tensor_reg_tensor__const_vector_bool_R
-     * @archs 3510
+     * @archs 3510, 9201
      * @param [in] maskValue Raw vector predicate used as the active-lane mask.
      * @note A mask value of 1 enables the corresponding element; a value of 0 disables it. Setting the mask does not
      * modify the underlying register data.
@@ -65,7 +65,7 @@ struct reg_tensor {
      * @brief Sets the active-lane mask from a Boolean register tensor.
      *
      * @override_id te_experimental_reg_tensor_with_mask__const_reg_tensor_bool_R
-     * @archs 3510
+     * @archs 3510, 9201
      * @return A reference to this register tensor.
      * @param [in] maskReg Register tensor whose register value supplies the mask.
      * @note A mask value of 1 enables the corresponding element; a value of 0 disables it. Setting the mask does not
@@ -116,7 +116,7 @@ struct reg_pair {
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/reg_tensor_impl.h"
 #endif
 

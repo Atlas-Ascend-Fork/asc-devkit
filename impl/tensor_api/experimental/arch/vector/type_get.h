@@ -125,6 +125,17 @@ struct type_get<fp4x2_e1m2_t> {
     using type = vector_fp4x2_e1m2_t;
 };
 
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201) && (ASC_DEVKIT_VERSION_NUM >= 90300000)
+template <>
+struct type_get<fp8_e6m2_t> {
+    using type = vector_fp8_e6m2_t;
+};
+
+template <>
+struct type_get<hifloat4x2_t> {
+    using type = vector_hifloat4x2_t;
+};
+#endif
 } // namespace detail
 } // namespace experimental
 } // namespace te

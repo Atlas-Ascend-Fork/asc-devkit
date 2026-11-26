@@ -35,7 +35,7 @@ inline constexpr histogram_options default_histogram_options{};
  * @brief Accumulates histogram or cumulative histogram counts into dst and returns the updated tensor.
  *
  * @override_id te_experimental_histograms__reg_tensor_T_R_const_reg_tensor_U_R__template_options_T_U
- * @archs 3510
+ * @archs 3510, 9201
  * @return The updated destination tensor with its original mask unchanged.
  * @param [in,out] dst Destination tensor containing the initial and accumulated counts.
  * @param [in] src Source operand.
@@ -47,7 +47,7 @@ __simd_callee__ inline reg_tensor<T> histograms(reg_tensor<T>& dst, const reg_te
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/histogram_compute_impl.h"
 #endif
 

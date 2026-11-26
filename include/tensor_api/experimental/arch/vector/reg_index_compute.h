@@ -33,7 +33,7 @@ namespace experimental {
  * @brief Creates an arithmetic lane-index register from a scalar start value.
  *
  * @override_id te_experimental_iota__const_T_R__template_order_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam order Sequence order. increase generates ascending lane values; decrease generates descending lane values.
  * @tparam T Type of the scalar start value and generated lane values.
  * @return A register tensor containing the generated lane-index sequence with an all-active result mask.
@@ -46,7 +46,7 @@ __simd_callee__ inline reg_tensor<Std::remove_cvref_t<T>> iota(const T& start);
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/reg_index_impl.h"
 #endif
 

@@ -24,7 +24,8 @@
 #include "version/asc_devkit_version.h"
 
 #if (ASC_DEVKIT_VERSION_NUM >= 90200000)
-#if !defined(__NPU_ARCH__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510))
+#if !defined(__NPU_ARCH__) || (__NPU_ARCH__ == 3510) || \
+    ((__NPU_ARCH__ == 9201) && (ASC_DEVKIT_VERSION_NUM >= 90300000))
 #include "tensor_api/experimental/utils/reg_enum.h"
 #include "tensor_api/experimental/arch/vector/reg_tensor.h"
 #include "tensor_api/experimental/arch/vector/type_conversion.h"

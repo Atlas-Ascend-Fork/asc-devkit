@@ -31,10 +31,16 @@ namespace experimental {
  *
  * @override_id
  * te_experimental_gather__const_reg_tensor_DataType_R_const_reg_tensor_IndexType_R__template_DataType_IndexType
- * @archs 3510
- * @tparam DataType Element type of the source and result register tensors.
- * @tparam IndexType Element type of the index register tensor.
+ * @archs 3510, 9201
+ * @tparam DataType Element type of the source and result register tensors. Supported types are int8_t, uint8_t,
+ * fp8_e4m3fn_t, hifloat8_t, fp8_e5m2_t, fp8_e8m0_t, int16_t, uint16_t, half, bfloat16_t, int32_t, uint32_t, and float.
+ * @tparam IndexType Unsigned integer type with the same element width as DataType: uint8_t, uint16_t, or uint32_t.
  * @return A register tensor containing the gathered data with an all-active result mask.
+ * @note Indexes are element positions, not byte offsets. Each result lane is src.reg[index.reg[i] % VL_T], where
+ * VL_T is the number of DataType elements in one vector register.
+ * @note Neither src.mask nor index.mask selects participating lanes. All index lanes and all referenced source
+ * elements must be initialized. Bind a new result mask before consuming only part of the result.
+ * @note This operation is effective only on AIV.
  * @param [in] src Source register tensor.
  * @param [in] index Register tensor containing per-lane source indexes.
  */
@@ -45,7 +51,7 @@ __simd_callee__ inline reg_tensor<DataType> gather(const reg_tensor<DataType>& s
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/reg_gather_impl.h"
 #endif
 

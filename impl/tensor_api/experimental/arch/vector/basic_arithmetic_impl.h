@@ -35,6 +35,12 @@ constexpr int32_t float_max_normal_exponent = 127;
 constexpr int32_t float_normalization_scale_exponent = 23;
 constexpr int32_t float_mantissa_drop_width = 24;
 
+using div_shift_reg_type =
+    AscendC::Std::conditional_t<current_arch_version == arch_version::v9201, vector_uint32_t, vector_int32_t>;
+using div_shift_scalar_type =
+    AscendC::Std::conditional_t<current_arch_version == arch_version::v9201, uint32_t, int16_t>;
+constexpr div_shift_scalar_type div_exponent_shift = float_exponent_shift;
+
 constexpr int16_t half_exponent_shift = 10;
 constexpr int16_t half_exponent_bias = 15;
 constexpr int16_t half_scale_underflow_bound = -9;
@@ -121,14 +127,14 @@ __simd_callee__ inline void div_precision(
 
     asc_duplicate_scalar(src0_reg, float_exponent_mask, mask);
     asc_and(src0_exp_bits, (vector_uint32_t&)src0, src0_reg, mask);
-    asc_shiftright_scalar(src0_exp_bits, src0_exp_bits, float_exponent_shift, mask);
+    asc_shiftright_scalar(src0_exp_bits, src0_exp_bits, div_exponent_shift, mask);
     asc_add_scalar(src0_exp, (vector_int32_t&)src0_exp_bits, -float_exponent_bias, mask);
     asc_lt_scalar(need_scale_mask, src0_exp, precision_threshold, mask);
 
     asc_duplicate_scalar(threshold_vec, precision_threshold, mask);
     asc_sub(k, threshold_vec, src0_exp, need_scale_mask);
     asc_add_scalar(new_exp, k, float_exponent_bias, mask);
-    asc_shiftleft_scalar(scale_bits, (vector_uint32_t&)new_exp, float_exponent_shift, mask);
+    asc_shiftleft_scalar(scale_bits, (vector_uint32_t&)new_exp, div_exponent_shift, mask);
 
     asc_mul((vector_float&)src0_reg, src0, (vector_float&)scale_bits, mask);
     asc_mul((vector_float&)src0_exp_bits, src1, (vector_float&)scale_bits, mask);
@@ -228,7 +234,7 @@ __simd_callee__ inline void div_scale_round(
     asc_and(q_sign, (vector_uint32_t&)dst, tmp_u0, mask);
     asc_duplicate_scalar(tmp_u0, exponent_extractor, mask);
     asc_and(q_exponent, (vector_uint32_t&)dst, tmp_u0, mask);
-    asc_shiftright_scalar(q_exponent, q_exponent, float_exponent_shift, mask);
+    asc_shiftright_scalar(q_exponent, q_exponent, div_exponent_shift, mask);
     asc_duplicate_scalar(tmp_i0, float_exponent_bias, mask);
     asc_sub(e, (vector_int32_t&)q_exponent, tmp_i0, mask);
     asc_add(e, e, scale, mask);
@@ -244,7 +250,7 @@ __simd_callee__ inline void div_scale_round(
     asc_not(not_overflow_mask, overflow_mask, mask);
     asc_ge_scalar(normal_mask, e, float_min_normal_exponent, not_overflow_mask);
     asc_add_scalar(tmp_i1, e, float_exponent_bias, normal_mask);
-    asc_shiftleft_scalar(tmp_u0, (vector_uint32_t&)tmp_i1, float_exponent_shift, normal_mask);
+    asc_shiftleft_scalar(tmp_u0, (vector_uint32_t&)tmp_i1, div_exponent_shift, normal_mask);
     asc_or(result_bits, q_sign, tmp_u0, normal_mask);
     asc_or(result_bits, result_bits, q_mantissa, normal_mask);
     asc_select((vector_uint32_t&)dst, result_bits, (vector_uint32_t&)dst, normal_mask);
@@ -258,12 +264,12 @@ __simd_callee__ inline void div_scale_round(
     asc_not(subnormal_round_mask, zero_mask, subnormal_mask);
     asc_duplicate_scalar(one_u, 1u, subnormal_round_mask);
     asc_duplicate_scalar(zero_u, 0u, subnormal_round_mask);
-    asc_shiftright(tmp_u0, m24, (vector_int32_t&)drop, subnormal_round_mask);
-    asc_shiftleft(tmp_u1, one_u, (vector_int32_t&)drop, subnormal_round_mask);
+    asc_shiftright(tmp_u0, m24, (div_shift_reg_type&)drop, subnormal_round_mask);
+    asc_shiftleft(tmp_u1, one_u, (div_shift_reg_type&)drop, subnormal_round_mask);
     asc_sub(tmp_u1, tmp_u1, one_u, subnormal_round_mask);
     asc_and(tmp_u2, m24, tmp_u1, subnormal_round_mask);
     asc_add_scalar(drop_minus_one, drop, -1, subnormal_round_mask);
-    asc_shiftleft(tmp_u1, one_u, (vector_int32_t&)drop_minus_one, subnormal_round_mask);
+    asc_shiftleft(tmp_u1, one_u, (div_shift_reg_type&)drop_minus_one, subnormal_round_mask);
     asc_gt(rem_gt_half_mask, tmp_u2, tmp_u1, subnormal_round_mask);
     asc_eq(rem_eq_half_mask, tmp_u2, tmp_u1, subnormal_round_mask);
     asc_and(tmp_u2, tmp_u0, one_u, subnormal_round_mask);
@@ -362,8 +368,8 @@ __simd_callee__ inline void div_subnormal(vector_float& dst, vector_float src0, 
     asc_duplicate_scalar(tmp0, inf, mask);
     asc_and(src0_exponent, (vector_uint32_t&)src0_all, tmp0, mask);
     asc_and(src1_exponent, (vector_uint32_t&)src1_all, tmp0, mask);
-    asc_shiftright_scalar(src0_exponent, src0_exponent, float_exponent_shift, mask);
-    asc_shiftright_scalar(src1_exponent, src1_exponent, float_exponent_shift, mask);
+    asc_shiftright_scalar(src0_exponent, src0_exponent, div_exponent_shift, mask);
+    asc_shiftright_scalar(src1_exponent, src1_exponent, div_exponent_shift, mask);
     asc_sub(scale, (vector_int32_t&)src0_exponent, (vector_int32_t&)src1_exponent, mask);
     asc_add_scalar(tmp1, scale, -float_normalization_scale_exponent, mask_src0_subnormal);
     asc_select(scale, tmp1, scale, mask_src0_subnormal);

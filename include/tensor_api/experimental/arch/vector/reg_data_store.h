@@ -33,7 +33,7 @@ namespace experimental {
  *
  * @override_id
  * te_experimental_store__Tensor_R_const_Coord_R_const_reg_tensor_RegDataType_R__template_sideband_mode_Tensor_Coord_RegDataType
- * @archs 3510
+ * @archs 3510, 9201
  * @note For vector data registers, the tensor and register element types must match, except that an int4b_t
  * tensor requires an int4x2_t register. Mask registers (reg_tensor<bool>) support only store_sideband_mode::direct
  * and store_sideband_mode::pack, and only to uint8_t, uint16_t, or uint32_t tensors. Both modes ignore src.mask.
@@ -52,7 +52,7 @@ __simd_callee__ inline void store(Tensor& tensor, const Coord& coord, const reg_
  *
  * @override_id
  * te_experimental_store__Tensor_R_const_reg_tensor_RegDataType_R__template_sideband_mode_Tensor_RegDataType
- * @archs 3510
+ * @archs 3510, 9201
  * @note For vector data registers, the tensor and register element types must match, except that an int4b_t
  * tensor requires an int4x2_t register. Mask registers (reg_tensor<bool>) support only store_sideband_mode::direct
  * and store_sideband_mode::pack, and only to uint8_t, uint16_t, or uint32_t tensors. Both modes ignore src.mask.
@@ -68,7 +68,7 @@ __simd_callee__ inline void store(Tensor& tensor, const reg_tensor<RegDataType>&
  *
  * @override_id
  * te_experimental_store__Tensor_R_const_Coord_R_const_reg_tensor_RegDataType_R_const_reg_tensor_RegDataType_R__template_sideband_mode_Tensor_Coord_RegDataType
- * @archs 3510
+ * @archs 3510, 9201
  * @note This overload supports only store_sideband_mode::intlv. The tensor and register element types must match.
  * @param [out] tensor Destination tensor located in UB.
  * @param [in] coord Coordinate of the first destination element.
@@ -87,7 +87,7 @@ __simd_callee__ inline void store(
  *
  * @override_id
  * te_experimental_store__Tensor_R_const_reg_tensor_RegDataType_R_const_reg_tensor_RegDataType_R__template_sideband_mode_Tensor_RegDataType
- * @archs 3510
+ * @archs 3510, 9201
  * @note This overload supports only store_sideband_mode::intlv. The tensor and register element types must match.
  * @param [out] tensor Destination tensor located in UB.
  * @param [in] src0 First source register tensor.
@@ -103,7 +103,7 @@ __simd_callee__ inline void store(
  *
  * @override_id
  * te_experimental_store_scatter__Tensor_R_const_reg_tensor_T_R_const_reg_tensor_Index_R__template_Tensor_T_Index
- * @archs 3510
+ * @archs 3510, 9201
  * @note The tensor and source register element types must match.
  * @param [out] tensor Destination tensor located in UB.
  * @param [in] src Source register tensor. Its active-lane mask selects the elements to store.
@@ -120,7 +120,7 @@ __simd_callee__ inline void store_scatter(Tensor& tensor, const reg_tensor<T>& s
  *
  * @override_id
  * te_experimental_store_scatter__Tensor_R_const_Coord_R_const_reg_tensor_T_R_const_reg_tensor_Index_R__template_Tensor_Coord_T_Index
- * @archs 3510
+ * @archs 3510, 9201
  * @note The tensor and source register element types must match.
  * @param [out] tensor Destination tensor located in UB.
  * @param [in] coord Coordinate used as the base destination position.
@@ -181,7 +181,7 @@ private:
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201 && ASC_DEVKIT_VERSION_NUM >= 90300000))
 #include "impl/tensor_api/experimental/arch/vector/reg_data_store_impl.h"
 #endif
 

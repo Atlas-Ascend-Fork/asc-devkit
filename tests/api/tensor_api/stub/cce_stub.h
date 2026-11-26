@@ -50,7 +50,7 @@ template <typename T>
 inline void asc_mem_bar(T)
 {}
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ != 3510)
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ != 3510) && (__NPU_ARCH__ != 9201)
 using vector_uint8_t = uint8_t;
 using vector_uint16_t = uint8_t;
 using vector_uint32_t = uint8_t;

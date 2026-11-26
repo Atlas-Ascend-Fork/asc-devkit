@@ -27,10 +27,11 @@ namespace experimental {
  * @brief Packs a register tensor into the selected low or high half-width representation.
  *
  * @override_id te_experimental_pack__reg_tensor_T__template_part_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam part Destination half selected for the pack operation.
- * @tparam T Element type of the source register tensor.
+ * @tparam T Source element type: bool, uint16_t, int16_t, uint32_t, or int32_t.
  * @return A register tensor containing the packed data with an all-active result mask.
+ * @note part selects the destination half, not which bits to extract from each source element.
  * @param [in] src Source register tensor.
  */
 template <high_low_part part = high_low_part::low, typename T>
@@ -41,7 +42,7 @@ __simd_callee__ inline decltype(auto) pack(reg_tensor<T> src);
  * @brief Unpacks a register tensor from the selected low or high half-width representation.
  *
  * @override_id te_experimental_unpack__reg_tensor_T__template_part_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam part Source half selected for the unpack operation.
  * @tparam T Element type of the source register tensor.
  * @return A register tensor containing the unpacked data with an all-active result mask.
@@ -55,9 +56,10 @@ __simd_callee__ inline decltype(auto) unpack(reg_tensor<T> src);
  * @brief Compresses the lanes selected by the source tensor mask into contiguous low lanes.
  *
  * @override_id te_experimental_compress__reg_tensor_T__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam T Element type of the source register tensor.
  * @return A register tensor containing selected elements packed into low lanes.
+ * @note The result mask is copied from src.mask, not adjusted to the compacted lane positions.
  * @param [in] src Source register tensor whose mask selects the lanes to compress.
  */
 template <typename T>
@@ -68,7 +70,7 @@ __simd_callee__ inline reg_tensor<T> compress(reg_tensor<T> src);
  * @brief Generates exclusive prefix-count indexes from a mask.
  *
  * @override_id te_experimental_expand__reg_tensor_bool__template_T
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam T Element type of the generated index register tensor.
  * @return A register tensor containing prefix-count indexes with an all-active result mask.
  * @param [in] mask Lane-selection mask.
@@ -79,7 +81,7 @@ __simd_callee__ inline reg_tensor<T> expand(reg_tensor<bool> mask);
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/reg_compute_sel_impl.h"
 #endif
 

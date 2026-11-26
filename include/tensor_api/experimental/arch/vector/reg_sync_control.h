@@ -30,7 +30,7 @@ namespace experimental {
  * @brief Synchronizes UB accesses between two pipelines in a SIMD VF.
  *
  * @override_id te_experimental_mem_bar__void__template_src_dst
- * @archs 3510
+ * @archs 3510, 9201
  * @tparam src Source pipeline whose preceding UB accesses must complete.
  * @tparam dst Destination pipeline whose subsequent UB accesses wait for the source pipeline.
  * @note Only the source/destination combinations documented for this interface are supported. This interface does not
@@ -42,7 +42,7 @@ __simd_callee__ inline void mem_bar();
 } // namespace te
 } // namespace asc
 
-#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+#if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 3510) || (__NPU_ARCH__ == 9201))
 #include "impl/tensor_api/experimental/arch/vector/reg_sync_control_impl.h"
 #endif
 
