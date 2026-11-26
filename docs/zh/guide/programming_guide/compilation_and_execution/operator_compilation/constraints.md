@@ -25,7 +25,7 @@
   - 支持直接声明或使用的数据类型。
     |  类别   |  数据类型  | 支持情况 |
     |  ----  | ----  | ----  |
-    | 基本数据类型  | int4b_t、bool、int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float、int64_t、uint64_t、double。 | 支持声明和使用 |
+    | 基本数据类型  | int4b_t、bool、int8_t、uint8_t、int16_t、uint16_t、half（gcc>=12.0.0时支持）、int32_t、uint32_t、float、int64_t、uint64_t、double。 | 支持声明和使用 |
     | 基本数据类型 |int4x2_t。| 仅支持声明 |
     | 向量数据类型  | vector_bool、vector_int8_t、vector_uint8_t、vector_int16_t、vector_uint16_t、vector_half、vector_int32_t、vector_uint32_t、vector_float、vector_int64_t、vector_uint64_t、addr_reg、vector_store_unalign、vector_load_unalign。| 支持声明和使用 |
     | 复数 | complex32、complex64。| 仅支持声明 |

@@ -4,11 +4,11 @@
 
 本样例基于C API编程接口实现ELU（Exponential Linear Unit）激活运算，主要调用 `asc_exp`、`asc_mul_scalar`、`asc_select` 接口。
 
-## 本样例支持的产品及CANN软件版本
+## 本样例支持的产品及软件版本
 
-| 产品 | CANN软件版本 |
-| --- | --- |
-| Ascend 950PR&950DT系列产品 | >= CANN 9.0.0 |
+| 产品 | CANN软件版本 | GCC软件版本 |
+| --- | --- | --- |
+| Ascend 950PR&950DT系列产品 | >= CANN 9.0.0 | >= 12.0.0 |
 
 ## 目录结构介绍
 

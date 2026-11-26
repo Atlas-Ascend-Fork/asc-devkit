@@ -210,6 +210,9 @@ git clone https://gitcode.com/cann/asc-devkit.git
 - pkg-config >= 0.29.0
 - patch
 
+> [!CAUTION] 编译报错可能
+> 本仓库中，部分`examples`下的算子样例以及API手册中的调用示例在`host`端使用了`half`类型。该类型自GCC 12.0.0起才得到支持，因此在GCC版本低于12.0.0的环境中，编译相关内容时可能出现编译错误。
+
 ### ⚡ 编译安装<a name="compile&install"></a>
 
 1. 编译
