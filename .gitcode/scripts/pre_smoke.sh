@@ -100,6 +100,10 @@ update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 10; update-altern
 update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 10; update-alternatives --config g++ <<< '1'
 source /usr/local/Ascend/cann/set_env.sh
 python3 -m pip install -r .devcontainer/requirements.txt
+if [[ "${ARCH:-}" == "dav-3510" ]]; then
+  # Use the system GCC toolchain for bisheng on the A5 smoke image.
+  export ASCFLAGS="${ASCFLAGS:---gcc-toolchain=/usr}"
+fi
 (cd ./scripts && bash run_presmoke.sh 2>&1 | tee -a "$RUN_TEST_LOG")
 if [ -d "presmoke_reports" ]; then
   mv presmoke_reports /root/ascend/log
