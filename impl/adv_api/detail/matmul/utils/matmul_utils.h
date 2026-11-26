@@ -50,6 +50,11 @@ constexpr uint32_t L0C_BUF_BLOCK_NUM = 8;
 constexpr int8_t N_BUFFER_33_FACTOR = 3;
 constexpr uint32_t CV_SYNC_AIV_ID0 = 0;
 constexpr uint32_t CV_SYNC_AIV_ID1 = 1;
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+// WAIT_FIXP is special because the cube and vector use different event types.
+constexpr uint8_t WAIT_FIXP_FOR_AIV = static_cast<uint8_t>(1U);
+constexpr uint8_t WAIT_FIXP_FOR_CUBE = static_cast<uint8_t>(2U);
+#endif
 
 constexpr TQueConfig gCO1Config = {
     .nd2nz = false,
@@ -351,7 +356,7 @@ __aicore__ constexpr bool PhyPosIsL1OrUB(TPosition pos)
 __aicore__ constexpr bool PhyPosIsL0C(TPosition pos) { return (pos == TPosition::CO1); }
 
 template <bool AShare, bool BShare>
-__aicore__ __inline__ void SyncCubeWithVec()
+__aicore__ __inline__ void SyncCubeWithVec(uint8_t instID)
 {
     // Ensure that the Cube starts to process the message after receiving the
     // signals of V0 and V1 in the case of ABshare.
@@ -362,7 +367,12 @@ __aicore__ __inline__ void SyncCubeWithVec()
     if ASCEND_IS_AIC {
         if constexpr (AShare && BShare) {
             constexpr uint16_t eventID = 9U;
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_FIX>(GetIntraFlagId(instID, WAIT_FIXP_FOR_CUBE, 0U));
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_FIX>(GetIntraFlagId(instID, WAIT_FIXP_FOR_CUBE, 1U));
+#else
             WaitEvent(eventID);
+#endif
             return;
         }
     }
@@ -370,7 +380,11 @@ __aicore__ __inline__ void SyncCubeWithVec()
     if ASCEND_IS_AIV {
         if constexpr (AShare && BShare) {
             constexpr uint16_t eventID = 9U;
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreSetFlag<INTRA_MODE, PIPE_V>(GetIntraFlagId(instID, WAIT_FIXP_FOR_CUBE, GetSubBlockIdxImpl()));
+#else
             NotifyEvent<PIPE_MTE3>(eventID);
+#endif
             return;
         }
     }

@@ -327,6 +327,7 @@ file(GLOB ASCENDC_TEST_ascend950pr_9599_AIC_CASE_SRC_FILES
     matmul/resource/cube_out_buffer/test_cube_out_buffer_co1_shared.cpp
     matmul/param/test_matmul_cross_core_sync.cpp
     matmul/kfc/test_matmul_server_c310.cpp
+    matmul/kfc/test_matmul_server_c220.cpp
     matmul/copy_cube_in/test_copy_cube_in_ub_to_l1_ss.cpp
     matmul/tiling/test_matmul_constant_tiling_impl.cpp
     matmul/test_operator_matmul_mx_c310.cpp
@@ -494,7 +495,7 @@ foreach(product_type ${PRODUCT_TYPE_LIST})
         $<$<STREQUAL:${product_type},ascend610>:__NPU_ARCH__=2002;__DAV_M200__>
         $<$<STREQUAL:${product_type},ascend910B1_AIC>:__NPU_ARCH__=2201;__DAV_C220__;__DAV_C220_CUBE__;__DAV_CUBE__>
         $<$<STREQUAL:${product_type},ascend910B1_AIV>:__NPU_ARCH__=2201;__DAV_C220__;__DAV_C220_VEC__;__DAV_VEC__>
-        $<$<STREQUAL:${product_type},ascend950pr_9599_AIC>:__NPU_ARCH__=3510;__DAV_C310__;__DAV_C310_CUBE__>
+        $<$<STREQUAL:${product_type},ascend950pr_9599_AIC>:__NPU_ARCH__=3510;__DAV_C310__;__DAV_C310_CUBE__;__DAV_CUBE__>
         $<$<STREQUAL:${product_type},ascend950pr_9599_AIV>:__NPU_ARCH__=3510;__DAV_C310__;__DAV_C310_VEC__>
         $<$<STREQUAL:${product_type},KirinX90_AIV>:__NPU_ARCH__=3003;__DAV_L300__;__DAV_L300_VEC__;__DAV_L300_VEC__>
         $<$<STREQUAL:${product_type},Kirin9030_AIV>:__NPU_ARCH__=3113;__DAV_L311__;__DAV_L311_VEC__;__DAV_L311_VEC__>

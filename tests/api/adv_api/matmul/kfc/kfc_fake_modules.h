@@ -23,11 +23,21 @@ class CustomMatmulScheduler {
 
 public:
     __aicore__ inline void Init(const TCubeTiling* __restrict cubeTiling, TPipe* tpipe) {}
-    __aicore__ inline bool ScheduleOnce(bool enPartialSum) { return true; }
+    __aicore__ inline bool ScheduleOnce(bool enPartialSum)
+    {
+        if (scheduleTimes_ == 0) {
+            return false;
+        }
+        scheduleTimes_--;
+        return true;
+    }
     __aicore__ inline void GetResult(const GlobalTensor<DstT>& gm, uint8_t enAtomic = 0, bool enSequentialWrite = false)
     {}
     __aicore__ inline void End() {}
     __aicore__ inline void Reset() {}
+
+private:
+    uint32_t scheduleTimes_ = 14;
 };
 
 template <typename IMPL, class A_TYPE, class B_TYPE, class C_TYPE, class BIAS_TYPE, const auto& MM_CFG>
@@ -37,7 +47,8 @@ public:
     template <class T>
     void Schedule(
         const T& dst, bool enPartialSum, uint8_t enAtomic, bool enSequentialWrite, const uint32_t matrixStrideA,
-        const uint32_t matrixStrideB, const uint32_t matrixStrideC) {};
+        const uint32_t matrixStrideB, const uint32_t matrixStrideC)
+    {}
     __aicore__ inline void End() {}
 };
 } // namespace AscendC

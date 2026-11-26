@@ -759,7 +759,7 @@ public:
         const bool isBias = kfcMsg_.body.setTensorBias;
 #endif
         PostMessage<KFC_Enum::MMFUN_ITERATE, false>();
-        SyncCubeWithVec<A_TYPE::ibShare, B_TYPE::ibShare>();
+        SyncCubeWithVec<A_TYPE::ibShare, B_TYPE::ibShare>(static_cast<uint8_t>(this->instIdx));
 #if defined(USE_SSBUF)
         // wait and copy data from UB->L1
         PrepareABFromUb(isTransA, isTransB, isBias, isTransScaleA, isTransScaleB);
@@ -789,6 +789,15 @@ public:
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
         }
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        if constexpr (GetPhyType(C_TYPE::pos) == Hardware::UB) {
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_V>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+        } else {
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+        }
+#else
         auto intraId = this->devEvtID;
         if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
             if (GetSubBlockIdxImpl() == 1) {
@@ -796,6 +805,7 @@ public:
             }
         }
         WaitEvent(intraId);
+#endif
 #endif
     }
 
@@ -810,7 +820,12 @@ public:
 #if defined(USE_SSBUF)
         CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+            GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
         WaitEvent(this->devEvtID);
+#endif
 #endif
     }
 
@@ -831,11 +846,11 @@ public:
             if ASCEND_IS_AIC {
                 cubeObj.cubeObj[0].mul.IterateAll(gm, enAtomic, enSequentialWrite, waitIterateAll, fakeMsg);
                 if (sync || waitIterateAll) {
-                    CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(GetIntraFlagId(
-                        cubeObj.cubeObj[0].instID, static_cast<uint8_t>(VEC_WAIT_INTRA_Enum::WAIT_FIXP), 0U));
+                    CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                        GetIntraFlagId(cubeObj.cubeObj[0].instID, WAIT_FIXP_FOR_AIV, 0U));
                     if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
                         CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(GetIntraFlagId(
-                            cubeObj.cubeObj[0].instID, static_cast<uint8_t>(VEC_WAIT_INTRA_Enum::WAIT_FIXP),
+                            cubeObj.cubeObj[0].instID, WAIT_FIXP_FOR_AIV,
                             1U)); // 1 means sub_block 1
                     }
                 }
@@ -965,8 +980,12 @@ public:
         kfcMsg_.body.enSequentialWrite = enSequentialWrite;
         kfcMsg_.body.waitIterateAll = waitIterateAll;
         PostMessage<KFC_Enum::MMFUN_ITERATE_ALL, sync>();
-        SyncCubeWithVec<A_TYPE::ibShare, B_TYPE::ibShare>();
+        SyncCubeWithVec<A_TYPE::ibShare, B_TYPE::ibShare>(static_cast<uint8_t>(this->instIdx));
         if constexpr (sync) {
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             auto intraId = this->devEvtID;
             if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
                 if (GetSubBlockIdxImpl() == 1) {
@@ -974,6 +993,7 @@ public:
                 }
             }
             WaitEvent(intraId);
+#endif
         }
         isSyncGetC = sync;
         TRACE_STOP(TraceId::KFC_CLIENT_POST_MSG);
@@ -1012,7 +1032,12 @@ public:
         PostMessage<KFC_Enum::MMFUN_ITERATE_ALL, sync>();
 
         if constexpr (sync) {
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
             CopyToUB(ubCmatrix, gmDataAddr, ubCmatrix.GetSize());
         }
         isSyncGetC = sync;
@@ -1056,7 +1081,12 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
 #endif
         }
         isSyncGetC = sync;
@@ -1109,7 +1139,12 @@ public:
                 CrossCoreWaitFlag<INTRA_MODE, PIPE_V>(waitFixpId);
             }
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
             CopyToUB(ubCmatrix, gmDataAddr, ubCmatrix.GetSize());
 #endif
         }
@@ -1163,7 +1198,12 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
 #endif
         }
         isSyncGetC = sync;
@@ -1303,7 +1343,12 @@ public:
         PostMessage<KFC_Enum::MMFUN_GET_TENSOR_C, sync>();
 
         if constexpr (sync) {
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
         }
         TRACE_STOP(TraceId::KFC_CLIENT_REV_MSG_GM);
     }
@@ -1327,7 +1372,12 @@ public:
 
             if (curProcess < INC_PROCESS_CHECK) {
                 ++curProcess;
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+                CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                    GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
                 WaitEvent(this->devEvtID);
+#endif
             }
 
             uint32_t size;
@@ -1356,7 +1406,12 @@ public:
         GM_ADDR gmDataAddr = reinterpret_cast<GM_ADDR>(kfcMsg_.body.cAddr);
         PostMessage<KFC_Enum::MMFUN_GET_TENSOR_C, true>();
 
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+            GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
         WaitEvent(this->devEvtID);
+#endif
 
         if constexpr (PhyPosIsUB(C_TYPE::pos)) {
             if constexpr (doPad) {
@@ -1394,7 +1449,12 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
 #endif
         }
 
@@ -1418,6 +1478,10 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             auto intraId = this->devEvtID;
             if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
                 if (GetSubBlockIdxImpl() == 1) {
@@ -1425,6 +1489,7 @@ public:
                 }
             }
             WaitEvent(intraId);
+#endif
 #endif
         }
         uint32_t size;
@@ -1464,7 +1529,12 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
 #endif
         }
 
@@ -1507,7 +1577,12 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(waitFixpId); // GM to UB
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_MTE2>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
 #endif
         }
         // 计算batchC
@@ -1546,7 +1621,12 @@ public:
 #if defined(USE_SSBUF)
             CrossCoreWaitFlag<INTRA_MODE, PIPE_V>(waitFixpId);
 #else
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            CrossCoreWaitFlag<INTRA_MODE, PIPE_V>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instIdx), WAIT_FIXP_FOR_AIV, GetSubBlockIdxImpl()));
+#else
             WaitEvent(this->devEvtID);
+#endif
 #endif
         }
 
@@ -1928,11 +2008,11 @@ private:
             }
             cubeObj.cubeObj[0].mul.IterateAll(ubCmatrix, enAtomic);
             if (sync || waitIterateAll) {
-                CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(GetIntraFlagId(
-                    cubeObj.cubeObj[0].instID, static_cast<uint8_t>(VEC_WAIT_INTRA_Enum::WAIT_FIXP), 0U));
+                CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                    GetIntraFlagId(cubeObj.cubeObj[0].instID, WAIT_FIXP_FOR_AIV, 0U));
                 if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
                     CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(GetIntraFlagId(
-                        cubeObj.cubeObj[0].instID, static_cast<uint8_t>(VEC_WAIT_INTRA_Enum::WAIT_FIXP),
+                        cubeObj.cubeObj[0].instID, WAIT_FIXP_FOR_AIV,
                         1U)); // 1 means sub_block 1
                 }
             }

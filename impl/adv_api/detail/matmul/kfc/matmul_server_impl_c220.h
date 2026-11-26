@@ -103,7 +103,17 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
         if constexpr ((ToMatmulConfig(MM_CFG).iterateMode & IterateMode::ITERATE_MODE_NORMAL) != 0) {
             if (cntIterator < INC_PROCESS_CHECK && funID == KFC_Enum::MMFUN_ITERATE) {
                 uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + mul.GetSubBlockIdx());
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+                uint16_t intraFlagId =
+                    GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+                CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+                if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+                    CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                        GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+                }
+#else
                 NotifyEvent<PIPE_FIX>(eventID);
+#endif
 #if defined(__ASCENDC_ENABLE_SUPER_KERNEL__)
                 SuperKernelEventCount(eventID);
 #endif
@@ -202,7 +212,17 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
     }
     if (msg->body.sync == 1) { // Synchronize
         uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + mul.GetSubBlockIdx());
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        uint16_t intraFlagId =
+            GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+        CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+        if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+        }
+#else
         NotifyEvent<PIPE_FIX>(eventID);
+#endif
     }
     return false;
 }
@@ -246,7 +266,17 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
     }
     if (body->sync || body->waitIterateBatch) {
         uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + mul.GetSubBlockIdx());
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        uint16_t intraFlagId =
+            GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+        CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+        if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+        }
+#else
         NotifyEvent<PIPE_FIX>(eventID);
+#endif
     }
     return true;
 }
@@ -294,7 +324,17 @@ MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, MM_CB, MATMUL_POLICY>::
         cntIterator++;
         if (cntIterator < INC_PROCESS_CHECK && (!body->sync && !body->waitIterateBatch)) {
             uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + mul.GetSubBlockIdx());
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+            uint16_t intraFlagId =
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+            if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+                CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                    GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+            }
+#else
             NotifyEvent<PIPE_FIX>(eventID);
+#endif
         }
     }
 }
@@ -329,9 +369,29 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
     }
     uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + mul.GetSubBlockIdx());
     if (msg->body.sync || msg->body.waitIterateBatch) {
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        uint16_t intraFlagId =
+            GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+        CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+        if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+        }
+#else
         NotifyEvent<PIPE_FIX>(eventID);
+#endif
     } else if (cntIterator >= INC_PROCESS_CHECK) {
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        uint16_t intraFlagId =
+            GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+        CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+        if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+        }
+#else
         NotifyEvent<PIPE_FIX>(eventID);
+#endif
     }
     return true;
 }
@@ -349,7 +409,17 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
         if (msg->body.iterateFakeMsg) {
             if (funID == KFC_Enum::MMFUN_ITERATE_ALL) { // fake msg
                 uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + kfcCommSrv->subBlockID);
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+                uint16_t intraFlagId =
+                    GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, kfcCommSrv->subBlockID);
+                CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+                if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+                    CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                        GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+                }
+#else
                 NotifyEvent<PIPE_FIX>(eventID);
+#endif
 #if defined(__ASCENDC_ENABLE_SUPER_KERNEL__)
                 SuperKernelEventCount(eventID);
 #endif
@@ -359,7 +429,7 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
     } else {
         ASSERT(!msg->body.iterateFakeMsg && "Only Ib share mode support fake msg.");
     }
-    SyncCubeWithVec<A_TYPE::ibShare, B_TYPE::ibShare>();
+    SyncCubeWithVec<A_TYPE::ibShare, B_TYPE::ibShare>(static_cast<uint8_t>(this->instID));
     QuantCacheRefresh(msg);
     IterateSetMessage(msg, &(msg->body));
     uint32_t cntIterator = 0;
@@ -378,12 +448,32 @@ __aicore__ inline bool MatmulService<A_TYPE, B_TYPE, C_TYPE, BIAS_TYPE, MM_CFG, 
     uint16_t eventID = static_cast<uint16_t>(this->devEvtID * 2 + mul.GetSubBlockIdx());
     if (sync || msg->body.waitIterateAll) {
         ASSERT(funID == KFC_Enum::MMFUN_ITERATE_ALL);
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        uint16_t intraFlagId =
+            GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+        CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+        if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+        }
+#else
         NotifyEvent<PIPE_FIX>(eventID);
+#endif
 #if defined(__ASCENDC_ENABLE_SUPER_KERNEL__)
         SuperKernelEventCount(eventID);
 #endif
     } else if (cntIterator >= INC_PROCESS_CHECK && funID == KFC_Enum::MMFUN_ITERATE) {
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+        uint16_t intraFlagId =
+            GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, mul.GetSubBlockIdx());
+        CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(intraFlagId);
+        if constexpr (A_TYPE::ibShare && B_TYPE::ibShare) {
+            CrossCoreSetFlag<INTRA_MODE, PIPE_FIX>(
+                GetIntraFlagId(static_cast<uint8_t>(this->instID), WAIT_FIXP_FOR_AIV, 1U));
+        }
+#else
         NotifyEvent<PIPE_FIX>(eventID);
+#endif
 #if defined(__ASCENDC_ENABLE_SUPER_KERNEL__)
         SuperKernelEventCount(eventID);
 #endif
