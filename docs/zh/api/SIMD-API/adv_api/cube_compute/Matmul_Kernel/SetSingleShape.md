@@ -59,7 +59,7 @@ REGIST_MATMUL_OBJ(&pipe, GetSysWorkSpacePtr(), mm, &tiling);
 // tailM：M方向上剩余元素个数，tailN：N方向上剩余元素个数，tailK：K方向上剩余元素个数
 // 如果是尾核，剩余元素可能会少于单核需要计算的元素。此时，需要使用SetSingleShape重新设置本次计算的元素个数
 if (tailM < tiling.singleCoreM || tailN < tiling.singleCoreN || tailK < tiling.singleCoreK) {
-    matmulObj.SetSingleShape(tailM, tailN, tailK);
+    mm.SetSingleShape(tailM, tailN, tailK);
 }
 
 mm.SetTensorA(gm_a);

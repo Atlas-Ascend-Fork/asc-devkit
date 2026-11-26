@@ -99,7 +99,7 @@ mm.SetQuantVector(quantTensor);
 mm.SetTensorA(gm_a);
 mm.SetTensorB(gm_b);
 if (tiling.isBias) {
-    matmulObj.SetBias(biasGlobal);
+    mm.SetBias(biasGlobal);
 }
 mm.IterateAll(gm_c);
 mm.End();
