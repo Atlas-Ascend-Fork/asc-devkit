@@ -52,7 +52,7 @@ __aicore__ inline bool PopStackBuffer(LocalTensor<T>& pop)
     });
     ASCENDC_ASSERT((endAddress > queEndAddress), {
         KERNEL_LOG(
-            KERNEL_ERROR, "PopStackBuffer failed, local memory has used %lu bytes, there is no enough memory to pop",
+            KERNEL_ERROR, "PopStackBuffer failed, local memory has used %lu bytes, there is not enough memory to pop",
             queEndAddress);
     });
     addr.dataLen = static_cast<uint32_t>(endAddress - queEndAddress);
@@ -81,7 +81,7 @@ __aicore__ inline bool PopStackBuffer(TBuf<pos>& popBuffer, TBufType& bufStart)
     });
     ASCENDC_ASSERT((endAddress > queEndAddress), {
         KERNEL_LOG(
-            KERNEL_ERROR, "PopStackBuffer failed, local memory has used %lu bytes, there is no enough memory to pop",
+            KERNEL_ERROR, "PopStackBuffer failed, local memory has used %lu bytes, there is not enough memory to pop",
             queEndAddress);
     });
     uint32_t dataLen = static_cast<uint32_t>(endAddress - queEndAddress);

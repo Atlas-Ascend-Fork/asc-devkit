@@ -310,7 +310,7 @@ __aicore__ inline void CheckMaskValue(const MaskType mask, const __gm__ char* ap
     ASCENDC_DEBUG_ASSERT(
         (mask != 0), KERNEL_LOG_INTERNAL(
                          KERNEL_ERROR,
-                         "Failed to check mask value in %s, when in"
+                         "Failed to check mask value in %s, when in "
                          "norm mode, mask cannot be 0 on current platform.\n",
                          apiName));
 #endif

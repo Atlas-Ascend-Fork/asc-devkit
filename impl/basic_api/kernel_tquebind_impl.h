@@ -174,14 +174,14 @@ __aicore__ inline __sync_alias__ bool TQueBind<src, dst, depth, mask>::EnQue(TBu
     static_assert(
         ((srcUserPos == TPosition::GM) || (srcUserPos == TPosition::VECIN) || (srcUserPos == TPosition::VECOUT) ||
          (srcUserPos == TPosition::VECCALC)) &&
-        "enque only support src position GM/UB(VECIN/VECOUT/VECCALC) currently.");
+        "EnQue only support src position GM/UB(VECIN/VECOUT/VECCALC) currently.");
     static_assert(
         ((dstUserPos == TPosition::GM) || (dstUserPos == TPosition::VECIN) || (dstUserPos == TPosition::VECOUT) ||
          (dstUserPos == TPosition::VECCALC)) &&
-        "enque only support dst position GM/UB(VECIN/VECOUT/VECCALC) currently.");
+        "EnQue only support dst position GM/UB(VECIN/VECOUT/VECCALC) currently.");
     static_assert(
         !((srcUserPos == TPosition::GM) && (dstUserPos == TPosition::GM)) &&
-        "enque src and dst position cannot be GM at the same time.");
+        "EnQue src and dst position cannot be GM at the same time.");
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 5101 || __NPU_ARCH__ == 5161 || __NPU_ARCH__ == 5165 || \
                               __NPU_ARCH__ == 5163 || __NPU_ARCH__ == 5162)
     static constexpr HardEvent enQueUserEvt = GetQueEvt(srcUserPos, dstUserPos, true);
@@ -192,9 +192,9 @@ __aicore__ inline __sync_alias__ bool TQueBind<src, dst, depth, mask>::EnQue(TBu
 #endif
 
     ASCENDC_DEBUG_ASSERT(
-        (this->usedCount < depth),
-        KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "usedCount is %d, which exceed depth limits %d", static_cast<int32_t>(usedCount), depth));
+        (this->usedCount < depth), KERNEL_LOG_INTERNAL(
+                                       KERNEL_ERROR, "The usedCount is %d, which must be less than depth %d",
+                                       static_cast<int32_t>(usedCount), depth));
     auto ptr = reinterpret_cast<TBufType*>(buf);
     if constexpr (depth == 1) {
         this->que_ = buf;
@@ -254,9 +254,9 @@ __aicore__ inline __sync_alias__ bool TQueBind<src, dst, depth, mask>::EnQue(TBu
     auto ptr = reinterpret_cast<TBufType*>(buf);
     if constexpr (depth != 0) {
         ASCENDC_DEBUG_ASSERT(
-            (this->usedCount < depth),
-            KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "usedCount is %d, which exceed depth limits %d", static_cast<int32_t>(usedCount), depth));
+            (this->usedCount < depth), KERNEL_LOG_INTERNAL(
+                                           KERNEL_ERROR, "The usedCount is %d, which must be less than depth %d",
+                                           static_cast<int32_t>(usedCount), depth));
 
         if constexpr (depth == 1) {
             this->que_ = buf;
@@ -387,7 +387,7 @@ __aicore__ inline __sync_alias__ TBufHandle TQueBind<src, dst, depth, mask>::DeQ
     ASCENDC_DEBUG_ASSERT(
         (this->usedCount > 0),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "usedCount is %d, which can only larger than 0", static_cast<int32_t>(this->usedCount)));
+            KERNEL_ERROR, "The usedCount is %d, which must be larger than 0", static_cast<int32_t>(this->usedCount)));
     this->usedCount--;
     /* Add for TSCM
      * for 220, aiv just send message, no need add this set/wait
@@ -471,12 +471,13 @@ __aicore__ inline __sync_alias__ TBufHandle TQueBind<src, dst, depth, mask>::DeQ
     ASCENDC_DEBUG_ASSERT(
         (this->usedCount > 0),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "usedCount is %d, which can only larger than 0", static_cast<int32_t>(this->usedCount)));
+            KERNEL_ERROR, "The usedCount is %d, which must be larger than 0", static_cast<int32_t>(this->usedCount)));
     this->usedCount--;
 #if defined(ASCENDC_CPU_DEBUG) && (ASCENDC_CPU_DEBUG == 1)
     ASCENDC_DEBUG_ASSERT(
-        (ptr->userEnQueEvt == deQueUserEvt),
-        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "EnQue and DeQue Event should be same."));
+        (ptr->userEnQueEvt == deQueUserEvt), KERNEL_LOG_INTERNAL(
+                                                 KERNEL_ERROR, "EnQue event %d and DeQue event %d should be the same.",
+                                                 static_cast<int>(ptr->userEnQueEvt), static_cast<int>(deQueUserEvt)));
 #endif
     DEBUG_CODE(ptr->state = TBufState::DEQUE);
     // when src and dst both ub, should insert pipe v barrier
@@ -561,7 +562,9 @@ __aicore__ inline void TQueBind<src, dst, depth, mask>::FreeBuffer(TBufHandle bu
                     SetFlag<freeBufEvt>(0); // insert pipe_v without eventID
                     ASCENDC_DEBUG_ASSERT(
                         (ptr->freeBufEvtID == INVALID_TEVENTID),
-                        KERNEL_LOG_INTERNAL(KERNEL_ERROR, "freebuf event id can not be -1"));
+                        KERNEL_LOG_INTERNAL(
+                            KERNEL_ERROR, "Freebuf event id is %d, which must equal INVALID_TEVENTID (%d)",
+                            static_cast<int>(ptr->freeBufEvtID), static_cast<int>(INVALID_TEVENTID)));
                 } else {
                     ptr->freeBufEvtID = GetTPipePtr()->AllocEventID<freeBufEvt>();
                     SetFlag<freeBufEvt>(ptr->freeBufEvtID);
@@ -662,7 +665,7 @@ __aicore__ inline TBufHandle TQueBind<src, dst, depth, mask>::AllocBuffer()
         ASCENDC_DEBUG_ASSERT(
             (++size <= this->bufNum),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "size is %d, which exceed limits %d", size, static_cast<int32_t>(this->bufNum)));
+                KERNEL_ERROR, "Size is %d, which exceeds limit %d", size, static_cast<int32_t>(this->bufNum)));
 #endif
     } while (true);
     this->bufUsedCount++;
@@ -698,7 +701,9 @@ __aicore__ inline void TQueBind<src, dst, depth, mask>::FreeAllEvent()
             // should be in deque status
             ASCENDC_DEBUG_ASSERT(
                 (ptr->enQueEvtID == INVALID_TEVENTID),
-                KERNEL_LOG_INTERNAL(KERNEL_ERROR, "enque event id can not be -1"));
+                KERNEL_LOG_INTERNAL(
+                    KERNEL_ERROR, "EnQue event id is %d, which must equal INVALID_TEVENTID (%d)",
+                    static_cast<int>(ptr->enQueEvtID), static_cast<int>(INVALID_TEVENTID)));
             if (ptr->freeBufEvtID != INVALID_TEVENTID) {
                 WaitFlag<freeBufEvt>(ptr->freeBufEvtID);
                 GetTPipePtr()->ReleaseEventID<freeBufEvt>(ptr->freeBufEvtID);

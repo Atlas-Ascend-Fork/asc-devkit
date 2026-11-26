@@ -137,8 +137,11 @@ public:
                               (__NPU_ARCH__ == 9201) || (__NPU_ARCH__ == 9202))
 #if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
         if (sizeof(T) >= sizeof(int32_t)) {
-            ASCENDC_ASSERT(
-                (maskHigh == 0ULL), { KERNEL_LOG(KERNEL_ERROR, "maskHigh must be 0 for type b32 and b64"); });
+            ASCENDC_ASSERT((maskHigh == 0ULL), {
+                KERNEL_LOG(
+                    KERNEL_ERROR, "The maskHigh is %llu, which must be 0 for type b32 and b64",
+                    static_cast<unsigned long long>(maskHigh));
+            });
         }
         ASCENDC_ASSERT(((maskLow != 0ULL) || (maskHigh != 0ULL)), {
             KERNEL_LOG(KERNEL_ERROR, "maskLow and maskHigh can not be zero at the same time");
@@ -280,7 +283,7 @@ public:
         const int32_t maxTempSize = 0x100000;
         ASCENDC_ASSERT((bufferSize < maxTempSize), {
             KERNEL_LOG(
-                KERNEL_ERROR, "bufferSize is %d, which exceed the maxTempSize limits %d", bufferSize, maxTempSize);
+                KERNEL_ERROR, "The bufferSize is %d, which must be less than maxTempSize %d", bufferSize, maxTempSize);
         });
         T* addr = reinterpret_cast<T*>(ConstDefiner::Instance().hardwareCpuBufferMap.at(Hardware::UB) + bufferOffset);
 #else

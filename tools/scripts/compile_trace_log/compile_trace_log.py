@@ -225,8 +225,8 @@ def extract_lines_with_condition(txtlist, result):
                 out_f.write("=======================================================================\n")
     if os.path.exists("check_info.txt") and os.path.getsize("check_info.txt") > 0:
         print(
-            "[WARNING]: Some operator log reads failed.\n"
-            "Failed operator details are in 'check_info.txt'.\n"
+            "[WARNING]: Some operator log reads failed. "
+            "Failed operator details are in 'check_info.txt'. "
             "Please check if the operators are compiled correctly "
             "by referring to the operator names and original log files."
         )
