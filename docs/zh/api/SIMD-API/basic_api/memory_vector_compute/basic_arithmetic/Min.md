@@ -23,15 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="9020" id18 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id18 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id9 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/basic_arithmetic/Min_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -106,15 +97,6 @@ $dst_i = min(src0_i, src1_i)$
 <!-- npu="910" id15 -->
 - 针对Atlas训练系列产品，T支持的数据类型为：half、int32_t、float。
 <!-- end id15 -->
-<!-- npu="x90" id16 -->
-- 针对KirinX90处理器系列产品，T支持的数据类型为：int16_t、half、int32_t、float。
-<!-- end id16 -->
-<!-- npu="9020" id19 -->
-- 针对Kirin9020处理器系列产品，T支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。数据类型int8_t、uint8_t仅支持tensor前n个数据计算接口。
-<!-- end id19 -->
-<!-- npu="9030" id17 -->
-- 针对Kirin9030处理器系列产品，T支持的数据类型为：int16_t、half、int32_t、float。
-<!-- end id17 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/basic_arithmetic/Min_res.md#id2 -->
 
 

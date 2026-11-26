@@ -23,27 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id12 -->
-- KirinX90处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9020" id13 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id13 -->
-<!-- npu="9030" id14 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id14 -->
-<!-- npu="9050" id8 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="kirin1" id9 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="kirin2" id10 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin3" id11 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/reg_data_store/StoreUnAlign_MaskReg_res.md#id1 -->
 
 ## 功能说明
@@ -107,9 +86,6 @@ __simd_callee__ inline void StoreUnAlignPost(__ubuf__ T*& dstAddr, UnalignRegFor
 
 - 数据类型为b16时，位于UB的地址必须16字节对齐，搬运完成后UB地址按16B偏移量更新，不需要手动更新地址。
 - 数据类型为b32时，位于UB的地址必须8字节对齐，搬运完成后UB地址按8B偏移量更新，不需要手动更新地址。
-<!-- npu="x90,9020,9030" id15 -->
-- 针对KirinX90/Kirin9020/Kirin9030处理器系列产品，不支持上述的StoreUnAlign。
-<!-- end id15 -->
 
 ## 关键特性说明
 

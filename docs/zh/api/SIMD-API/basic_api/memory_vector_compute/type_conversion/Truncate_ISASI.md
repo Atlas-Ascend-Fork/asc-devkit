@@ -23,15 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id11 -->
-- KirinX90处理器系列产品：支持
-<!-- end id11 -->
-<!-- npu="9020" id12 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9030" id13 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id13 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/type_conversion/Truncate_ISASI_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -72,9 +63,6 @@ __aicore__ inline void Truncate(const LocalTensor<T> &dst, const LocalTensor<T> 
 <!-- end id8 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/type_conversion/Truncate_ISASI_res.md#id2 -->
 
-<!-- npu="x90,9020,9030" id10 -->
-针对KirinX90处理器系列产品、Kirin9020处理器系列产品和Kirin9030处理器系列产品，T支持的数据类型为：half、float。
-<!-- end id10 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/type_conversion/Truncate_ISASI_res.md#id2 -->
 
 

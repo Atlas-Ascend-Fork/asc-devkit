@@ -1,11 +1,11 @@
 # 算子实现<a name="ZH-CN_TOPIC_0000002500468252"></a>
 
-在通算融合类算子的实现中，通信操作使用[Hccl高阶API](../../../../../api/SIMD-API/adv_api/HCCL_communication/HCCL_Kernel/HCCL_usage.md)，矩阵乘计算操作使用[Matmul高阶API](../../../../../api/SIMD-API/adv_api/cube_compute/Matmul_Kernel/Matmul_Kernel.md)。关于更多集合通信的内容和相关概念请参考[《HCCL集合通信库》](https://gitcode.com/cann/hccl/blob/master/docs/zh/user_guide/README.md)。通算融合算子的开发过程与一般算子相同，但请注意，当前通算融合算子暂不支持[核函数（Kernel）直调](../../../../programming_guide/appendix/kernel_direct_call_from_sample.md)和[入图（GE图）开发](../../../../programming_guide/advanced_programming/operator_graph_development/overview.md)，仅支持[单算子API调用](../../../../programming_guide/advanced_programming/aclnn_operator_development/invocation/single_operator_api_call.md)。
+在通算融合类算子的实现中，通信操作使用[Hccl高阶API](../../../../../api/SIMD-API/adv_api/HCCL_communication/HCCL_Kernel/HCCL_usage.md)，矩阵乘计算操作使用[Matmul高阶API](../../../../../api/SIMD-API/adv_api/cube_compute/Matmul_Kernel/Matmul_Kernel.md)。关于更多集合通信的内容和相关概念请参考[《HCCL集合通信库》](https://gitcode.com/cann/hccl/blob/9.3.0/docs/zh/user_guide/README.md)。通算融合算子的开发过程与一般算子相同，但请注意，当前通算融合算子暂不支持[核函数（Kernel）直调](../../../../programming_guide/appendix/kernel_direct_call_from_sample.md)和[入图（GE图）开发](../../../../programming_guide/advanced_programming/operator_graph_development/overview.md)，仅支持[单算子API调用](../../../../programming_guide/advanced_programming/aclnn_operator_development/invocation/single_operator_api_call.md)。
 
 下文将以AllGatherMatmulCustom算子（简称AllGatherMatmul）的实现为例，从算子分析、数据流分析、创建算子工程、原型定义、Tiling实现、核函数（Kernel）实现、编译与运行等方面介绍通算融合算子的设计和实现流程，本章节以Atlas A2系列产品为例讲解，仅支持`FLOAT16`数据类型。
 
 >[!NOTE]说明
->[AllGatherMatmulV2样例](https://gitcode.com/cann/ops-transformer/tree/master/mc2/all_gather_matmul_v2)是另一个语义相近的通算融合算子，并非本章节教学示例的完整版，二者在算子名、输入输出参数命名（`a`/`b`对应`x1`/`x2`）、支持的数据类型和产品范围上均不相同，不能直接对照阅读。该样例面向生产场景交付，额外支持低精度量化数据类型等能力，并依赖内部公共库组织实现，可作为生产级通算融合算子的参考，具体用法以其自身README为准。
+>[AllGatherMatmulV2样例](https://gitcode.com/cann/ops-transformer/tree/9.3.0/mc2/all_gather_matmul_v2)是另一个语义相近的通算融合算子，并非本章节教学示例的完整版，二者在算子名、输入输出参数命名（`a`/`b`对应`x1`/`x2`）、支持的数据类型和产品范围上均不相同，不能直接对照阅读。该样例面向生产场景交付，额外支持低精度量化数据类型等能力，并依赖内部公共库组织实现，可作为生产级通算融合算子的参考，具体用法以其自身README为准。
 
 ## 算子分析<a name="zh-cn_topic_0000002400208581_section59611034123213"></a>
 
@@ -142,7 +142,7 @@ AllGatherMatmul算子逻辑分析：
 
 创建通算融合算子的工程目录和CMakeLists.txt与一般算子相同，可按[创建算子工程](../../../../programming_guide/advanced_programming/aclnn_operator_development/aclnn_quick_start.md#create-project)逐步编写。将示例中的AddCustom原型和核函数替换为本章的AllGatherMatmulCustom实现，并在`npu_op_kernel_sources`中设置对应的`OP_TYPE`和实际核函数文件名。
 
-算子的输入、输出和属性直接通过[算子原型定义](#operator-prototype-definition)声明：输入为`a`、`b`，输出为`c`、`gather_out`，必选字符串属性`group`表示通信域名称。Host原型中的`AddConfig`与CMake中的构建目标均应配置为本样例支持的`soc_series`。通算融合所需的其他编译配置和依赖，可参考[AllGatherMatmulV2样例](https://gitcode.com/cann/ops-transformer/tree/master/mc2/all_gather_matmul_v2)。
+算子的输入、输出和属性直接通过[算子原型定义](#operator-prototype-definition)声明：输入为`a`、`b`，输出为`c`、`gather_out`，必选字符串属性`group`表示通信域名称。Host原型中的`AddConfig`与CMake中的构建目标均应配置为本样例支持的`soc_series`。通算融合所需的其他编译配置和依赖，可参考[AllGatherMatmulV2样例](https://gitcode.com/cann/ops-transformer/tree/9.3.0/mc2/all_gather_matmul_v2)。
 
 ## 算子原型定义<a id="operator-prototype-definition"></a>
 
@@ -600,7 +600,7 @@ extern "C" __global__ __aicore__ void all_gather_matmul_custom(__gm__ uint8_t* a
 
     对于按本章手写的工程，先将通信、Tiling和核函数相关源文件与依赖加入CMake配置，再按[编译与部署基本流程](../../../../programming_guide/advanced_programming/aclnn_operator_development/compilation_and_deployment/basic_process.md)编译生成算子安装包。
 
-    若参考[AllGatherMatmulV2样例](https://gitcode.com/cann/ops-transformer/tree/master/mc2/all_gather_matmul_v2)，请按其README执行工程对应的构建命令，构建入口、依赖、目录组织及产物位置以其自身说明为准。
+    若参考[AllGatherMatmulV2样例](https://gitcode.com/cann/ops-transformer/tree/9.3.0/mc2/all_gather_matmul_v2)，请按其README执行工程对应的构建命令，构建入口、依赖、目录组织及产物位置以其自身说明为准。
 
 2.  **安装**
 
@@ -647,7 +647,7 @@ extern "C" __global__ __aicore__ void all_gather_matmul_custom(__gm__ uint8_t* a
 
     其中aclnnAllGatherMatmulCustomGetWorkspaceSize为第一段接口，主要用于计算本次API调用计算过程中需要的workspace内存大小。按照该workspaceSize大小申请Device侧内存，然后调用第二段接口aclnnAllGatherMatmulCustom执行计算。详细内容请参考[单算子API调用](../../../../programming_guide/advanced_programming/aclnn_operator_development/invocation/single_operator_api_call.md)章节。
 
-    在通算融合场景，单算子API调用的程序中需要调用[通信域创建与管理接口](https://gitcode.com/cann/hcomm/blob/master/docs/zh/api_ref/comm_mgr_c/README.md)创建通信域，并在多线程上执行AllGatherMatmul算子。以下给出main函数和线程调用函数中关键步骤的代码示例，仅供参考。
+    在通算融合场景，单算子API调用的程序中需要调用[通信域创建与管理接口](https://gitcode.com/cann/hcomm/blob/9.3.0/docs/zh/api_ref/comm_mgr_c/README.md)创建通信域，并在多线程上执行AllGatherMatmul算子。以下给出main函数和线程调用函数中关键步骤的代码示例，仅供参考。
 
     ```
     int main(int argc, char **argv)

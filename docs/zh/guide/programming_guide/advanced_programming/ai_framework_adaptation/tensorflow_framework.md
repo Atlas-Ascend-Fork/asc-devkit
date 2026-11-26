@@ -13,7 +13,7 @@
 
 1.  环境准备。
     1.  CANN软件安装请参考[环境准备](../../../getting_started/environment_setup.md)。
-    2.  安装框架插件包，请参考[TensorFlow模型迁移](https://www.hiascend.com/document/detail/zh/TensorFlowCommunity/latest/index/index.html)中《TensorFlow 1.15模型迁移》或《TensorFlow 2.6.5模型迁移》的环境准备 \> 安装框架插件包章节，获取框架插件包详细的安装步骤。
+    2.  安装框架插件包，请参考[TensorFlow模型迁移](https://www.hiascend.com/document/detail/zh/TensorFlowCommunity/930/index/index.html)中《TensorFlow 1.15模型迁移》或《TensorFlow 2.6.5模型迁移》的环境准备 \> 安装框架插件包章节，获取框架插件包详细的安装步骤。
     3.  <a name="li123241091016"></a>[创建算子工程](../aclnn_operator_development/aclnn_quick_start.md#create-project)。在手写算子工程的基础上，按[适配插件开发](#section1820291291414)创建插件目录、编写插件源码并补充CMake配置。
 
 2.  算子实现。

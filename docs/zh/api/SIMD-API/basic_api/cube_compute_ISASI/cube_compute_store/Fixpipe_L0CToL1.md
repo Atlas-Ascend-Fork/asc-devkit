@@ -23,15 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：仅支持包含FixpipeParamsV220参数的接口。
-<!-- end id8 -->
-<!-- npu="9020" id12 -->
-- Kirin9020处理器系列产品：仅支持包含FixpipeParamsV220参数的接口。
-<!-- end id12 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：仅支持包含FixpipeParamsV220参数的接口。
-<!-- end id9 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/cube_compute_store/Fixpipe_L0CToL1_res.md#id1 -->
 
 ## 功能说明<a id="zh-cn_topic_0000002511188540_section106841136114319"></a>
@@ -180,26 +171,6 @@
 | int32_t | int8_t、uint8_t、half。 |
 
 <!-- end id24 -->
-
-<!-- npu="x90" id25 -->
-针对KirinX90处理器系列产品，支持的数据类型组合如下：
-
-| 源矩阵（L0C Buffer） | 目的矩阵（L1 Buffer） |
-| ---------- | ---------- |
-| float | int8_t、half。 |
-| int32_t | int8_t、half。 |
-
-<!-- end id25 -->
-
-<!-- npu="9030" id26 -->
-针对Kirin9030处理器系列产品，支持的数据类型组合如下：
-
-| 源矩阵（L0C Buffer） | 目的矩阵（L1 Buffer） |
-| ---------- | ---------- |
-| float | half |
-| int32_t | half |
-
-<!-- end id26 -->
 
 ## 返回值说明
 

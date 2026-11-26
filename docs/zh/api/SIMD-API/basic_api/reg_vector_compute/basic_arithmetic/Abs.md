@@ -23,27 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id14 -->
-- KirinX90处理器系列产品：支持
-<!-- end id14 -->
-<!-- npu="9020" id12 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9030" id13 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id13 -->
-<!-- npu="9050" id8 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="kirin1" id9 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="kirin2" id10 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin3" id11 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id11 -->
 
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/basic_arithmetic/Abs_res.md#id1 -->
 
@@ -133,18 +112,6 @@
     - --cce-ftz=false时，计算过程中保留Subnormal，并按照其实际数值参与后续计算。
     - --cce-ftz=true时，启用FTZ（Flush-To-Zero）模式，计算过程中产生或参与运算的Subnormal将按0处理，可能导致计算结果与保留Subnormal时存在精度差异。
 <!-- end id16 -->
-<!-- npu="x90" id18 -->
-- 针对KirinX90处理器系列产品，T支持的数据类型为：int8_t、int16_t、int32_t、half、float。
-<!-- end id18 -->
-<!-- npu="9020" id15 -->
-- 针对Kirin9020处理器系列产品，T支持的数据类型为：int8_t、int16_t、int32_t、half、float。
-<!-- end id15 -->
-<!-- npu="9030" id17 -->
-- 针对Kirin9030处理器系列产品，T支持的数据类型为：int8_t、int16_t、int32_t、half、float。
-<!-- end id17 -->
-<!-- npu="9050" id19 -->
-- 针对Kirin9050处理器系列产品，T支持的数据类型为：int8_t、int16_t、int32_t、half、float。
-<!-- end id19 -->
 
 ## 调用示例<a name="section642mcpsimp"></a>
 

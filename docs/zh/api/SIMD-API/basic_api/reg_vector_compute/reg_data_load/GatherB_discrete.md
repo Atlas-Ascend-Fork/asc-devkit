@@ -23,27 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id12 -->
-- KirinX90处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9020" id13 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id13 -->
-<!-- npu="9030" id14 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id14 -->
-<!-- npu="9050" id8 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="kirin1" id9 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id9 -->
-<!-- npu="kirin2" id10 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="kirin3" id11 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id11 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/reg_data_load/GatherB_discrete_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -114,9 +93,6 @@ __simd_callee__ inline void GatherB(U& dstReg, __ubuf__ T* baseAddr, S& index, M
 - index索引值对应的数据必须在UB有效地址范围内。
 - RegTensor模板参数regTrait只支持RegTraitNumOne。
 - index仅前8个元素有效。
-<!-- npu="x90,9020,9030,9050" id15 -->
-- 针对KirinX90处理器系列产品、Kirin9020处理器系列产品、Kirin9030处理器系列产品和Kirin9050处理器系列产品,暂不支持b64数据类型。
-<!-- end id15 -->
 
 ## 调用示例<a name="section642mcpsimp"></a>
 

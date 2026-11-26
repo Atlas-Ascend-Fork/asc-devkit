@@ -23,18 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：不支持
 <!-- end id7 -->
-<!-- npu="x90" id12 -->
-- KirinX90处理器系列产品：支持
-<!-- end id12 -->
-<!-- npu="9020" id10 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="9030" id11 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id11 -->
-<!-- npu="9050" id14 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id14 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/reduction_compute/ReduceDataBlock_res.md#id1 -->
 
 ## 功能说明<a name="section618mcpsimp"></a>
@@ -98,37 +86,6 @@ __simd_callee__ inline void ReduceDataBlock(U& dstReg, U srcReg, MaskReg mask)
 | uint32_t | uint32_t |
 | float | float |
 <!-- end id8 -->
-
-<!-- npu="x90,9020,9030" id9 -->
-**表5** KirinX90/Kirin9020/Kirin9030处理器系列产品，版本ReduceType::SUM、ReduceType::MAX、ReduceType::MIN数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| half | half |
-| float | float |
-<!-- end id9 -->
-
-
-<!-- npu="9050" id13 -->
-**表5** Kirin9050处理器系列产品，版本ReduceType::SUM数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| half | half |
-| float | float |
-| int32_t | int16_t |
-| int32_t | int32_t |
-| uint32_t | unt16_t |
-| uint32_t | uint32_t |
-
-**表6** Kirin9050处理器系列产品，版本ReduceType::MAX、ReduceType::MIN数据类型支持情况
-
-| dstReg | srcReg |
-| --- | --- |
-| half | half |
-| float | float |
-
-<!-- end id13 -->
 
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/reg_vector_compute/reduction_compute/ReduceDataBlock_res.md#id2 -->
 

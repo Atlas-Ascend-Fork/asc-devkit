@@ -23,18 +23,6 @@
 <!-- npu="910" id7 -->
 - Atlas训练系列产品：支持
 <!-- end id7 -->
-<!-- npu="x90" id8 -->
-- KirinX90处理器系列产品：支持
-<!-- end id8 -->
-<!-- npu="9020" id19 -->
-- Kirin9020处理器系列产品：不支持
-<!-- end id19 -->
-<!-- npu="9030" id9 -->
-- Kirin9030处理器系列产品：不支持
-<!-- end id9 -->
-<!-- npu="9050" id23 -->
-- Kirin9050处理器系列产品：不支持
-<!-- end id23 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/cube_compute_ISASI/cube_compute_load/LoadData_2D_res.md#id1 -->
 
 ## 功能说明
@@ -122,12 +110,6 @@ Atlas训练系列产品，支持数据类型为：uint8_t、int8_t、uint16_t、
 <!-- npu="310p" id17 -->
 Atlas推理系列产品AI Core，支持数据类型为：int4b_t、uint8_t、int8_t、uint16_t、int16_t、half；**注：int4b_t仅支持L1 Buffer->L0A Buffer、L1 Buffer->L0B Buffer通路。**
 <!-- end id17 -->
-
-<!-- npu="x90" id18 -->
-KirinX90处理器系列产品，支持数据类型为：int4b_t、uint8_t、int8_t、uint16_t、int16_t、uint32_t、int32_t、half、bfloat16_t。
-<!-- end id18 -->
-
-
 
 ## 返回值说明
 

@@ -23,36 +23,6 @@
 <!-- npu="910" id22 -->
 - Atlas训练系列产品：支持
 <!-- end id22 -->
-<!-- npu="x90" id23 -->
-- KirinX90处理器系列产品：支持
-<!-- end id23 -->
-<!-- npu="9030" id24 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id24 -->
-<!-- npu="9050" id25 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id25 -->
-<!-- npu="kirin1" id26 -->
-- KirinDev0001处理器系列产品：支持
-<!-- end id26 -->
-<!-- npu="kirin2" id27 -->
-- KirinDev0002处理器系列产品：支持
-<!-- end id27 -->
-<!-- npu="kirin3" id28 -->
-- KirinDev0003处理器系列产品：支持
-<!-- end id28 -->
-<!-- npu="x90" id10 -->
-- Kirinx90处理器系列产品：支持
-<!-- end id10 -->
-<!-- npu="9020" id13 -->
-- Kirin9020处理器系列产品：支持
-<!-- end id13 -->
-<!-- npu="9030" id14 -->
-- Kirin9030处理器系列产品：支持
-<!-- end id14 -->
-<!-- npu="9050" id15 -->
-- Kirin9050处理器系列产品：支持
-<!-- end id15 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/data_move/DataCopy_UBToUB_continuous_res.md#id1 -->
 
 ## 功能说明<a name="section474617392321"></a>
@@ -119,31 +89,6 @@ __aicore__ inline void DataCopy(const LocalTensor<T>& dst, const LocalTensor<T>&
 - Atlas训练系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float、int64_t、uint64_t、double。
 <!-- end id5 -->
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/basic_api/memory_vector_compute/data_move/DataCopy_UBToUB_continuous_res.md#id2 -->
-
-<!-- npu="9050" id6 -->
-- Kirin9050处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-<!-- end id6 -->
-<!-- npu="kirin1" id7 -->
-- KirinDev0001处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-<!-- end id7 -->
-<!-- npu="kirin2" id8 -->
-- KirinDev0002处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-<!-- end id8 -->
-<!-- npu="kirin3" id9 -->
-- KirinDev0003处理器系列产品，支持的数据类型为：int8_t、uint8_t、int16_t、uint16_t、half、int32_t、uint32_t、float。
-<!-- end id9 -->
-<!-- npu="x90" id12 -->
-- KirinX90处理器系列产品，支持的数据类型为：b8、b16、b32。
-<!-- end id12 -->
-<!-- npu="9020" id29 -->
-- Kirin9020处理器系列产品，支持的数据类型为：b8、b16、b32。
-<!-- end id29 -->
-<!-- npu="9030" id30 -->
-- Kirin9030处理器系列产品，支持的数据类型为：b8、b16、b32。
-<!-- end id30 -->
-<!-- npu="9050" id31 -->
-- Kirin9050处理器系列产品，支持的数据类型为：b8、b16、b32。
-<!-- end id31 -->
 
 ## 返回值说明<a name="section44801012174220"></a>
 

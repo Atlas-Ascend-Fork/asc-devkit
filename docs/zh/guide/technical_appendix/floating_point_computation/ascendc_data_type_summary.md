@@ -322,7 +322,7 @@ MX缩放计算的接口分为三类：
 
 矩阵计算前，需通过量化接口将half、bfloat16_t、float等类型量化为MX格式的私有元素；计算完成后，可通过反量化接口还原。[Quantize](../../../api/SIMD-API/adv_api/quantization/Quantize.md)与[AntiQuantize](../../../api/SIMD-API/adv_api/quantization/AntiQuantize.md)支持这些类型与fp8_e5m2_t、fp8_e4m3fn_t、fp4x2_e2m1_t、fp4x2_e1m2_t、hifloat8_t、int8_t等低位宽类型的互转。
 
-MX矩阵搬运与计算为Ascend 950PR&950DT系列产品新增能力。完整的使用流程与代码示例请参见[MxMatmul场景](../../operator_practice/simd_operator_impl/matrix_advanced_api/feature_scenarios/mx_matmul_scenario.md)与[mmad_mx样例](https://gitcode.com/cann/asc-devkit/blob/master/examples/01_simd_cpp_api/03_basic_api/03_matrix_compute/mmad_mx)。
+MX矩阵搬运与计算为Ascend 950PR&950DT系列产品新增能力。完整的使用流程与代码示例请参见[MxMatmul场景](../../operator_practice/simd_operator_impl/matrix_advanced_api/feature_scenarios/mx_matmul_scenario.md)与[mmad_mx样例](https://gitcode.com/cann/asc-devkit/blob/9.3.0/examples/01_simd_cpp_api/03_basic_api/03_matrix_compute/mmad_mx)。
 
 MX缩放计算仅适用于SIMD编程范式：MxMatmul为矩阵计算特性，相关接口均为SIMD API；SIMT编程范式不提供矩阵计算能力。SIMD与SIMT混合编程场景下，需在SIMD侧完成MX的配置与计算。
 
