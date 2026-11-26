@@ -980,8 +980,14 @@ void inline TPipe::SetBufferCtx(Hardware hard, struct BufPoolExtra* bufPool)
     } else {
         ptr = ConstDefiner::Instance().hardwareCpuBufferMap.at(hard);
     }
-    {
-        // init memory with random value
+    bool isSharedBuffer = false;
+#if __NPU_ARCH__ == 3510
+    // MIX-mode UB/L1 were initialized before fork. AIC and AIV processes can
+    // share these slices, so constructing a TPipe must not refill them.
+    isSharedBuffer = g_kernelMode == KernelMode::MIX_MODE && (hard == Hardware::UB || hard == Hardware::L1);
+#endif
+    if (!isSharedBuffer) {
+        // init private memory with random value
         std::default_random_engine e;
         int32_t* p = reinterpret_cast<int32_t*>(ptr);
         for (uint64_t i = 0; i < bufferInitLen.at(hard) / sizeof(int32_t); i++) {
