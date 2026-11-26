@@ -345,7 +345,7 @@
     uint16_t baseOffset = tiling.M / 2 * tiling.N;
     uint16_t stride = tiling.M / 2 * tiling.N * sizeof(C_T) / 32; // 32B
     const uint16_t blockCount = tiling.M / tiling.M;
-    if (GetSubBlockIdxImpl() == 0) {
+    if (GetSubBlockIdx() == 0) {
         DataCopy(gmC, bufferC, {blockCount, stride, stride, stride});
     } else {
         DataCopy(gmC[baseOffset], bufferC, {blockCount, stride, stride, stride});
@@ -396,7 +396,7 @@
     uint16_t blockLen = (tiling.N / 2 * sizeof(C_T)) / 32;
     uint16_t srcStride = 0;
     uint16_t dstStride = (tiling.N / 2 * sizeof(C_T)) / 32;
-    if (GetSubBlockIdxImpl() == 0) {
+    if (GetSubBlockIdx() == 0) {
         DataCopy(gmC, bufferC, {blockCount, blockLen, srcStride, dstStride});
     } else {
         DataCopy(gmC[baseOffset], bufferC, {blockCount, blockLen, srcStride, dstStride});
