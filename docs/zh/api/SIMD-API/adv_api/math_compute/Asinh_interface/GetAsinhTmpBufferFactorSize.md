@@ -4,17 +4,17 @@
 
 核函数（Kernel）侧Asinh接口的计算需要开发者预留/申请临时空间，最大临时空间（maxTmpBuffer）和输入所占空间（inputSize \* typeSize）存在以下关系：
 
-**maxTmpBuffer = maxLiveNodeCount \* inputSize \* typeSize + extraBuffer**
+**maxTmpBuffer = maxLiveNodeCount \* inputSize \* typeSize + extraBuf**
 
-其中maxLiveNodeCount表示最大临时空间是输入所占空间的多少倍；extraBuffer表示使用的额外临时空间大小。
+其中maxLiveNodeCount表示最大临时空间是输入所占空间的多少倍；extraBuf表示使用的额外临时空间大小。
 
-该接口用于获取maxLiveNodeCount和extraBuffer，在固定空间大小的情况下，通过maxLiveNodeCount和extraBuffer可以推算算子单次最大计算元素数量；另外，接口获取的maxLiveNodeCount值可能为0，计算时需要判断该值非0，避免除零错误。
+该接口用于获取maxLiveNodeCount和extraBuf，在固定空间大小的情况下，通过maxLiveNodeCount和extraBuf可以推算算子单次最大计算元素数量；另外，接口获取的maxLiveNodeCount值可能为0，计算时需要判断该值非0，避免除零错误。
 
 示例如下：
 
-算子实现需要调用Asinh接口，开发者为其预留currBuff大小的空间，利用GetAsinhTmpBufferFactorSize接口得到maxLiveNodeCount、extraBuffer输出值，反推Asinh算子单次最大计算元素数量为：
+算子实现需要调用Asinh接口，开发者为其预留currBuff大小的空间，利用GetAsinhTmpBufferFactorSize接口得到maxLiveNodeCount、extraBuf输出值，反推Asinh算子单次最大计算元素数量为：
 
-**currentShapeSize = \(currBuff - extraBuffer\) / maxLiveNodeCount / typeSize**
+**currentShapeSize = \(currBuff - extraBuf\) / maxLiveNodeCount / typeSize**
 
 ## 函数原型
 
@@ -43,10 +43,10 @@ void GetAsinhTmpBufferFactorSize(const uint32_t typeSize, uint32_t& maxLiveNodeC
 ## 调用示例
 
 ```
-// 获取输入类型为half的Asinh操作的maxLiveNodeCount和extraBuffer
+// 获取输入类型为half的Asinh操作的maxLiveNodeCount和extraBuf
 uint32_t typeSize = sizeof(half);
 uint32_t maxLiveNodeCount = 0;
-uint32_t extraBuffer = 0;
+uint32_t extraBuf = 0;
 
-AscendC::GetAsinhTmpBufferFactorSize(typeSize, maxLiveNodeCount, extraBuffer);
+AscendC::GetAsinhTmpBufferFactorSize(typeSize, maxLiveNodeCount, extraBuf);
 ```

@@ -13,7 +13,7 @@ Ascend C提供DeepNorm Tiling API，方便用户获取DeepNorm核函数（Kernel
     -   为保证功能正确，预留/申请的临时空间大小不能小于最小临时空间大小；
     -   在最小临时空间-最大临时空间范围内，随着临时空间增大，核函数（Kernel）侧接口计算性能会有一定程度的优化提升。为了达到更好的性能，开发者可以根据实际的内存使用情况进行空间预留/申请。
 
-2.  通过**GetDeepNormTilingInfo**获取DeepNormkernel侧接口所需tiling参数。
+2.  通过**GetDeepNormTilingInfo**获取DeepNorm kernel侧接口所需tiling参数。
 
     DeepNormTiling结构体的定义如下，开发者无需关注该tiling结构的具体信息，只需要传递到核函数（Kernel）侧，传入DeepNorm高阶API接口，直接进行使用即可。
 

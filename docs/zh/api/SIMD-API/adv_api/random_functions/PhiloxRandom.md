@@ -27,7 +27,7 @@
 
 基于Philox随机数生成算法，给定随机数种子，生成若干的随机数。
 
-Philox随机数生成的核心算法是一个基于记数的伪随机数生成算法，输入为一个128bit的记数器C，两个32bit的key（k0和k1），输出为4个32bit的整数。
+Philox随机数生成的核心算法是一个基于计数的伪随机数生成算法，输入为一个128bit的计数器C，两个32bit的key（k0和k1），输出为4个32bit的整数。
 
 ## 函数原型
 
@@ -60,7 +60,7 @@ Philox随机数生成的核心算法是一个基于记数的伪随机数生成�
 | --- | --- | --- |
 | dstLocal | 输出 | 目的操作数。<br><br>类型为[LocalTensor](../../basic_api/data_structures/LocalTensor/LocalTensor.md)，支持的TPosition为VECIN/VECCALC/VECOUT。<br><br>LocalTensor的起始地址需要32字节对齐。 |
 | philoxKey | 输入 | 随机数种子。两个32bit的key，定义如下：<br>using PhiloxKey = uint32_t[2]; |
-| philoxCounter | 输入 | 随机数种子。一个128bit的记数器C（由4个32bit组成），定义如下：<br>using PhiloxCounter = uint32_t[4]; |
+| philoxCounter | 输入 | 随机数种子。一个128bit的计数器C（由4个32bit组成），定义如下：<br>using PhiloxCounter = uint32_t[4]; |
 | count | 输入 | 生成目的操作数的元素个数。 |
 | params | 输入 | stride模式计算所需的参数信息。PhiloxRandomParams类型，定义如下方代码所示，其中参数的含义为：<br>stride：两行元素之间的间隔。<br>row：表示生成的行数。<br>column：表示生成的每一行的元素个数。<br>请注意：<br>row * column大于0，不大于LocalTensor的大小。<br>column % 4 == 0，stride % 4 == 0，stride >= column。 |
 
@@ -78,7 +78,7 @@ struct PhiloxRandomParams {
 上图是一个生成随机数的示意图。
 
 -   连续模式下使用philoxCounter=\{0, 0, 0, 0\}，count=32来生成32个随机数。
--   stride模式下可按列分两次生成，调用两次接口。第一次调用参数为philoxCounter=\{0, 0, 0, 0\}，stride=8，row=4，column=4；第二次调用参数为philoxCounter=\{1, 0, 0, 0\}（每次记数器C自增会生成128bit的随机数），stride=8，row=4，column=4。
+-   stride模式下可按列分两次生成，调用两次接口。第一次调用参数为philoxCounter=\{0, 0, 0, 0\}，stride=8，row=4，column=4；第二次调用参数为philoxCounter=\{1, 0, 0, 0\}（每次计数器C自增会生成128bit的随机数），stride=8，row=4，column=4。
 
 ## 返回值说明
 

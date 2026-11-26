@@ -40,8 +40,8 @@ TConv3DApiTiling结构体包含Conv3D算子规格信息及Tiling切分算法的�
 | mL0 | uint32_t | L0上单次处理的M大小。 |
 | kL0 | uint32_t | L0上单次处理的K大小。 |
 | nL0 | uint32_t | L0上单次处理的N大小。 |
-| kAL1 | uint32_t | L1上Input K的实际大小，等于Cin1InL1 * KH *  KW * C0，Cin1InL1是KD * Cin1合轴之后Tiling切分的大小。 |
-| kBL1 | uint32_t | L1上Weight K的实际大小，等于Cin1InL1 * KH *  KW * C0，Cin1InL1是KD * Cin1合轴之后Tiling切分的大小。 |
+| kAL1 | uint32_t | L1上Input K的实际大小，等于Cin1InL1 \* KH \*  KW \* C0，Cin1InL1是KD \* Cin1合轴之后Tiling切分的大小。 |
+| kBL1 | uint32_t | L1上Weight K的实际大小，等于Cin1InL1 \* KH \*  KW \* C0，Cin1InL1是KD \* Cin1合轴之后Tiling切分的大小。 |
 | nBL1 | uint32_t | L1上Weight载入Cout维度的实际数据大小。 |
 | mAL1 | uint32_t | L1上Input载入M的实际数据大小。 |
 | al1FullLoad | uint8_t | Input数据在L1 Buffer是否全载。<br><br>0：Input数据在L1 Buffer上不全载。<br><br>1：Input数据在L1 Buffer上全载。 |

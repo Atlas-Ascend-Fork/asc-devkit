@@ -165,7 +165,7 @@ struct WelfordUpdateParam {
 // para: 包含Reduce轴分块信息和归一化系数的参数结构
 
 // 使用WelfordUpdate接口执行Welford在线算法更新
-struct AscendC::WelfordUpdateParam para = {nLength, rLength, abComputeLength, 0.3};
+struct AscendC::WelfordUpdateParam para = {rnLength, abLength, abComputeLength, 0.3};
 AscendC::WelfordUpdate<T, U, false, WELFORD_UPDATE_ENABLE_INPLACE_CFG>(
     outputMean,      // 输出：更新后的均值
     outputVariance,  // 输出：更新后的方差中间结果

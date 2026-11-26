@@ -18,7 +18,7 @@ int32_t SetFixSplit(int32_t baseMIn = -1, int32_t baseNIn = -1, int32_t baseKIn 
 | --- | --- | --- |
 | baseMIn | 输入 | 设置固定的baseM，默认值为-1，表示不设置固定baseM，由tiling函数进行计算。 |
 | baseNIn | 输入 | 设置固定的baseN，默认值为-1，表示不设置固定baseN，由tiling函数进行计算。 |
-| baseKIn | 输入 | 当前仅支持取值为-1，暂不支持设置其它值。 |
+| baseKIn | 输入 | 当前仅支持取值为-1，暂不支持设置其他值。 |
 
 ## 返回值说明
 

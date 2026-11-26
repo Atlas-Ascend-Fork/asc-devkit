@@ -72,6 +72,6 @@ if (AscendC::g_coreType == AIC) {
     int32_t finishedCount = hccl.Query(handleId);
     while (hccl.Query(handleId) < repeat) {
     }                // 等待查询到handleId对应的通信任务执行repeat次
-    hccl.Finalize(); // 后续无其他通信任务，通知服务端执行上述ReduceScatter任务之后即可以退出
+    hccl.Finalize(); // 后续无其他通信任务，通知服务端执行上述ReduceScatter任务之后即可退出
 }
 ```

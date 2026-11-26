@@ -28,8 +28,8 @@ TConv3DBackpropInputTiling结构体包含Conv3DBackpropInput算子规格信息�
 | wk | 输入Weight的Width大小，单位元素。 |
 | group | 预留参数，用户无需感知。 |
 | strideD | 卷积反向计算中Stride的Depth大小，单位元素。 |
-| strideH | 卷积反向计算中StrideHeight大小，单位元素。 |
-| strideW | 卷积反向计算中StrideWidth大小，单位元素。 |
+| strideH | 卷积反向计算中Stride的Height大小，单位元素。 |
+| strideW | 卷积反向计算中Stride的Width大小，单位元素。 |
 | padFront | 卷积反向计算中输出矩阵GradInput Padding的Depth维度的前方向，单位元素。 |
 | padBack | 卷积反向计算中输出矩阵GradInput Padding的Depth维度的后方向，单位元素。 |
 | padUp | 卷积反向计算中输出矩阵GradInput Padding的Height维度的上方向，单位元素。 |

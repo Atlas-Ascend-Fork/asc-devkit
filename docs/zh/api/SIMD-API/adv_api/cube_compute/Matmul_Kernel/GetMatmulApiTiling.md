@@ -34,7 +34,7 @@ Matmul Tiling常量化功能为在编译期间获取常量化的Matmul Tiling参
 
 当在调用[获取MatmulConfig模板的接口](MatmulConfig.md)时，只将\(baseM, baseN, baseK\)设置为常数值时，称为部分常量化，此时\(singleCoreM, singleCoreN, singleCoreK\)都保持默认值0，部分常量化场景在核函数（Kernel）侧使用[REGIST\_MATMUL\_OBJ](REGIST_MATMUL_OBJ.md)初始化Matmul对象时，仍需要使用Tiling；将\(baseM, baseN, baseK, singleCoreM, singleCoreN, singleCoreK\)都设置为常数值时，称为全量常量化，这时可以在[REGIST\_MATMUL\_OBJ](REGIST_MATMUL_OBJ.md)的入参传递Tiling参数的位置，使用空指针替代。
 
-经过上述部分常量化或全部常量化后，将得到带有常量化参数的MatmulConfig模板，然后使用本接口将Tiling参数常量化。本接口的返回值包含常量化的Matmul Tiling参数和MatmulConfig模板。
+经过上述部分常量化或全量常量化后，将得到带有常量化参数的MatmulConfig模板，然后使用本接口将Tiling参数常量化。本接口的返回值包含常量化的Matmul Tiling参数和MatmulConfig模板。
 
 ## 函数原型
 
@@ -67,7 +67,7 @@ __aicore__ constexpr MatmulApiStaticTiling GetMatmulApiTiling(const MatmulConfig
 
 ## 约束说明
 
--   入参mmCFG，在调用获取MatmulConfig模板的接口获取时，需要使用常数值指定\(baseM, baseN, baseK\)或者指定\(baseM, baseN, baseK, singleCoreM, singleCoreN, singleCoreK\)，并且指定的参数值需要和Tiling计算的值保持一致。
+-   入参mmCFG，在调用获取MatmulConfig模板的接口时，需要使用常数值指定\(baseM, baseN, baseK\)或者指定\(baseM, baseN, baseK, singleCoreM, singleCoreN, singleCoreK\)，并且指定的参数值需要和Tiling计算的值保持一致。
 -   Batch Matmul场景支持全量常量化，但不支持使用空指针替代REGIST\_MATMUL\_OBJ的入参Tiling。
 
 <!-- @ref: asc-devkit/res/docs/zh/api/SIMD-API/adv_api/cube_compute/Matmul_Kernel/GetMatmulApiTiling_res.md#id2 -->

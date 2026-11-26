@@ -55,4 +55,3 @@ gradWeight_.SetSingleShape(singleShapeM, singleShapeN, singleShapeK);
 gradWeight_.SetStartPosition(hoStartIdx); // 设置单核上GradOutput载入的起始位置
 ...
 ```
-

@@ -80,7 +80,7 @@ __aicore__ inline void Fill(GlobalTensor<T>& gmWorkspaceAddr, const uint64_t siz
 本调用示例使用8个核，每个核用当前blockIdx的值初始化zGm上的65536个数。
 
 ```
-// 带初始化的元素个数
+// 待初始化的元素个数
 constexpr int32_t INIT_SIZE = 65536;
 
 // 设置源操作数在Global Memory上的起始地址为z+INIT_SIZE*blockIdx，所占外部存储的大小为INIT_SIZE个float
