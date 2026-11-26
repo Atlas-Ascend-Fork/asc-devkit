@@ -60,7 +60,7 @@ The formula for converting the float-type quantization computation parameters **
     -   If **offset** exists:
         1.  Process the **offset** value as int, with a range of \[-256, 255\].
 
-            offset = Max\(Min\(INT\(Round\(offset\)\), 255\), 256\)
+            offset = Max\(Min\(INT\(Round\(offset\)\), 255\), -256\)
 
         2.  Then retain 9 bits of offset and store them in bits 37 to 45 of **quantScalar**.
 
