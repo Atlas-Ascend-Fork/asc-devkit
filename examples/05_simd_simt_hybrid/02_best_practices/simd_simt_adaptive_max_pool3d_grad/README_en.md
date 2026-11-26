@@ -68,13 +68,16 @@ This sample implements the operator in four ways, so as to compare the performan
 
 The sample fixes `output` to [1,4096,32,32,32], so each `NC` plane holds 32\*32\*32=32768 elements. The D/H/W of `grad/argmax` (using the same value for all three) ranges over 1/2/4/8/16, so there is no overlap between the regions occupied by the gradients, which means the gradients can be written back with a plain assignment instead of an accumulation. The sample collects the latency of each implementation under different gradient counts.
 
-**Performance Data Column Descriptions**
+### Performance Metrics
 
-| Column | Description |
+| Metric | Description |
 |:---|:---|
-| D/H/W of `grad/argmax` | Value of the D, H, and W dimensions of `grad` and `argmax`. All three are the same and are configured by the `GRAD_DHW` build option, which accepts 1/2/4/8/16. |
-| Gradients scattered per `NC` plane | Number of gradients to scatter on each `NC` plane at this configuration. It equals the D×H×W of `grad/argmax` and measures the amount of discrete-write data. |
-| Task Duration(us) | Overall Task latency reported by `msOpProf`, including the time to dispatch to the accelerator, the execution time on the accelerator, and the response completion time. The performance comparison in this sample is based on this column. |
+| Task Duration(us) | Overall Task latency, including the time to dispatch to the accelerator, the execution time on the accelerator, and the response completion time |
+
+The sample collects performance data under different gradient counts, which are described by the following two variables:
+
+- D/H/W of `grad/argmax`: value of the D, H, and W dimensions of `grad` and `argmax`. All three are the same and are configured by the `GRAD_DHW` build option, which accepts 1/2/4/8/16.
+- Gradients scattered per `NC` plane: number of gradients to scatter on each `NC` plane at this data volume. It equals the D×H×W of `grad/argmax`.
 
 ### Case 0: SIMD API Zeroing and Gradient Scatter
 

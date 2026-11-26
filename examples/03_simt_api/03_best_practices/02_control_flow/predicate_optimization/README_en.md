@@ -21,7 +21,9 @@ This sample demonstrates tuning methods for [Warp Branch Divergence](../../../..
 │   └── README_en.md                // English sample documentation
 ```
 
-## Basic Concepts
+## Sample Description
+
+### Basic Concepts
 
 - **Warp and Branch Divergence**
 
@@ -56,7 +58,7 @@ This sample demonstrates tuning methods for [Warp Branch Divergence](../../../..
 
   When warp divergence occurs, each branch can only execute serially. While one branch is executing, threads that do not enter that branch are masked by the active thread mask and idle. The hardware pushes the reconvergence address and the active thread mask of each direction onto the branch stack. After all branches finish execution, the Warp reconverges at the reconvergence point. Predicate optimization can eliminate jump and branch stack overhead and improve operator performance.
 
-## hlog10 Sample Description
+### hlog10 Sample Description
 
 - Sample Function
 
@@ -70,14 +72,28 @@ This sample demonstrates tuning methods for [Warp Branch Divergence](../../../..
   <tr><td rowspan="1" align="center">Kernel Name</td><td colspan="4" align="center">hlog10_early_return_kernel / hlog10_predicate_kernel</td></tr>
   </table>
 
-## hlog10 Sample Implementation
+### j0f Sample Description
 
-| Case | Implementation Characteristics | Kernel Used | Branch Chain Handling |
-|--------|---------------------------------------------------|--------------------|---------------------|
-| Case 0 | Uses early return to handle special values | hlog10_early_return_kernel | Baseline divergence version |
-| Case 1 | Uses a temporary variable to handle special values and returns uniformly at the end | hlog10_predicate_kernel | Predicate optimization |
+- Sample Function
 
-Each case launches 8 blocks by default, with 1024 threads per block. Each thread processes one element.
+  Take the [j0f](../../../../../docs/zh/api/SIMT-API/math_functions/float_math_functions/j0f.md) interface as an example. The j0f interface calculates the first-kind zero-order Bessel function of the input data. The interface divides calculation into three segments by the absolute value of the input data and separately handles two special values.
+
+- Sample Specifications:
+  <table>
+  <tr><td rowspan="1" align="center">Sample Type (OpType)</td><td colspan="4" align="center">j0f</td></tr>
+  <tr><td rowspan="3" align="center">Sample Input/Output</td><td align="center">name</td><td align="center">shape</td><td align="center">data type</td><td align="center">format</td></tr>
+  <tr><td align="center">input / output</td><td align="center">[8192]</td><td align="center">float</td><td align="center">ND</td></tr>
+  <tr><td rowspan="1" align="center">Kernel Name</td><td colspan="4" align="center">j0f_early_return_kernel / j0f_unified_return_kernel / j0f_hybrid_return_kernel</td></tr>
+  </table>
+
+  Case 2 and Case 3 compare the divergence baseline with predicate optimization on input2. Case 4 constructs two input batches by branch hit situation and explores the applicable boundary of predicate optimization by comparing performance data under different hit rates:
+
+  | Input Data | Data Range |
+  | --- | --- |
+  | input1 | Random values in the real domain, including special values |
+  | input2 | Random values in the range `[-1.0e13f,1.0e13f]` |
+
+## Sample Implementation
 
 ### Performance Metrics
 
@@ -88,7 +104,16 @@ Each case launches 8 blocks by default, with 1024 threads per block. Each thread
 
 To prevent warp scheduling from affecting the result, execute cycle is collected with 1 block and 32 threads.
 
-### Case 0: hlog10 Branch Chain Divergence Version
+### hlog10 Sample Implementation
+
+| Case | Implementation Characteristics | Kernel Used | Branch Chain Handling |
+|--------|---------------------------------------------------|--------------------|---------------------|
+| Case 0 | Uses early return to handle special values | hlog10_early_return_kernel | Baseline divergence version |
+| Case 1 | Uses a temporary variable to handle special values and returns uniformly at the end | hlog10_predicate_kernel | Predicate optimization |
+
+Each case launches 8 blocks by default, with 1024 threads per block. Each thread processes one element.
+
+#### Case 0: hlog10 Branch Chain Divergence Version
 
 **Implementation**: Handles precision-abnormal special values through early return.
 
@@ -161,7 +186,7 @@ __aicore__ inline half hlog10(half x)
 
 - The interface has six levels of branch conditions that produce divergence and introduce additional jump and branch stack overhead.
 
-### Case 1: hlog10 Branch Chain Predicate Optimization Version
+#### Case 1: hlog10 Branch Chain Predicate Optimization Version
 
 **Implementation**: First fully executes the normal-value path to obtain the temporary variable temp, then overwrites the temporary variable level by level to handle precision-abnormal special values.
 
@@ -216,28 +241,7 @@ __aicore__ inline half hlog10(half x)
 
 The following sample uses different handling methods for branches with different hit rates to show the applicable scope of predicate optimization.
 
-## j0f Sample Description
-
-- Sample Function
-
-  Take the [j0f](../../../../../docs/zh/api/SIMT-API/math_functions/float_math_functions/j0f.md) interface as an example. The j0f interface calculates the first-kind zero-order Bessel function of the input data. The interface divides calculation into three segments by the absolute value of the input data and separately handles two special values.
-
-- Sample Specifications:
-  <table>
-  <tr><td rowspan="1" align="center">Sample Type (OpType)</td><td colspan="4" align="center">j0f</td></tr>
-  <tr><td rowspan="3" align="center">Sample Input/Output</td><td align="center">name</td><td align="center">shape</td><td align="center">data type</td><td align="center">format</td></tr>
-  <tr><td align="center">input / output</td><td align="center">[8192]</td><td align="center">float</td><td align="center">ND</td></tr>
-  <tr><td rowspan="1" align="center">Kernel Name</td><td colspan="4" align="center">j0f_early_return_kernel / j0f_unified_return_kernel / j0f_hybrid_return_kernel</td></tr>
-  </table>
-
-  Case 2 and Case 3 compare the divergence baseline with predicate optimization on input2. Case 4 constructs two input batches by branch hit situation and explores the applicable boundary of predicate optimization by comparing performance data under different hit rates:
-
-  | Input Data | Data Range |
-  | --- | --- |
-  | input1 | Random values in the real domain, including special values |
-  | input2 | Random values in the range `[-1.0e13f,1.0e13f]` |
-
-## j0f Sample Implementation
+### j0f Sample Implementation
 
 | Case | Implementation Characteristics | Kernel Used | Branch Chain Handling |
 |--------|---------------------------------------------------|--------------------|---------------------|
@@ -247,7 +251,7 @@ The following sample uses different handling methods for branches with different
 
 The performance metrics and collection methods of the cases in this group are the same as above. See [Performance Metrics](#performance-metrics).
 
-### Case 2: j0f Branch Chain Divergence Version
+#### Case 2: j0f Branch Chain Divergence Version
 
 **Implementation**: Handles each branch through early return.
 
@@ -283,7 +287,7 @@ __aicore__ inline float j0f(float x)
 
 - input2 is in the range `[-1.0e13f,1.0e13f]`. Each thread executes only the branch body in the hit direction, while branches that are not hit still generate jump and branch stack overhead. execute cycle is 1139.
 
-### Case 3: j0f Branch Chain Unified Return Version
+#### Case 3: j0f Branch Chain Unified Return Version
 
 **Implementation**: Uses a temporary variable to store intermediate results. Each branch overwrites the temporary variable when hit, and the function returns uniformly at the end.
 
@@ -321,7 +325,7 @@ __aicore__ inline float j0f(float x)
 - Compared with the 1139 cycles of Case 2, execute cycle increases to 2930; aiv_total_cycles increases from 2837.75 to 18512.38. Case 3 is significantly slower than the baseline because the unified return causes many threads to perform useless calculations, resulting in performance loss.
 - Comparing Case 2 and Case 3 shows that predicate optimization does not always bring performance gains when warp divergence occurs. Case 4 introduces branch hit situations on this basis to explore the applicable boundary of predicate optimization.
 
-### Case 4: j0f Branch Chain Version with Early Return for High-Hit-Rate Branches and Predicate Optimization for Low-Hit-Rate Branches
+#### Case 4: j0f Branch Chain Version with Early Return for High-Hit-Rate Branches and Predicate Optimization for Low-Hit-Rate Branches
 
 **Implementation**: Uses early return for high-hit-rate branches and a temporary variable to store the calculation results of low-hit-rate branches, guiding the compiler to perform predicate optimization on the low-hit-rate branches.
 
