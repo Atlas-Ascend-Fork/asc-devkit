@@ -51,6 +51,10 @@ if(NOT "${PRODUCT_SIDE}" STREQUAL "device")
     PATTERN "hccl_res_dl.h" EXCLUDE
     PATTERN "hcomm_dlsym.h" EXCLUDE
     PATTERN "hcomm_host_profiling_dl.h" EXCLUDE
+    PATTERN "ccu_launch_dl.h" EXCLUDE
+    PATTERN "ccu_primitives_impl_dl.h" EXCLUDE
+    PATTERN "ccu_res_dl.h" EXCLUDE
+    PATTERN "hccl_ccu_res_dl.h" EXCLUDE
     REGEX "common/adapter_error_manager_pub\\.h$" EXCLUDE)
 
   # copy tiling to asc impl
