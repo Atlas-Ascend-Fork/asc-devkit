@@ -535,6 +535,36 @@ __aicore__ inline void asc_mmad_mx(
     }
 }
 
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mmad_mx)
+__aicore__ inline void asc_mmad_mx(
+    __cc__ float* c_matrix, __ca__ fp4x2_e2m1_t* a_matrix, __cb__ fp4x2_e2m1_t* b_matrix, uint16_t left_height,
+    uint16_t n_dim, uint16_t right_width, uint8_t unit_flag, bool disable_gemv, bool c_matrix_source,
+    bool c_matrix_init_val)
+{
+    if ASC_IS_AIC {
+        constexpr uint64_t scaleAddressUnit = 16;
+        mad_mx(
+            c_matrix, 0, a_matrix, reinterpret_cast<uint64_t>(a_matrix) / scaleAddressUnit, b_matrix,
+            reinterpret_cast<uint64_t>(b_matrix) / scaleAddressUnit, left_height, n_dim, right_width, unit_flag,
+            disable_gemv, c_matrix_source, c_matrix_init_val);
+    }
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_mmad_mx)
+__aicore__ inline void asc_mmad_mx(
+    __cc__ float* c_matrix, __ca__ fp8_e4m3fn_t* a_matrix, __cb__ fp8_e4m3fn_t* b_matrix, uint16_t left_height,
+    uint16_t n_dim, uint16_t right_width, uint8_t unit_flag, bool disable_gemv, bool c_matrix_source,
+    bool c_matrix_init_val)
+{
+    if ASC_IS_AIC {
+        constexpr uint64_t scaleAddressUnit = 16;
+        mad_mx(
+            c_matrix, 0, a_matrix, reinterpret_cast<uint64_t>(a_matrix) / scaleAddressUnit, b_matrix,
+            reinterpret_cast<uint64_t>(b_matrix) / scaleAddressUnit, left_height, n_dim, right_width, unit_flag,
+            disable_gemv, c_matrix_source, c_matrix_init_val);
+    }
+}
+
 #endif
 
 #if defined(UNDEF_ASCENDC_C_API_INCLUDE_COMPILER_INTERNAL_HEADERS_ASCENDC)

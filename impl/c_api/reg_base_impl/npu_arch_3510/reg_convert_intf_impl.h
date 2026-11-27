@@ -245,26 +245,10 @@ __simd_callee__ inline void asc_uint322int16_sat_v2(vector_int16_t& dst, vector_
 }
 
 ASC_DEPRECATED(9.2.0, "2027/09/07", asc_e4m32float)
-__simd_callee__ inline void asc_e4m32float(vector_float& dst, vector_fp8_e4m3fn_t src, vector_bool mask)
-{
-    if ASC_IS_AIV {
-        vcvt(dst, src, mask, PART_P0, MODE_ZEROING);
-    }
-}
-
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_e4m32float)
 __simd_callee__ inline void asc_e4m32float_v2(vector_float& dst, vector_fp8_e4m3fn_t src, vector_bool mask)
 {
     if ASC_IS_AIV {
         vcvt(dst, src, mask, PART_P1, MODE_ZEROING);
-    }
-}
-
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_e4m32float)
-__simd_callee__ inline void asc_e4m32float_v3(vector_float& dst, vector_fp8_e4m3fn_t src, vector_bool mask)
-{
-    if ASC_IS_AIV {
-        vcvt(dst, src, mask, PART_P2, MODE_ZEROING);
     }
 }
 
@@ -2348,14 +2332,6 @@ __simd_callee__ inline void asc_float2bfloat16_rd_sat_v2(vector_bfloat16_t& dst,
 {
     if ASC_IS_AIV {
         vcvt(dst, src, mask, ROUND_F, RS_ENABLE, PART_ODD, MODE_ZEROING);
-    }
-}
-
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_float2bfloat16_rn)
-__simd_callee__ inline void asc_float2bfloat16_rn(vector_bfloat16_t& dst, vector_float src, vector_bool mask)
-{
-    if ASC_IS_AIV {
-        vcvt(dst, src, mask, ROUND_R, RS_DISABLE, PART_EVEN, MODE_ZEROING);
     }
 }
 

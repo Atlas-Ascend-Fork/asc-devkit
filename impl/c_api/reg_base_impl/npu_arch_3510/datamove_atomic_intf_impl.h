@@ -18,17 +18,6 @@
 #ifndef IMPL_C_API_REG_BASE_IMPL_NPU_ARCH_3510_DATAMOVE_ATOMIC_INTF_IMPL_H
 #define IMPL_C_API_REG_BASE_IMPL_NPU_ARCH_3510_DATAMOVE_ATOMIC_INTF_IMPL_H
 
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_disable_dma_atomic)
-__aicore__ inline void asc_set_atomic_none() { set_atomic_none(); }
-
-/// \deprecated Use asc_set_atomic_add_int32 instead.
-ASC_DEPRECATED(9.2.0, "2027/09/07", asc_set_atomic_add_int32)
-__aicore__ inline void asc_set_atomic_add_int()
-{
-    set_atomic_add();
-    set_atomic_s32();
-}
-
 /// \deprecated Use asc_set_atomic_max_int32 instead.
 ASC_DEPRECATED(9.2.0, "2027/09/07", asc_set_atomic_max_int32)
 __aicore__ inline void asc_set_atomic_max_int()

@@ -2461,6 +2461,16 @@ __aicore__ inline void asc_copy_gm2l1_nd2nz(
     }
 }
 
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_copy_gm2l1_nd2nz)
+__aicore__ inline void asc_copy_gm2l1_nd2nz(
+    __cbuf__ bfloat16_t* dst, __gm__ bfloat16_t* src, uint64_t loop1_src_stride, uint8_t l2_cache_ctl, uint16_t n_value,
+    uint32_t d_value, uint64_t loop4_src_stride, bool smallc0_en)
+{
+    asc_copy_gm2l1_nd2nz(
+        dst, src, loop1_src_stride, static_cast<asc_load_l2_cache_mode>(l2_cache_ctl), n_value, d_value,
+        loop4_src_stride, smallc0_en, false);
+}
+
 #endif
 
 #if defined(UNDEF_ASCENDC_C_API_INCLUDE_COMPILER_INTERNAL_HEADERS_ASCENDC)

@@ -22,6 +22,17 @@
 #include "impl/c_api/reg_base_impl/npu_arch_3510/datamove_atomic_intf_impl.h"
 #endif
 
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_disable_dma_atomic)
+__aicore__ inline void asc_set_atomic_none() { set_atomic_none(); }
+
+/// \deprecated Use asc_set_atomic_add_int32 instead.
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_set_atomic_add_int32)
+__aicore__ inline void asc_set_atomic_add_int()
+{
+    set_atomic_add();
+    set_atomic_s32();
+}
+
 /// Enables atomic add for data transfer from Unified Buffer/L0C Buffer/L1 Buffer to
 /// Global Memory with half precision (half).
 __aicore__ inline void asc_set_atomic_add_float16()

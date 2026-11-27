@@ -803,6 +803,22 @@ __simd_callee__ inline vector_float asc_half2float(
     return dst;
 }
 
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_e4m32float)
+__simd_callee__ inline void asc_e4m32float(vector_float& dst, vector_fp8_e4m3fn_t src, vector_bool mask)
+{
+    if ASC_IS_AIV {
+        vcvt(dst, src, mask, PART_P0, MODE_ZEROING);
+    }
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_e4m32float)
+__simd_callee__ inline void asc_e4m32float_v3(vector_float& dst, vector_fp8_e4m3fn_t src, vector_bool mask)
+{
+    if ASC_IS_AIV {
+        vcvt(dst, src, mask, PART_P2, MODE_ZEROING);
+    }
+}
+
 __simd_callee__ inline void asc_e4m32float(
     vector_float& dst, vector_fp8_e4m3fn_t src, vector_bool mask,
     std::integral_constant<asc_position_quarter_mode, asc_position_quarter_mode::DISPERSE_FIRST_QUARTER>
@@ -4648,6 +4664,14 @@ __simd_callee__ inline vector_bfloat16_t asc_float2bfloat16_rd_sat(
     vector_bfloat16_t dst;
     asc_float2bfloat16_rd_sat(dst, src, mask, dst_pos);
     return dst;
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_float2bfloat16_rn)
+__simd_callee__ inline void asc_float2bfloat16_rn(vector_bfloat16_t& dst, vector_float src, vector_bool mask)
+{
+    if ASC_IS_AIV {
+        vcvt(dst, src, mask, ROUND_R, RS_DISABLE, PART_EVEN, MODE_ZEROING);
+    }
 }
 
 __simd_callee__ inline void asc_float2bfloat16_rn(

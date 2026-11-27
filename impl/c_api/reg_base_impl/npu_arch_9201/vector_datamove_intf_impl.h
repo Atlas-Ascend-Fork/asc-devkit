@@ -1627,6 +1627,106 @@ __aicore__ inline void asc_copy_ub2gm_align(__gm__ fp8_e6m2_t* dst, __ubuf__ fp8
     asc_copy_ub2gm_align(dst, src, 1, size, static_cast<asc_store_l2_cache_mode>(0), 0, 0);
 }
 
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_load_l2_cache_mode)
+__aicore__ inline void asc_copy_gm2ub_align(
+    __ubuf__ uint8_t* dst, __gm__ uint8_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t left_padding_num,
+    uint8_t right_padding_num, bool enable_constant_pad, uint8_t l2_cache_mode, uint64_t src_stride,
+    uint32_t dst_stride)
+{
+    asc_copy_gm2ub_align(
+        dst, src, burst_count, burst_len, left_padding_num, right_padding_num, enable_constant_pad, false,
+        static_cast<asc_load_l2_cache_mode>(l2_cache_mode), src_stride, dst_stride, false);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_load_l2_cache_mode)
+__aicore__ inline void asc_copy_gm2ub_align(
+    __ubuf__ int16_t* dst, __gm__ int16_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t left_padding_num,
+    uint8_t right_padding_num, bool enable_constant_pad, uint8_t l2_cache_mode, uint64_t src_stride,
+    uint32_t dst_stride)
+{
+    asc_copy_gm2ub_align(
+        dst, src, burst_count, burst_len, left_padding_num, right_padding_num, enable_constant_pad, false,
+        static_cast<asc_load_l2_cache_mode>(l2_cache_mode), src_stride, dst_stride, false);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_load_l2_cache_mode)
+__aicore__ inline void asc_copy_gm2ub_align(
+    __ubuf__ uint32_t* dst, __gm__ uint32_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t left_padding_num,
+    uint8_t right_padding_num, bool enable_constant_pad, uint8_t l2_cache_mode, uint64_t src_stride,
+    uint32_t dst_stride)
+{
+    asc_copy_gm2ub_align(
+        dst, src, burst_count, burst_len, left_padding_num, right_padding_num, enable_constant_pad, false,
+        static_cast<asc_load_l2_cache_mode>(l2_cache_mode), src_stride, dst_stride, false);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_load_l2_cache_mode)
+__aicore__ inline void asc_copy_gm2ub_align(
+    __ubuf__ int32_t* dst, __gm__ int32_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t left_padding_num,
+    uint8_t right_padding_num, bool enable_constant_pad, uint8_t l2_cache_mode, uint64_t src_stride,
+    uint32_t dst_stride)
+{
+    asc_copy_gm2ub_align(
+        dst, src, burst_count, burst_len, left_padding_num, right_padding_num, enable_constant_pad, false,
+        static_cast<asc_load_l2_cache_mode>(l2_cache_mode), src_stride, dst_stride, false);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_load_l2_cache_mode)
+__aicore__ inline void asc_copy_gm2ub_align(
+    __ubuf__ float* dst, __gm__ float* src, uint32_t burst_count, uint32_t burst_len, uint8_t left_padding_num,
+    uint8_t right_padding_num, bool enable_constant_pad, uint8_t l2_cache_mode, uint64_t src_stride,
+    uint32_t dst_stride)
+{
+    asc_copy_gm2ub_align(
+        dst, src, burst_count, burst_len, left_padding_num, right_padding_num, enable_constant_pad, false,
+        static_cast<asc_load_l2_cache_mode>(l2_cache_mode), src_stride, dst_stride, false);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_store_l2_cache_mode)
+__aicore__ inline void asc_copy_ub2gm_align(
+    __gm__ uint8_t* dst, __ubuf__ uint8_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride)
+{
+    asc_copy_ub2gm_align(
+        dst, src, burst_count, burst_len, static_cast<asc_store_l2_cache_mode>(l2_cache_mode), dst_stride, src_stride);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_store_l2_cache_mode)
+__aicore__ inline void asc_copy_ub2gm_align(
+    __gm__ int16_t* dst, __ubuf__ int16_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride)
+{
+    asc_copy_ub2gm_align(
+        dst, src, burst_count, burst_len, static_cast<asc_store_l2_cache_mode>(l2_cache_mode), dst_stride, src_stride);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_store_l2_cache_mode)
+__aicore__ inline void asc_copy_ub2gm_align(
+    __gm__ uint32_t* dst, __ubuf__ uint32_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride)
+{
+    asc_copy_ub2gm_align(
+        dst, src, burst_count, burst_len, static_cast<asc_store_l2_cache_mode>(l2_cache_mode), dst_stride, src_stride);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_store_l2_cache_mode)
+__aicore__ inline void asc_copy_ub2gm_align(
+    __gm__ int32_t* dst, __ubuf__ int32_t* src, uint32_t burst_count, uint32_t burst_len, uint8_t l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride)
+{
+    asc_copy_ub2gm_align(
+        dst, src, burst_count, burst_len, static_cast<asc_store_l2_cache_mode>(l2_cache_mode), dst_stride, src_stride);
+}
+
+ASC_DEPRECATED(9.2.0, "2027/09/07", asc_store_l2_cache_mode)
+__aicore__ inline void asc_copy_ub2gm_align(
+    __gm__ float* dst, __ubuf__ float* src, uint32_t burst_count, uint32_t burst_len, uint8_t l2_cache_mode,
+    uint64_t dst_stride, uint32_t src_stride)
+{
+    asc_copy_ub2gm_align(
+        dst, src, burst_count, burst_len, static_cast<asc_store_l2_cache_mode>(l2_cache_mode), dst_stride, src_stride);
+}
+
 #endif
 
 #if defined(UNDEF_ASCENDC_C_API_INCLUDE_COMPILER_INTERNAL_HEADERS_ASCENDC)
