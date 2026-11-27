@@ -339,8 +339,20 @@ HcclResult AllocWorkspaceMemory(HcclComm comm, const std::string& ctxTag, CommEn
             static_cast<unsigned long long>(msgAreaSize));
     }
 
+    CHK_PRT_RET(
+        workSpacePtr == nullptr || memSize < msgAreaSize,
+        HCCL_ERROR(
+            "Invalid MC2 workspace, tag[%s], addr[%p], size[%llu].", tagWorkSpace.c_str(), workSpacePtr,
+            static_cast<unsigned long long>(memSize)),
+        HCCL_E_MEMORY);
+
     resCtx.workSpace = reinterpret_cast<uint64_t>(workSpacePtr);
+    // A5 keeps the protocol-compatible 512B round-up on host so the device Init can skip it.
+    resCtx.workSpace = (resCtx.workSpace + 0x1ffULL) & ~0x1ffULL;
     resCtx.workSpaceSize = memSize;
+    HCCL_INFO(
+        "HcclAllocOpResCtx the workSpace: workSpaceAddr[%llu], workSpaceSize[%llu]",
+        static_cast<unsigned long long>(resCtx.workSpace), static_cast<unsigned long long>(memSize));
     return HCCL_SUCCESS;
 }
 
