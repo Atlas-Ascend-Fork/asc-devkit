@@ -73,8 +73,8 @@ static bool ParseTplUintValue(ParamStruct& paramStruct)
     }
     if (paramStruct.vals.size() < 2U) {
         printf(
-            "[ERROR] Value length of ASCENDC_TPL_UINT_%s: %s is less than 2, parse value failed.\n",
-            paramStruct.macroType, paramStruct.name);
+            "[ERROR] Value length of ASCENDC_TPL_UINT_%s: %s is %zu, less than 2, failed to parse value.\n",
+            paramStruct.macroType, paramStruct.name, paramStruct.vals.size());
         return false;
     }
     uint8_t uiFlag = static_cast<uint8_t>(paramStruct.vals[0]);
@@ -84,8 +84,8 @@ static bool ParseTplUintValue(ParamStruct& paramStruct)
     }
     if (uiFlag != ASCENDC_TPL_UI_RANGE && uiFlag != ASCENDC_TPL_UI_MIX) {
         printf(
-            "[ERROR] ASCENDC_TPL_UINT_%s: %s UI flag is invalid,"
-            "it should be in [UI_RANGE, UI_LIST, UI_MIX]!\n",
+            "[ERROR] ASCENDC_TPL_UINT_%s: %s UI flag is invalid. "
+            "It should be in [UI_RANGE, UI_LIST, UI_MIX]!\n",
             paramStruct.macroType, paramStruct.name);
         return false;
     }
@@ -93,8 +93,10 @@ static bool ParseTplUintValue(ParamStruct& paramStruct)
     size_t rangeNum = paramStruct.vals[1];
     if (rangeNum * VAL_PAIR > paramStruct.vals.size() - VAL_START) {
         printf(
-            "[ERROR] ASCENDC_TPL_UINT_%s: %s range declare exceed actual length!\n", paramStruct.macroType,
-            paramStruct.name);
+            "[ERROR] ASCENDC_TPL_UINT_%s: %s range declaration count %zu exceeds the available "
+            "range capacity %zu (value length %zu)!\n",
+            paramStruct.macroType, paramStruct.name, rangeNum, (paramStruct.vals.size() - VAL_START) / VAL_PAIR,
+            paramStruct.vals.size());
         return false;
     }
     size_t elementNum = 0;
@@ -133,8 +135,8 @@ static bool CheckSelectParamValid(const TilingDeclareParams& declareParams, cons
             for (auto val : selectParam.vals) {
                 if (std::find(declareVals.begin(), declareVals.end(), val) == declareVals.cend()) {
                     printf(
-                        "[ERROR] ASCENDC_TPL_%s_SEL %s value %lu does not exist in ASCENDC_TPL_%s_DECL, "
-                        "please check it!\n",
+                        "[ERROR] ASCENDC_TPL_%s_SEL %s value %lu does not exist in ASCENDC_TPL_%s_DECL. "
+                        "Please check it!\n",
                         TPL_TYPE_STR_ARR[declareParam.paramType], selectParam.name, val,
                         TPL_TYPE_STR_ARR[declareParam.paramType]);
                     return false;
@@ -168,7 +170,10 @@ static bool CheckInputTilingParamValid(
     const TilingDeclareParams& declareParams)
 {
     if (tilingParams.size() != declareParams.size()) {
-        printf("[ERROR] Number of arguments in GET_TPL_TILING_KEY is not the same as ASCENDC_TPL_ARGS_DECL.\n");
+        printf(
+            "[ERROR] Number of arguments in GET_TPL_TILING_KEY (%zu) is not the same as "
+            "ASCENDC_TPL_ARGS_DECL (%zu).\n",
+            tilingParams.size(), declareParams.size());
         return false;
     }
     std::unordered_map<std::string, size_t> nameOrder;
@@ -214,7 +219,7 @@ static bool CheckParamValid(
     const TilingDeclareParams& declareParams)
 {
     if (!CheckSelectParamsValid(declareParams, selectParamsVec)) {
-        printf("[ERROR] ASCEND_TPL_SEL format is incorrect, please check!\n");
+        printf("[ERROR] ASCEND_TPL_SEL format is incorrect. Please check it!\n");
         return false;
     }
     // Validate args in GET_TPL_TILING_KEY()
@@ -254,7 +259,7 @@ uint64_t EncodeTilingKey(
     for (auto& declareParam : declareParams) {
         declareParamNameSet.insert(declareParam.name);
         if (!ParseTplUintValue(declareParam)) {
-            printf("[ERROR] ASCENDC_TPL_DECL:%s parses value failed!\n", declareParam.name);
+            printf("[ERROR] ASCENDC_TPL_DECL:%s failed to parse value!\n", declareParam.name);
             return INVALID_TILING_KEY;
         }
     }
@@ -271,8 +276,8 @@ uint64_t EncodeTilingKey(
             // 保证selectParam在declareParams中存在
             if (declareParamNameSet.count(name) == 0 || !ParseTplUintValue(selectParam)) {
                 printf(
-                    "[ERROR] ASCENDC_TPL_SEL : %s parses value failed!"
-                    " Please check macro define name or values.\n",
+                    "[ERROR] ASCENDC_TPL_SEL : %s failed to parse value! "
+                    "Please check macro definition name or values.\n",
                     name.c_str());
                 return INVALID_TILING_KEY;
             }
@@ -300,8 +305,10 @@ uint64_t EncodeTilingKey(
         totalBits += bitWidth;
     }
     if (totalBits > MAX_BITS_NUM) {
-        printf("[ERROR] Tiling Key exceeds maximum 64 bit, please adjust ASCENDC_TPL_ARGS_DECL bitWidth"
-               "accordingly\n");
+        printf(
+            "[ERROR] Tiling key uses %u bits, exceeding the maximum of %u bits. "
+            "Please adjust ASCENDC_TPL_ARGS_DECL bitWidth accordingly.\n",
+            static_cast<unsigned int>(totalBits), static_cast<unsigned int>(MAX_BITS_NUM));
         return INVALID_TILING_KEY;
     }
     return tilingKey;

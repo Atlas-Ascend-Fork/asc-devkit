@@ -349,9 +349,10 @@ __aicore__ inline void CheckTensorAlign(
     ASCENDC_ASSERT((tensorAddr % alignByte == 0), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check %s start address "
-            "alignment in %s, its start address must align with %uB.",
-            tensorName, apiMsg, alignByte);
+            "Failed to check %s start address alignment in %s, "
+            "current buffer-relative address is %llu bytes; "
+            "its start address must align with %uB.",
+            tensorName, apiMsg, static_cast<unsigned long long>(tensorAddr), alignByte);
     });
 #endif
 }

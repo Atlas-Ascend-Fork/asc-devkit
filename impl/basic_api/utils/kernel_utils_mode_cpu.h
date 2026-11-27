@@ -101,7 +101,11 @@ public:
     uint8_t* GetHardwareBaseAddr(Hardware hardPos)
     {
         ASCENDC_ASSERT((hardwareCpuBufferMap.find(hardPos) != hardwareCpuBufferMap.end()), {
-            KERNEL_LOG(KERNEL_ERROR, "illegal hardPos %d", static_cast<int>(hardPos));
+            KERNEL_LOG(
+                KERNEL_ERROR,
+                "Illegal hardPos %d; valid values are UB=1, L1=2, L0A=3, L0B=4, L0C=5, BIAS=6, FIXBUF=7; "
+                "PT=8 is additionally supported when __NPU_ARCH__ is 5101, 5161, 5165 or 5163",
+                static_cast<int>(hardPos));
         });
         return hardwareCpuBufferMap[hardPos];
     }

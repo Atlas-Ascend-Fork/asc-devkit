@@ -136,11 +136,14 @@ public:
         if constexpr (IsSameType<PrimType, int4b_t>::value) {
 #endif
             ASCENDC_DEBUG_ASSERT(
-                (bufferSize != 0), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "InitBuffer bufferSize must be larger than 0."));
+                (bufferSize != 0),
+                KERNEL_LOG_INTERNAL(
+                    KERNEL_ERROR, "InitBuffer bufferSize is %u, which must be larger than 0.", bufferSize));
 
             ASCENDC_DEBUG_ASSERT(
                 (bufferOffset % ONE_BLK_SIZE == 0),
-                KERNEL_LOG_INTERNAL(KERNEL_ERROR, "bufferOffset is %u, which should be 32Bytes aligned", bufferOffset));
+                KERNEL_LOG_INTERNAL(
+                    KERNEL_ERROR, "The bufferOffset is %u, which should be 32Bytes aligned", bufferOffset));
         }
 
         ASCENDC_DEBUG_ASSERT(
@@ -156,7 +159,12 @@ public:
                  ConstDefiner::Instance().bufferInitLen.at(
                      positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))),
                 KERNEL_LOG_INTERNAL(
-                    KERNEL_ERROR, "bufferOffset is %d, bufferSize is %d, buffer overflow", bufferOffset, bufferSize));
+                    KERNEL_ERROR,
+                    "The bufferOffset is %u bytes, bufferSize is %u elements, buffer overflow; "
+                    "buffer limit is %u bytes",
+                    bufferOffset, bufferSize,
+                    ConstDefiner::Instance().bufferInitLen.at(
+                        positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))));
 
             this->address_.absAddr = ConstDefiner::Instance().hardwareCpuBufferMap.at(
                                          positionHardMap.at(AscendC::TPosition(this->address_.logicPos))) +
@@ -169,7 +177,12 @@ public:
                  ConstDefiner::Instance().bufferInitLen.at(
                      positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))),
                 KERNEL_LOG_INTERNAL(
-                    KERNEL_ERROR, "bufferOffset is %d, bufferSize is %d, buffer overflow", bufferOffset, bufferSize));
+                    KERNEL_ERROR,
+                    "The bufferOffset is %u bytes, bufferSize is %u elements, buffer overflow; "
+                    "buffer limit is %u bytes",
+                    bufferOffset, bufferSize,
+                    ConstDefiner::Instance().bufferInitLen.at(
+                        positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))));
 
             this->address_.absAddr = ConstDefiner::Instance().hardwareCpuBufferMap.at(
                                          positionHardMap.at(AscendC::TPosition(this->address_.logicPos))) +
@@ -181,7 +194,12 @@ public:
                  ConstDefiner::Instance().bufferInitLen.at(
                      positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))),
                 KERNEL_LOG_INTERNAL(
-                    KERNEL_ERROR, "bufferOffset is %d, bufferSize is %d, buffer overflow", bufferOffset, bufferSize));
+                    KERNEL_ERROR,
+                    "The bufferOffset is %u bytes, bufferSize is %u elements, buffer overflow; "
+                    "buffer limit is %u bytes",
+                    bufferOffset, bufferSize,
+                    ConstDefiner::Instance().bufferInitLen.at(
+                        positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))));
 
             this->address_.absAddr = ConstDefiner::Instance().hardwareCpuBufferMap.at(
                                          positionHardMap.at(AscendC::TPosition(this->address_.logicPos))) +
@@ -191,15 +209,23 @@ public:
         } else {
             ASCENDC_DEBUG_ASSERT(
                 (bufferOffset % ONE_BLK_SIZE == 0),
-                KERNEL_LOG_INTERNAL(KERNEL_ERROR, "bufferOffset is %u, which should be 32Bytes aligned", bufferOffset));
+                KERNEL_LOG_INTERNAL(
+                    KERNEL_ERROR, "The bufferOffset is %u, which should be 32Bytes aligned", bufferOffset));
             ASCENDC_DEBUG_ASSERT(
                 (bufferOffset + bufferSize * sizeof(PrimType) <=
                  ConstDefiner::Instance().bufferInitLen.at(
                      positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))),
                 KERNEL_LOG_INTERNAL(
-                    KERNEL_ERROR, "bufferOffset is %d, bufferSize is %d, buffer overflow", bufferOffset, bufferSize));
+                    KERNEL_ERROR,
+                    "The bufferOffset is %u bytes, bufferSize is %u elements, buffer overflow; "
+                    "buffer limit is %u bytes",
+                    bufferOffset, bufferSize,
+                    ConstDefiner::Instance().bufferInitLen.at(
+                        positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))));
             ASCENDC_DEBUG_ASSERT(
-                (bufferSize != 0), KERNEL_LOG_INTERNAL(KERNEL_ERROR, "InitBuffer bufferSize must be larger than 0."));
+                (bufferSize != 0),
+                KERNEL_LOG_INTERNAL(
+                    KERNEL_ERROR, "InitBuffer bufferSize is %u, which must be larger than 0.", bufferSize));
             this->address_.absAddr = ConstDefiner::Instance().hardwareCpuBufferMap.at(
                                          positionHardMap.at(AscendC::TPosition(this->address_.logicPos))) +
                                      bufferOffset;

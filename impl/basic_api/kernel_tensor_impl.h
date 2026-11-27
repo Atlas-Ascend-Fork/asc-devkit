@@ -114,7 +114,7 @@ typename LocalTensor<T>::PrimType* LocalTensor<T>::GetPhyAddr(const uint32_t off
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT4_TWO > (offset / INT4_TWO)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT4_TWO)));
         ASCENDC_DEBUG_ASSERT(
             (offset % INT4_TWO == 0),
@@ -125,7 +125,7 @@ typename LocalTensor<T>::PrimType* LocalTensor<T>::GetPhyAddr(const uint32_t off
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT2_FOUR > (offset / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
         ASCENDC_DEBUG_ASSERT(
             (offset % INT2_FOUR == 0),
@@ -135,7 +135,7 @@ typename LocalTensor<T>::PrimType* LocalTensor<T>::GetPhyAddr(const uint32_t off
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT1_EIGHT > (offset / INT1_EIGHT)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT1_EIGHT)));
         ASCENDC_DEBUG_ASSERT(
             (offset % INT1_EIGHT == 0),
@@ -149,7 +149,7 @@ typename LocalTensor<T>::PrimType* LocalTensor<T>::GetPhyAddr(const uint32_t off
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT2_FOUR > (offset / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be large than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
         ASCENDC_DEBUG_ASSERT(
             (offset % INT2_FOUR == 0),
@@ -160,7 +160,7 @@ typename LocalTensor<T>::PrimType* LocalTensor<T>::GetPhyAddr(const uint32_t off
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset * sizeof(PrimType))),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen / sizeof(PrimType))));
         return reinterpret_cast<PrimType*>(this->address_.absAddr) + offset;
     }
@@ -193,7 +193,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType LocalTensor<T>::GetValue(con
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT4_TWO > (offset / INT4_TWO)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT4_TWO)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -204,7 +204,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType LocalTensor<T>::GetValue(con
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT2_FOUR > (offset / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -214,7 +214,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType LocalTensor<T>::GetValue(con
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT1_EIGHT > (offset / INT1_EIGHT)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT1_EIGHT)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -228,7 +228,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType LocalTensor<T>::GetValue(con
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT2_FOUR > (offset / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be large than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -241,7 +241,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType LocalTensor<T>::GetValue(con
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * ConstantsInternal::ASCENDC_B4_TWO > (offset / ConstantsInternal::ASCENDC_B4_TWO)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * ConstantsInternal::ASCENDC_B4_TWO)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -263,7 +263,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType LocalTensor<T>::GetValue(con
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset * sizeof(PrimType))),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen / sizeof(PrimType))));
         return *(GetPhyAddr(offset));
     }
@@ -275,7 +275,7 @@ __inout_pipe__(S) typename LocalTensor<T>::PrimType& LocalTensor<T>::operator()(
     ASCENDC_DEBUG_ASSERT(
         (this->address_.dataLen > (offset * sizeof(PrimType))),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+            KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
             static_cast<uint32_t>(this->address_.dataLen / sizeof(PrimType))));
     return *(GetPhyAddr(offset));
 }
@@ -329,7 +329,7 @@ __inout_pipe__(S) void LocalTensor<T>::SetValue(const uint32_t index, const U va
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT4_TWO > (index / INT4_TWO)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "index is %u, which can not be larger than data len %u", index,
+                KERNEL_ERROR, "Index is %u, which can not be larger than data len %u", index,
                 static_cast<uint32_t>(this->address_.dataLen * INT4_TWO)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -342,7 +342,7 @@ __inout_pipe__(S) void LocalTensor<T>::SetValue(const uint32_t index, const U va
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT2_FOUR > (index / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "index is %u, which can not be larger than data len %u", index,
+                KERNEL_ERROR, "Index is %u, which can not be larger than data len %u", index,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -355,7 +355,7 @@ __inout_pipe__(S) void LocalTensor<T>::SetValue(const uint32_t index, const U va
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT1_EIGHT > (index / INT1_EIGHT)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "index is %u, which can not be larger than data len %u", index,
+                KERNEL_ERROR, "Index is %u, which can not be larger than data len %u", index,
                 static_cast<uint32_t>(this->address_.dataLen * INT1_EIGHT)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -372,7 +372,7 @@ __inout_pipe__(S) void LocalTensor<T>::SetValue(const uint32_t index, const U va
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * INT2_FOUR > (index / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "index is %u, which can not be large than data len %u", index,
+                KERNEL_ERROR, "Index is %u, which can not be larger than data len %u", index,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -396,7 +396,7 @@ __inout_pipe__(S) void LocalTensor<T>::SetValue(const uint32_t index, const U va
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen * ConstantsInternal::ASCENDC_B4_TWO > (index / ConstantsInternal::ASCENDC_B4_TWO)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "index is %u, which can not be larger than data len %u", index,
+                KERNEL_ERROR, "Index is %u, which can not be larger than data len %u", index,
                 static_cast<uint32_t>(this->address_.dataLen * ConstantsInternal::ASCENDC_B4_TWO)));
 
         LocalTensor<uint8_t> tmp = this->ReinterpretCast<uint8_t>();
@@ -409,7 +409,7 @@ __inout_pipe__(S) void LocalTensor<T>::SetValue(const uint32_t index, const U va
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (index * sizeof(PrimType))),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "index is %u, which can not be larger than data len %u", index,
+                KERNEL_ERROR, "Index is %u, which can not be larger than data len %u", index,
                 static_cast<uint32_t>(this->address_.dataLen / sizeof(PrimType))));
         *(GetPhyAddr(index)) = PrimType(value);
     }
@@ -427,20 +427,20 @@ LocalTensor<T> LocalTensor<T>::operator[](const uint32_t offset) const
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset / INT4_TWO)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT4_TWO)));
 #if (__NPU_ARCH__ == 5102) || (__NPU_ARCH__ == 5162)
     } else if constexpr (IsSameType<PrimType, int2b_t>::value) {
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
     } else if constexpr (IsSameType<PrimType, uint1b_t>::value) {
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset / INT1_EIGHT)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT1_EIGHT)));
 #endif
 #if defined(__NPU_ARCH__) &&                                                                         \
@@ -450,14 +450,14 @@ LocalTensor<T> LocalTensor<T>::operator[](const uint32_t offset) const
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset / INT2_FOUR)),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be large than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen * INT2_FOUR)));
 #endif
     } else {
         ASCENDC_DEBUG_ASSERT(
             (this->address_.dataLen > (offset * sizeof(PrimType))),
             KERNEL_LOG_INTERNAL(
-                KERNEL_ERROR, "offset is %u, which can not be larger than data len %u", offset,
+                KERNEL_ERROR, "Offset is %u, which can not be larger than data len %u", offset,
                 static_cast<uint32_t>(this->address_.dataLen / sizeof(PrimType))));
     }
 
@@ -1005,7 +1005,12 @@ __aicore__ inline void LocalTensor<T>::SetSize(const uint32_t size)
          ConstDefiner::Instance().bufferInitLen.at(
              ConstDefiner::Instance().positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))),
         KERNEL_LOG_INTERNAL(
-            KERNEL_ERROR, "Failed to check param size value in SetSize, current value is %d, buffer overflow", len));
+            KERNEL_ERROR,
+            "Failed to check param size value in SetSize, requested length is %u bytes, "
+            "buffer limit is %u bytes, buffer overflow",
+            len,
+            ConstDefiner::Instance().bufferInitLen.at(
+                ConstDefiner::Instance().positionHardMap.at(AscendC::TPosition(this->address_.logicPos)))));
 #endif
     if constexpr (IsHalfByteDataType<PrimType>()) {
         this->address_.dataLen = size / INT4_TWO;
