@@ -21,6 +21,9 @@
 #ifndef ASCENDC_MODULE_UTILS_MODE_CPU_H
 #define ASCENDC_MODULE_UTILS_MODE_CPU_H
 #include "kernel_utils_constants.h"
+#if defined(ASCENDC_CPU_DEBUG) && ASCENDC_CPU_DEBUG == 1
+#include <random>
+#endif
 
 namespace AscendC {
 class MaskSetter {
@@ -382,6 +385,23 @@ private:
 
     ~ConstDefiner() { Free(); }
 
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
+    void InitSharedBuffer(uint8_t* base, Hardware hard, uint64_t bufferCount)
+    {
+        ASCENDC_ASSERT((base != nullptr), { KERNEL_LOG(KERNEL_ERROR, "shared buffer allocation failed"); });
+        const uint32_t bufferSize = bufferInitLen.at(hard);
+        // Allocate() runs in the parent before fork. Reset the engine per hardware slice,
+        // preserving the original debug pattern without rewriting another core's live data.
+        for (uint64_t buffer = 0; buffer < bufferCount; ++buffer) {
+            std::default_random_engine engine;
+            int32_t* words = reinterpret_cast<int32_t*>(base + buffer * bufferSize);
+            for (uint32_t i = 0; i < bufferSize / sizeof(int32_t); ++i) {
+                words[i] = engine();
+            }
+        }
+    }
+#endif
+
 public:
 #if defined(__NPU_ARCH__) && ((__NPU_ARCH__ == 5102) || (__NPU_ARCH__ == 5162) || (__NPU_ARCH__ == 3003) || \
                               (__NPU_ARCH__ == 3103) || (__NPU_ARCH__ == 3113) || (__NPU_ARCH__ == 3510))
@@ -401,6 +421,10 @@ public:
         } else {
             cpuUB = (uint8_t*)GmAlloc(bufferInitLen.at(Hardware::UB) * block_num * g_taskRation);
             cpuL1 = (uint8_t*)GmAlloc(bufferInitLen.at(Hardware::L1) * block_num);
+#if __NPU_ARCH__ == 3510
+            InitSharedBuffer(cpuUB, Hardware::UB, static_cast<uint64_t>(block_num) * g_taskRation);
+            InitSharedBuffer(cpuL1, Hardware::L1, static_cast<uint64_t>(block_num));
+#endif
             uint32_t aivNum = g_taskRation;
             uint32_t totalSSbufSize = 1024 * (aivNum + 1);
             cpuSSbuf = (uint8_t*)GmAlloc(totalSSbufSize * block_num);
