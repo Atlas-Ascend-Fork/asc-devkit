@@ -20,6 +20,8 @@
 #include <utility>
 #include <vector>
 
+#include "securec.h"
+
 namespace mc2_ops_hccl {
 namespace binary_cache {
 class ExactKeyBuilder {
@@ -101,7 +103,7 @@ private:
         if (size > sizeof(pending_)) {
             exactBytes_.append(static_cast<const char*>(data), size);
         } else {
-            (void)std::memcpy(pending_ + pendingSize_, data, size);
+            (void)memcpy_s(pending_ + pendingSize_, sizeof(pending_) - pendingSize_, data, size);
             pendingSize_ += size;
         }
     }
