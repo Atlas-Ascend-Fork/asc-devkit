@@ -437,40 +437,11 @@ bool HcclIsCcuAlgorithmRegistered(uint32_t opType, const char* algName)
     return CollAlgExecRegistryV2::Instance().IsRegistered(static_cast<HcclCMDType>(opType), algName);
 }
 
-namespace {
-bool IsCcuForcedAlgUsable(const Mc2CcTilingInner* ccTiling)
-{
-    if (ccTiling == nullptr) {
-        HCCL_WARNING("[AllocComResourceByTilingCcu] algName[] is not supported in mc2_client.");
-        return false;
-    }
-    ExternalAlgSpec extSpec;
-    std::string extParseErrMsg;
-    const ForcedAlgKind kind = ClassifyForcedAlgConfig(ccTiling->algConfig, extSpec, extParseErrMsg);
-    if (kind != ForcedAlgKind::EXTERNAL) {
-        HCCL_WARNING("[MC2_EXT_ALG] algConfig[%s] is not supported in mc2_client.", ccTiling->algConfig);
-        return false;
-    }
-    if (!extParseErrMsg.empty()) {
-        HCCL_WARNING(
-            "[MC2_EXT_ALG] ccu gate rejected, algConfig[%s], opType[%u], reason[%s].", ccTiling->algConfig,
-            ccTiling->opType, extParseErrMsg.c_str());
-        return false;
-    }
-    return true;
-}
-} // namespace
-
 bool CheckCcuAlgorithmsRegistered(const void* ccTilingList[], uint32_t tilingNum)
 {
-    HCCL_INFO("[CheckCcuAlgorithmsRegistered]Start CheckCcuAlgorithmsRegistered!");
-    if (tilingNum > 1) {
-        HCCL_WARNING("[AllocComResourceByTilingCcu] tilingNum[%u] is not supported in mc2_client.", tilingNum);
-        return false;
-    }
     for (uint32_t i = 0U; i < tilingNum; ++i) {
-        const auto* ccTiling = static_cast<const Mc2CcTilingInner*>(ccTilingList[i]);
-        if (!IsCcuForcedAlgUsable(ccTiling)) {
+        if (ccTilingList[i] == nullptr) {
+            HCCL_WARNING("[CheckCcuAlgorithmsRegistered] ccTilingList[%u] is null pointer.", i);
             return false;
         }
     }
@@ -580,7 +551,7 @@ HcclResult DispatchAllocByCommEngine(
                 "[HcclAllocComResourceByTiling]Failed to resolve a supported CCU version; refusing V1 fallback.");
             return HCCL_E_NOT_SUPPORT;
         }
-        if (!CheckCcuAlgorithmsRegistered(ccTilingList, tilingNum)) {
+        if (checkOnly && !CheckCcuAlgorithmsRegistered(ccTilingList, tilingNum)) {
             HCCL_INFO("[HcclAllocComResourceByTiling]Current ccu algorithm is not supported in mc2_client.");
             return HCCL_E_ALG_NOT_SUPPORTED;
         }

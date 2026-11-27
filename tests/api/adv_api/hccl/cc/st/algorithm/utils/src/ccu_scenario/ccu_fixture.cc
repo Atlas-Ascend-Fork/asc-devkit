@@ -29,6 +29,8 @@
 extern "C" {
 void ResetCcuKernelRegisterCount();
 uint32_t GetCcuKernelRegisterCount();
+// 清理 CCU 动态资源桩中该通信域的 Assign 绑定，避免 comm 地址复用后命中陈旧实例
+void CcuStubReleaseComm(HcclComm comm);
 }
 
 namespace HcclSim {
@@ -62,6 +64,7 @@ uint32_t CcuStFixture::CountRanks(const TopoMeta& topoMeta)
 void CcuStFixture::CleanupHostEnv(HcclComm& comm)
 {
     if (comm != nullptr) {
+        CcuStubReleaseComm(comm);
         delete static_cast<HcclSim::SimCommunicator*>(comm);
         comm = nullptr;
     }
