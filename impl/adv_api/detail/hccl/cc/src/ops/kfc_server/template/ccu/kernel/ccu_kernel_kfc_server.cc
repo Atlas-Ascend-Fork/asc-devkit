@@ -54,7 +54,7 @@ static bool CcuKfcProbesEnabled()
 
 using CcuProbePattern = std::vector<uint32_t>;
 static constexpr uint32_t kProbeGapCount = 7;
-static std::array<CcuProbePattern, 7> probePatterns = {{
+static std::array<CcuProbePattern, 14> probePatterns = {{
     {4, 3, 1, 1, 2, 3, 3}, // algorithm start
     {4, 3, 1, 1, 3, 3, 2}, // algorithm end
     {4, 3, 1, 2, 1, 3, 3}, // queue head start
@@ -62,6 +62,13 @@ static std::array<CcuProbePattern, 7> probePatterns = {{
     {4, 3, 1, 3, 3, 1, 2}, // parameter load start
     {4, 3, 1, 3, 3, 2, 1}, // turn-end signal complete
     {4, 3, 2, 1, 1, 3, 3}, // queue end
+    {4, 3, 2, 1, 3, 1, 3}, // first CKE load start
+    {4, 3, 2, 1, 3, 3, 1}, // first CKE load end
+    {4, 3, 2, 3, 1, 1, 3}, // start-signal CKE clear start
+    {4, 3, 2, 3, 1, 3, 1}, // start-signal CKE clear end
+    {4, 3, 2, 3, 3, 1, 1}, // parameter XN load start
+    {4, 3, 3, 1, 1, 2, 3}, // parameter XN load end
+    {4, 3, 3, 1, 1, 3, 2}, // after LoadFuncParamFromMemory call
 }};
 static std::mutex probePatternMutex;
 static bool probePatternsFrozen = false;
@@ -300,17 +307,34 @@ CcuResult MissionPostSync(KfcServerContext& ctx)
     return CCU_SUCCESS;
 }
 
-CcuResult WaitTurnStartSig(const ccu::variable& hbmSigAddr, ccu::variable& turnStartSig, const KfcServerContext& ctx)
+CcuResult WaitTurnStartSig(
+    const ccu::variable& hbmSigAddr, ccu::variable& turnStartSig, const KfcServerContext& ctx, ccu::variable& queueIdx)
 {
     (void)ctx;
     const uint32_t getDieId = 1;
     // 单Die场景：等待HBM中的信号
+    ccu::variable firstLoad;
+    firstLoad = 1;
+    CCU_IF(queueIdx == 0) { firstLoad = 0; }
     CCU_WHILE(turnStartSig != 1)
     {
+        if (CcuKfcProbesEnabled()) {
+            CCU_IF(firstLoad == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(7)); }
+        }
         CCU_CHK_RET(ccu::load(hbmSigAddr, turnStartSig)); // 循环读HBM对应地址的信号到Xn，直到Xn中的信号值为1
+        if (CcuKfcProbesEnabled()) {
+            CCU_IF(firstLoad == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(8)); }
+        }
+        firstLoad = 1;
     }
-    turnStartSig = 0;                                  // reset Xn
+    turnStartSig = 0; // reset Xn
+    if (CcuKfcProbesEnabled()) {
+        CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(9)); }
+    }
     CCU_CHK_RET(ccu::store(hbmSigAddr, turnStartSig)); // reset HBM
+    if (CcuKfcProbesEnabled()) {
+        CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(10)); }
+    }
     return CCU_SUCCESS;
 }
 
@@ -323,7 +347,8 @@ CcuResult SetTurnEndSig(const ccu::variable& hbmSigAddr, const ccu::variable& tu
 }
 
 CcuResult LoadFuncParamFromMemory(
-    const ccu::variable& paramAddr, ccu::array<ccu::variable>& param, const KfcServerContext& ctx)
+    const ccu::variable& paramAddr, ccu::array<ccu::variable>& param, const KfcServerContext& ctx,
+    ccu::variable& queueIdx)
 {
     (void)ctx;
     // 双Die场景Die1需要读后32个参数，其他场景都是读取前32个参数
@@ -333,7 +358,13 @@ CcuResult LoadFuncParamFromMemory(
     addr = paramAddr;
 
     // 一次性读取本轮32个参数
+    if (CcuKfcProbesEnabled()) {
+        CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(11)); }
+    }
     CCU_CHK_RET(ccu::load(addr, param, CCU_PARAM_NUM_PER_DIE));
+    if (CcuKfcProbesEnabled()) {
+        CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(12)); }
+    }
     return CCU_SUCCESS;
 }
 
@@ -637,13 +668,16 @@ CcuResult KfcServerGenCircularQueue(KfcServerContext& ctx)
 
     CCU_WHILE(repeatCond == 0)
     {
-        CCU_CHK_RET(WaitTurnStartSig(waitAddr, turnStartSig, ctx)); // 等待本轮开始信号
+        CCU_CHK_RET(WaitTurnStartSig(waitAddr, turnStartSig, ctx, queueIdx));
         // msprof can collapse repeated visits to a marker into its last visit.
         // Sample the load at queue slot zero separately from the Finalize turn.
         if (CcuKfcProbesEnabled()) {
             CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(4)); }
         }
-        CCU_CHK_RET(LoadFuncParamFromMemory(paramAddr, param, ctx)); // 读取本轮参数
+        CCU_CHK_RET(LoadFuncParamFromMemory(paramAddr, param, ctx, queueIdx));
+        if (CcuKfcProbesEnabled()) {
+            CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(13)); }
+        }
         CCU_IF(param[HBM_PARAM_IDX_0] == INVALID_U64) { repeatCond = 1; }
         CCU_IF(param[HBM_PARAM_IDX_0] != INVALID_U64)
         {
@@ -710,7 +744,10 @@ CcuResult SlaveKfcServerGenCircularQueue(KfcServerContext& ctx)
         if (CcuKfcProbesEnabled()) {
             CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(4)); }
         }
-        CCU_CHK_RET(LoadFuncParamFromMemory(paramAddr, param, ctx));
+        CCU_CHK_RET(LoadFuncParamFromMemory(paramAddr, param, ctx, queueIdx));
+        if (CcuKfcProbesEnabled()) {
+            CCU_IF(queueIdx == 0) { CCU_CHK_RET(CcuKfcAlgorithmBoundaryProbe(13)); }
+        }
         CCU_IF(param[HBM_PARAM_IDX_0] == INVALID_U64) { repeatCond = 1; }
         CCU_IF(param[HBM_PARAM_IDX_0] != INVALID_U64)
         {
