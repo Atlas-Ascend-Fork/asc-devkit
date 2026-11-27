@@ -22,6 +22,13 @@
 
 using namespace hcomm::CcuRep;
 
+// 与 cc/st 侧同因（CI run#8502）：本 TU 是 ccu_dynamic_res_stub.h 唯一包含者，
+// __attribute__((used)) 锚函数强制发射 inline 函数 ResetCcuDynResStub 的外部符号，
+// 供 test_ccu_mc2.cpp（仅声明、不包含该头，避免 run#8503 的 multiple definition）链接。
+namespace mc2_ops_hccl {
+__attribute__((used)) void EmitAnchorResetCcuDynResStub() { ResetCcuDynResStub(); }
+} // namespace mc2_ops_hccl
+
 namespace hcomm {
 
 CcuKernel::CcuKernel(const CcuKernelArg& arg) {}

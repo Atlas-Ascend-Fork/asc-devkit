@@ -172,9 +172,16 @@ target_compile_options(${MESHCHUNK_TEST_TARGET} PRIVATE -std=c++14 -Werror -O0 -
 target_compile_definitions(${MESHCHUNK_TEST_TARGET} PRIVATE UT_TEST AICPU_COMPILE)
 get_target_property(MESHCHUNK_TEST_LIBS ${HCCL_CHECKER_TARGET} LINK_LIBRARIES)
 target_link_libraries(${MESHCHUNK_TEST_TARGET} PRIVATE ${MESHCHUNK_TEST_LIBS})
+# 产品代码已迁移 asccomm_* 原语，--wrap 须跟随（双保留 Hcomm*：桩内部仍转发）。
 foreach(primitive HcommIsSupportHcommBatchTransferOnThread HcclHcommBatchTransferOnThread
         HcommChannelNotifyRecordOnThread HcommChannelNotifyWaitOnThread HcommWriteReduceOnThread HcommReadReduceOnThread
-        HcommThreadNotifyRecordOnThread HcommThreadNotifyWaitOnThread HcommLocalCopyOnThread)
+        HcommThreadNotifyRecordOnThread HcommThreadNotifyWaitOnThread HcommLocalCopyOnThread
+        asccomm_channel_notify_record_on_thread asccomm_channel_notify_wait_on_thread
+        asccomm_thread_notify_record_on_thread asccomm_thread_notify_wait_on_thread
+        asccomm_local_copy_on_thread asccomm_local_reduce_on_thread
+        asccomm_write_on_thread asccomm_write_reduce_on_thread
+        asccomm_read_on_thread asccomm_read_reduce_on_thread
+        asccomm_batch_transfer_on_thread)
     target_link_options(${MESHCHUNK_TEST_TARGET} PRIVATE "-Wl,--wrap=${primitive}")
 endforeach()
 add_custom_command(TARGET ${MESHCHUNK_TEST_TARGET} POST_BUILD

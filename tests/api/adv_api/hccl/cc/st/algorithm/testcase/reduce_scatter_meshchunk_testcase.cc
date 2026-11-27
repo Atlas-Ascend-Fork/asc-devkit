@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 #include "alg_data_trans_wrapper.h"
 #include "hcomm_primitives_dl.h"
+#include "asccomm_primitives.h" // __wrap_asccomm_* needs the asccomm_batch_transfer_desc types
 #include "ins_temp_reduce_scatter_mesh_1D_meshchunk.h"
 #include "ins_temp_reduce_scatter_nhr.h"
 #include "coll_alg_v2_exec_registry.h"
@@ -133,6 +134,120 @@ extern "C" int32_t __wrap_HcommReadReduceOnThread(
     ++readReduceCalls;
     return HCCL_SUCCESS;
 }
+extern "C" int32_t __wrap_asccomm_channel_notify_record_on_thread(ThreadHandle t, ChannelHandle c, uint32_t n)
+{
+    return __wrap_HcommChannelNotifyRecordOnThread(t, c, n);
+}
+extern "C" int32_t __wrap_asccomm_channel_notify_wait_on_thread(
+    ThreadHandle t, ChannelHandle c, uint32_t n, uint32_t timeout)
+{
+    return __wrap_HcommChannelNotifyWaitOnThread(t, c, n, timeout);
+}
+extern "C" int32_t __wrap_asccomm_thread_notify_record_on_thread(ThreadHandle t, ThreadHandle dst, uint32_t n)
+{
+    return __wrap_HcommThreadNotifyRecordOnThread(t, dst, n);
+}
+extern "C" int32_t __wrap_asccomm_thread_notify_wait_on_thread(ThreadHandle t, uint32_t n, uint32_t timeout)
+{
+    return __wrap_HcommThreadNotifyWaitOnThread(t, n, timeout);
+}
+extern "C" int32_t __wrap_asccomm_local_copy_on_thread(ThreadHandle t, void* dst, const void* src, uint64_t len)
+{
+    return __wrap_HcommLocalCopyOnThread(t, dst, src, len);
+}
+extern "C" int32_t __wrap_asccomm_local_reduce_on_thread(
+    ThreadHandle t, void* dst, const void* src, uint64_t count, asccomm_data_type dtype, asccomm_reduce_op op)
+{
+    ++readReduceCalls; // local reduce shares the local-compute path with read_reduce, reuse the counter
+    return HCCL_SUCCESS;
+}
+
+extern "C" int32_t __wrap_asccomm_write_on_thread(
+    ThreadHandle t, ChannelHandle c, void* dst, const void* src, uint64_t len)
+{
+    tasks.push_back({Kind::COPY, t, 0, 0, dst, src, len});
+    return HCCL_SUCCESS;
+}
+extern "C" int32_t __wrap_asccomm_write_reduce_on_thread(
+    ThreadHandle t, ChannelHandle c, void* dst, const void* src, uint64_t count, asccomm_data_type dtype,
+    asccomm_reduce_op op)
+{
+    return __wrap_HcommWriteReduceOnThread(
+        t, c, dst, src, count, static_cast<HcommDataType>(dtype), static_cast<HcommReduceOp>(op));
+}
+extern "C" int32_t __wrap_asccomm_read_on_thread(
+    ThreadHandle t, ChannelHandle c, void* dst, const void* src, uint64_t len)
+{
+    tasks.push_back({Kind::COPY, t, 0, 0, dst, src, len});
+    return HCCL_SUCCESS;
+}
+extern "C" int32_t __wrap_asccomm_read_reduce_on_thread(
+    ThreadHandle t, ChannelHandle c, void* dst, const void* src, uint64_t count, asccomm_data_type dtype,
+    asccomm_reduce_op op)
+{
+    return __wrap_HcommReadReduceOnThread(
+        t, c, dst, src, count, static_cast<HcommDataType>(dtype), static_cast<HcommReduceOp>(op));
+}
+extern "C" int32_t __wrap_asccomm_batch_transfer_on_thread(
+    ThreadHandle t, ChannelHandle c, const asccomm_batch_transfer_desc* desc, uint32_t num)
+{
+    // 与旧 __wrap 同语义，按字段映射到旧描述符类型（枚举值一致，static_cast 语义不变）。
+    ++batchCalls;
+    for (uint32_t i = 0; i < num; ++i) {
+        HcclHcommBatchTransferDesc mapped{};
+        if (desc[i].transType == ASCCOMM_TRANSFER_TYPE_WRITE_REDUCE_WITH_NOTIFY) {
+            mapped.transType = HCCL_HCOMM_TRANSFER_TYPE_WRITE_REDUCE_WITH_NOTIFY;
+            const auto& r = desc[i].transferInfo.writeReduceWithNotify;
+            mapped.transferInfo.writeReduceWithNotify.dst = r.dst;
+            mapped.transferInfo.writeReduceWithNotify.src = r.src;
+            mapped.transferInfo.writeReduceWithNotify.count = r.count;
+            mapped.transferInfo.writeReduceWithNotify.dataType = static_cast<HcommDataType>(r.dataType);
+            mapped.transferInfo.writeReduceWithNotify.reduceOp = static_cast<HcommReduceOp>(r.reduceOp);
+            mapped.transferInfo.writeReduceWithNotify.notifyIdx = r.notifyIdx;
+        } else if (desc[i].transType == ASCCOMM_TRANSFER_TYPE_READ) {
+            // READ 分支同样映射，防未来 batch-read 用例在 wrap 层假失败。
+            mapped.transType = HCCL_HCOMM_TRANSFER_TYPE_READ;
+            mapped.transferInfo.read.len = desc[i].transferInfo.read.len;
+            mapped.transferInfo.read.dst = desc[i].transferInfo.read.dst;
+            mapped.transferInfo.read.src = desc[i].transferInfo.read.src;
+        } else if (desc[i].transType == ASCCOMM_TRANSFER_TYPE_WRITE) {
+            mapped.transType = HCCL_HCOMM_TRANSFER_TYPE_WRITE;
+            mapped.transferInfo.write.len = desc[i].transferInfo.write.len;
+            mapped.transferInfo.write.dst = desc[i].transferInfo.write.dst;
+            mapped.transferInfo.write.src = desc[i].transferInfo.write.src;
+        } else {
+            EXPECT_EQ(desc[i].transType, ASCCOMM_TRANSFER_TYPE_WRITE_REDUCE);
+            mapped.transType = HCCL_HCOMM_TRANSFER_TYPE_WRITE_REDUCE;
+            const auto& r = desc[i].transferInfo.reduce;
+            mapped.transferInfo.reduce.dst = r.dst;
+            mapped.transferInfo.reduce.src = r.src;
+            mapped.transferInfo.reduce.count = r.count;
+            mapped.transferInfo.reduce.dataType = static_cast<HcommDataType>(r.dataType);
+            mapped.transferInfo.reduce.reduceOp = static_cast<HcommReduceOp>(r.reduceOp);
+        }
+        descriptors.push_back(mapped);
+    }
+    batchEnds.push_back(descriptors.size());
+    if (batchResult != HCCL_SUCCESS) {
+        return batchResult;
+    }
+    for (uint32_t i = 0; i < num; ++i) {
+        if (desc[i].transType == ASCCOMM_TRANSFER_TYPE_WRITE_REDUCE_WITH_NOTIFY) {
+            const auto& r = desc[i].transferInfo.writeReduceWithNotify;
+            __wrap_HcommWriteReduceOnThread(
+                t, c, r.dst, r.src, r.count, static_cast<HcommDataType>(r.dataType),
+                static_cast<HcommReduceOp>(r.reduceOp));
+            __wrap_HcommChannelNotifyRecordOnThread(t, c, r.notifyIdx);
+        } else {
+            const auto& r = desc[i].transferInfo.reduce;
+            __wrap_HcommWriteReduceOnThread(
+                t, c, r.dst, r.src, r.count, static_cast<HcommDataType>(r.dataType),
+                static_cast<HcommReduceOp>(r.reduceOp));
+        }
+    }
+    return HCCL_SUCCESS;
+}
+
 extern "C" int32_t __wrap_HcclHcommBatchTransferOnThread(
     ThreadHandle t, ChannelHandle c, const HcclHcommBatchTransferDesc* desc, uint32_t num)
 {

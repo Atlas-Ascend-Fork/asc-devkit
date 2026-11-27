@@ -22,15 +22,14 @@
 
 namespace mc2_ops_hccl {
 constexpr uint32_t CCU_STUB_RES_TYPE_COUNT = 7U;
-// 句柄空间须远大于单次用例内并存的 desc 数（4 rank 并发 + 每 rank 多个 desc），
-// 否则不同线程会拿到同一句柄并互相覆盖 nums 表。
+// 句柄空间须远大于单用例并存 desc 数，避免并发分到同一句柄互覆盖。
 constexpr uint32_t CCU_STUB_MAX_DESC_HANDLES = 4096U;
 // C++14 兼容的 header-only 全局（inline 变量是 C++17）：inline 函数内 static 跨 TU 唯一
 struct CcuDynResStubState {
     std::atomic<uint32_t> resDescCounter{0U};
     std::mutex assignedMutex;
     std::map<HcclComm, CcuInsHandle> assignedInsByComm;
-    // 实例创建时下发的资源容量，供复用路径 HcommCcuInsQueryResDesc 返回真实容量
+    // 实例容量，供复用路径返回真实容量
     std::mutex insMutex;
     std::map<CcuInsHandle, std::array<uint32_t, CCU_STUB_RES_TYPE_COUNT>> insCapacity;
 };
@@ -47,6 +46,30 @@ inline CcuStubDescNums& CcuStubDescNumsTable()
 {
     static CcuStubDescNums table;
     return table;
+}
+// 用例间复位：comm 地址复用会命中陈旧条目构成句柄碰撞窗口，复位保证走确定性 create 路径。
+inline void ResetCcuDynResStub()
+{
+    auto& state = CcuDynResStub();
+    {
+        std::lock_guard<std::mutex> insLock(state.insMutex);
+        state.insCapacity.clear();
+        state.resDescCounter.store(0U, std::memory_order_relaxed);
+    }
+    {
+        // 含 mutex 不可整体赋值，持锁逐元素清零。
+        auto& table = CcuStubDescNumsTable();
+        std::lock_guard<std::mutex> tableLock(table.mutex);
+        for (uint32_t handle = 0U; handle < CCU_STUB_MAX_DESC_HANDLES; ++handle) {
+            for (uint32_t t = 0U; t < CCU_STUB_RES_TYPE_COUNT; ++t) {
+                table.nums[handle][t] = 0U;
+            }
+        }
+    }
+    {
+        std::lock_guard<std::mutex> assignedLock(state.assignedMutex);
+        state.assignedInsByComm.clear();
+    }
 }
 } // namespace mc2_ops_hccl
 
@@ -125,8 +148,7 @@ CcuResult HcommCcuInsCreate(const HcommCcuResDescHandle* resDescs, uint32_t resD
     static std::atomic<uint64_t> stubInsCounter{0U};
     const CcuInsHandle handle = static_cast<CcuInsHandle>(stubInsCounter.fetch_add(1U) + 1U);
 
-    // 按创建时下发的 finalReqDesc 建模实例容量（多 die 取 max）：复用路径据此判定
-    // 容量是否充足，替代原先恒 0 的假容量（会把正常复用误判为资源不足）。
+    // 按 finalReqDesc 建模实例容量（多 die 取 max），复用路径据此判定容量。
     std::array<uint32_t, mc2_ops_hccl::CCU_STUB_RES_TYPE_COUNT> capacity{};
     auto& table = mc2_ops_hccl::CcuStubDescNumsTable();
     {
@@ -180,8 +202,7 @@ HcclResult HcclCommQueryAssignedCcuIns(HcclComm comm, CcuInsHandle* insHandles, 
     return HCCL_SUCCESS;
 }
 
-// 通信域销毁时清理 Assign 绑定：comm 地址被后续用例复用时若命中陈旧句柄，会误走复用路径
-// 并对旧实例做容量比对，进而返回 HCCL_E_UNAVAIL。清理保证每个新通信域都从“未绑定”开始。
+// 通信域销毁时清理 Assign 绑定，避免地址复用误走陈旧复用路径。
 void CcuStubReleaseComm(HcclComm comm)
 {
     auto& state = mc2_ops_hccl::CcuDynResStub();
@@ -202,7 +223,7 @@ CcuResult HcommCcuInsQueryResDesc(CcuInsHandle insHandle, HcommCcuResDescHandle 
     if (handle == 0U || handle >= mc2_ops_hccl::CCU_STUB_MAX_DESC_HANDLES) {
         return CCU_E_PARA;
     }
-    // 未登记的实例（如 legacy 通路句柄）按“容量充足”处理，避免桩世界产生假性不足。
+    // 未登记实例按“容量充足”处理。
     std::array<uint32_t, mc2_ops_hccl::CCU_STUB_RES_TYPE_COUNT> capacity;
     capacity.fill(UINT32_MAX);
     {
@@ -226,7 +247,7 @@ CcuResult HcommCcuQueryRemainResDesc(HcommCcuResDescHandle resDesc)
     if (handle == 0U || handle >= mc2_ops_hccl::CCU_STUB_MAX_DESC_HANDLES) {
         return CCU_E_PARA;
     }
-    // 桩世界不模拟资源消耗，剩余资源视为充足（仅用于回退诊断摘要）。
+    // 桩不模拟资源消耗，剩余视为充足。
     auto& table = mc2_ops_hccl::CcuStubDescNumsTable();
     std::lock_guard<std::mutex> lock(table.mutex);
     for (uint32_t t = 0; t < mc2_ops_hccl::CCU_STUB_RES_TYPE_COUNT; t++) {

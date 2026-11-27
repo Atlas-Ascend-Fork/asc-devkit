@@ -160,10 +160,10 @@ HcclResult AicpuStKernelRunner::Run(
     CHK_RET(GetUnfoldThreadInfo(comm, param, unfoldThread));
     CHK_RET(CaptureSlaveStreams(comm, param.stream, {mainThread, unfoldThread}));
 
-    // ═══ ② host→device 通知（收编自 HcclAicpuKernelEntranceLaunch op_common.cc:632）═══
-    // 主流上 idx 最大的 notify（handshake 1/4）
+    // Doorbell slot = read-back count - 2 (= maxNotifyNum), paired with the executor wait in
+    // kernel_launch.cc (mirrors HcclAicpuKernelEntranceLaunch in op_common.cc).
     CHK_RET(static_cast<HcclResult>(
-        HcommThreadNotifyRecordOnThread(cpuTsThread, exportedCpuTsThread, notifyNumOnMainThread - 1)));
+        HcommThreadNotifyRecordOnThread(cpuTsThread, exportedCpuTsThread, notifyNumOnMainThread - 2)));
     // （原 :636-648 AicpuKernelLaunch[aclrt launch]+HcclReportAicpuKernel：launch 语义在 ST 无
     //  对应物（同步模型下发与执行合一），DFX 桩空——由下方 kernel run 内联替代）
 

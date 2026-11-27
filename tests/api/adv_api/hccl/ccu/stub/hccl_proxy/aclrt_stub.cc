@@ -167,6 +167,10 @@ aclError aclrtCreateStream(aclrtStream* stream)
 int rtModelFake = 0;
 aclError aclmdlRICaptureGetInfo(aclrtStream stream, aclmdlRICaptureStatus* status, aclmdlRI* modelRI)
 {
+    // *status 必须初始化：未写会被读成 ACTIVE，带着 SimThread 句柄走进 dlsym 真实现导致段错误。
+    if (status != nullptr) {
+        *status = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_NONE;
+    }
     *modelRI = &rtModelFake;
     return ACL_SUCCESS;
 }

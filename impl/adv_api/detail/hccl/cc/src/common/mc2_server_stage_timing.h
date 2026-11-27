@@ -63,7 +63,8 @@ inline uint64_t Now()
 }
 inline bool& Enabled()
 {
-    static thread_local bool enabled;
+    // 显式初始化入 .data：AICPU 加载域 .bss 零初始化不可信，默认关闭语义不依赖它。
+    static thread_local bool enabled = false;
     return enabled;
 }
 // Descending order; equal values represent distinct samples and must be retained.

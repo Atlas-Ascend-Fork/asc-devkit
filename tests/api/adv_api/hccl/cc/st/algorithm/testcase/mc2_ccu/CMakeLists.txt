@@ -28,9 +28,7 @@ set(HCCL_SELECTOR_PRODUCT_SOURCES
     ${HCCL_CC_SRC_DIR}/ops/all_gather/template/ccu/kernel/ccu_kernel_kfc_all_gather_nhr1d_multi_jetty_mem2mem.cc
     ${HCCL_CC_SRC_DIR}/ops/all_gather/template/ccu/ccu_temp_kfc_all_gather_nhr_1d_mem2mem.cc
     ${HCCL_CC_SRC_DIR}/ops/all_gather/template/ccu/kernel/ccu_kernel_kfc_all_gather_nhr1d_mem2mem.cc
-    # server_a6 的 AG SoleNHR dispatch 引用 A6 专属符号：该 A6 版较 A5 少 turnEndAddr 形参，
-    # 桩世界 variable/Variable 别名后 mangled name 仍与 A5 版不同，无法像其他 A6 kernel
-    # 那样由同名同参的 A5 编译产物顶替，须编入本源。
+    # A6 专属符号（较 A5 少形参，mangled name 不同无法由 A5 顶替），须编入本源。
     ${HCCL_CC_SRC_DIR}/ops/all_gather/template/ccu/kernel/ccu_kernel_kfc_all_gather_nhr1d_mem2mem_a6.cc
     ${HCCL_CC_SRC_DIR}/ops/all_to_all_v/selector/alltoall_auto_selector.cc
     ${HCCL_CC_SRC_DIR}/ops/all_to_all_v/selector/alltoallv_auto_selector.cc
@@ -198,6 +196,7 @@ target_include_directories(
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime/runtime
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/profiling
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/toolchain
+    $ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR}
 )
 
 target_compile_options(

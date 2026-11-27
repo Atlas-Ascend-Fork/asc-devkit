@@ -10,6 +10,53 @@
 set(OPS_BASE_DIR ${HCCL_CC_DIR})
 option(MC2_CLIENT_ENABLE_CCU "Build CCU algorithm implementations into mc2_client" ON)
 
+if(ASCCOMM_PRIMITIVES_HDR)
+elseif(ASC_COMM_SOURCE_PATH)
+    # asc-comm 头布局沿革 aicpu/hcomm→aicpu/asccomm→aicpu_ts/asccomm（现行），从新到旧探测。
+    if(EXISTS "${ASC_COMM_SOURCE_PATH}/include/aicpu_ts/asccomm/asccomm_primitives.h")
+        set(ASCCOMM_PRIMITIVES_HDR "${ASC_COMM_SOURCE_PATH}/include/aicpu_ts/asccomm")
+    elseif(EXISTS "${ASC_COMM_SOURCE_PATH}/include/aicpu/asccomm/asccomm_primitives.h")
+        set(ASCCOMM_PRIMITIVES_HDR "${ASC_COMM_SOURCE_PATH}/include/aicpu/asccomm")
+    elseif(EXISTS "${ASC_COMM_SOURCE_PATH}/include/aicpu/hcomm/asccomm_primitives.h")
+        set(ASCCOMM_PRIMITIVES_HDR "${ASC_COMM_SOURCE_PATH}/include/aicpu/hcomm")
+    else()
+        message(FATAL_ERROR
+            "[asc-comm] ${ASC_COMM_SOURCE_PATH} has no asccomm_primitives.h under "
+            "include/aicpu_ts/asccomm, include/aicpu/asccomm, or include/aicpu/hcomm: "
+            "update the asc-comm tree (cann 9.3.0 line or newer).")
+    endif()
+else()
+    set(ASCCOMM_PRIMITIVES_HDR "$ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR}")
+endif()
+
+if(ASCCOMM_PRIMITIVES_HDR)
+    get_filename_component(_ASCCOMM_SOURCE_DIR "${ASCCOMM_PRIMITIVES_HDR}/../../.." ABSOLUTE)
+    set(ASCCOMM_PRIMITIVES_INTERNAL_HDR "${_ASCCOMM_SOURCE_DIR}/src/aicpu/asccomm/primitives/api_c_adpt")
+    # 实体契约头按树形择一（新版 pkg_inc/hcomm / 中间版 src 内部份 / 旧版公共链）；
+    # res_defs 必须与实体头同源（旧份缺 ThreadType，多 -I 路径下同名头易误取）。
+    if(EXISTS "${_ASCCOMM_SOURCE_DIR}/pkg_inc/hcomm/hcomm_res_entity_defs.h")
+        set(ASCCOMM_ENTITY_HDR "${_ASCCOMM_SOURCE_DIR}/pkg_inc/hcomm")
+        set(ASCOMM_RES_DEFS_HDR "${_ASCCOMM_SOURCE_DIR}/pkg_inc/hcomm")
+    elseif(EXISTS "${_ASCCOMM_SOURCE_DIR}/src/aicpu/asccomm/common/asccom_res_entity_defs.h")
+        set(ASCCOMM_ENTITY_HDR "${_ASCCOMM_SOURCE_DIR}/src/aicpu/asccomm/common")
+        set(ASCOMM_RES_DEFS_HDR "${_ASCCOMM_SOURCE_DIR}/pkg_inc/hcomm")
+    else()
+        set(ASCCOMM_ENTITY_HDR "${ASCCOMM_PRIMITIVES_HDR}")
+        # 旧树无内部实体头：ASCOMM_RES_DEFS_HDR 维持 cmake/device 或下方回退所设。
+    endif()
+else()
+    set(ASCCOMM_PRIMITIVES_INTERNAL_HDR "")
+    set(ASCCOMM_ENTITY_HDR "")
+    set(ASCOMM_RES_DEFS_HDR "")
+    # 顶层形态回退：ASCCOMM_PRIMITIVES_HDR 为空但 ASC_COMM_SOURCE_PATH 已设时，此处补推 res_defs 目录。
+    if(ASC_COMM_SOURCE_PATH)
+        get_filename_component(_ASC_COMM_ROOT_FALLBACK "${ASC_COMM_SOURCE_PATH}" ABSOLUTE)
+        if(EXISTS "${_ASC_COMM_ROOT_FALLBACK}/pkg_inc/hcomm/hcomm_res_defs.h")
+            set(ASCOMM_RES_DEFS_HDR "${_ASC_COMM_ROOT_FALLBACK}/pkg_inc/hcomm")
+        endif()
+    endif()
+endif()
+
 set(INCLUDE_LIST
     ${HCCL_CC_INCLUDE_DIR}
     ${ASCENDC_DIR}
@@ -213,7 +260,11 @@ if(PRODUCT_SIDE STREQUAL "device")
     )
 
     target_include_directories(mc2_server PRIVATE
+        ${ASCOMM_RES_DEFS_HDR}
         ${INCLUDE_LIST}
+        ${ASCCOMM_PRIMITIVES_HDR}
+        ${ASCCOMM_PRIMITIVES_INTERNAL_HDR}
+        ${ASCCOMM_ENTITY_HDR}
     )
 
     target_compile_options(mc2_server PRIVATE
@@ -235,6 +286,7 @@ if(PRODUCT_SIDE STREQUAL "device")
     target_compile_definitions(mc2_server PRIVATE
         -DAICPU_COMPILE
         MC2_SERVER_ONLY
+        ASCCOMM_ENABLE_INTERNAL_APIS
     )
 
     target_link_libraries(mc2_server PRIVATE
@@ -275,12 +327,17 @@ if(NOT KERNEL_MODE AND PRODUCT_SIDE STREQUAL "host")
     endif()
 
     target_include_directories(mc2_client PRIVATE
+        ${ASCOMM_RES_DEFS_HDR}
         ${INCLUDE_LIST}
+        ${ASCCOMM_PRIMITIVES_HDR}
+        ${ASCCOMM_PRIMITIVES_INTERNAL_HDR}
+        ${ASCCOMM_ENTITY_HDR}
     )
 
     target_compile_definitions(mc2_client PRIVATE
         -DHOST_COMPILE
         MC2_CLIENT_ENABLE_CCU=$<BOOL:${MC2_CLIENT_ENABLE_CCU}>
+        ASCCOMM_ENABLE_INTERNAL_APIS
     )
 
     if(NOT KERNEL_MODE)
@@ -340,9 +397,24 @@ if(NOT KERNEL_MODE AND PRODUCT_SIDE STREQUAL "host")
         target_link_options(mc2_client_hcomm_stub PRIVATE
             -Wl,-soname,libhcomm.so)
 
+        if(NOT TARGET mc2_client_asccomm_stub)
+            set(MC2_CLIENT_ASCCOMM_STUB_SRC
+                ${CMAKE_CURRENT_BINARY_DIR}/mc2_client_asccomm_stub.cc)
+            file(WRITE ${MC2_CLIENT_ASCCOMM_STUB_SRC}
+                "extern \"C\" void __mc2_client_asccomm_stub(void) {}\n")
+            add_library(mc2_client_asccomm_stub SHARED
+                ${MC2_CLIENT_ASCCOMM_STUB_SRC})
+            set_target_properties(mc2_client_asccomm_stub PROPERTIES
+                OUTPUT_NAME asccomm_aicpu
+                LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mc2_client_link_stub)
+            target_link_options(mc2_client_asccomm_stub PRIVATE
+                -Wl,-soname,libasccomm_aicpu.so)
+        endif()
+
         target_link_libraries(mc2_client PRIVATE
             -Wl,--no-as-needed
             mc2_client_hcomm_stub
+            mc2_client_asccomm_stub
             mc2_compat
             acl_rt
             c_sec

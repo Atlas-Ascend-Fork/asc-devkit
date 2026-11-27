@@ -19,6 +19,7 @@
         <file value="libasccomm_ccu.so" file_type="shared"/>
         <file value="libccu_runtime.a" file_type="static"/>
         <file value="libasccomm_cpu.so" file_type="shared"/>
+        <file value="libasccomm_aicpu.so" file_type="shared"/>
         <file value="libmc2_client.so" file_type="shared"/>
         <file value="libmc2_compat.so" file_type="shared"/>
     </file_info>

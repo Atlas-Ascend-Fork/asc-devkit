@@ -327,7 +327,7 @@ struct Rt91095StarsCCoreSqeNotifyWait {
     /* word6-7 */
     Rt91095StarsCondOpLoadImm_t ldrImm2; // load wait value, to R2
     /* word 8 */
-    Rt91095StarsCondOpBranch_t beq; // if waitvalue == 0, goto read R2
+    Rt91095StarsCondOpBranch_t branch; // BLTU: sendCnt < curTurn 时回跳重读 R2
     /* word 9-16 */
     union {
         // 28B

@@ -61,7 +61,11 @@ std::vector<KfcNhrStepInfo> NhrSteps(uint32_t rank, uint32_t size)
 
 class ParallelAllGatherMigrationTest : public ::testing::Test {
 protected:
-    void SetUp() override { RegisterManager::Global().Reset(); }
+    void SetUp() override
+    {
+        RegisterManager::Global().Reset();
+        mc2_ops_hccl::ResetCcuDynResStub(); // 与 ccu_fixture 同源：清理 CCU 动态资源桩跨用例状态
+    }
     void TearDown() override { RegisterManager::Global().Reset(); }
 
     // 直接编译产品 KFC server + dispatch + 两阶段子核，不替换算法计算。

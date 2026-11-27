@@ -26,7 +26,11 @@ constexpr uint32_t CKE_REGION = mc2_ops_hccl::CCU_TASK_NUM_MAX;
 
 class PeerOnlyLocalCopyTest : public ::testing::Test {
 protected:
-    void SetUp() override { RegisterManager::Global().Reset(); }
+    void SetUp() override
+    {
+        RegisterManager::Global().Reset();
+        mc2_ops_hccl::ResetCcuDynResStub(); // 与 ccu_fixture 同源：清理 CCU 动态资源桩跨用例状态
+    }
     void TearDown() override { RegisterManager::Global().Reset(); }
 
     template <typename T>

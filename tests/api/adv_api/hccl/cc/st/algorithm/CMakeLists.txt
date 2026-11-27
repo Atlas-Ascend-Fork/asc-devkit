@@ -28,6 +28,45 @@ endif()
 set(UTILS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/src)
 set(TESTCASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/testcase)
 
+if(NOT DEFINED ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR})
+    foreach(_asc_comm_candidate
+        "${ASCENDC_DIR}/asc-comm"
+        "${ASCENDC_DIR}/../asc-comm"
+        "${ASCENDC_DIR}/../asc/asc-comm"
+        "${ASCENDC_DIR}/../../asc-comm"
+        "${ASCENDC_DIR}/../../asc/asc-comm"
+        "${ASCENDC_DIR}/../../../asc-comm"
+        "${ASCENDC_DIR}/../../../asc/asc-comm")
+        # asc-comm 头布局从新到旧探测（与 impl/.../cc/src/CMakeLists.txt 同步）。
+        if(EXISTS "${_asc_comm_candidate}/include/aicpu_ts/asccomm/asccomm_primitives.h")
+            set(ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} "${_asc_comm_candidate}/include/aicpu_ts/asccomm")
+            break()
+        elseif(EXISTS "${_asc_comm_candidate}/include/aicpu/asccomm/asccomm_primitives.h")
+            set(ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} "${_asc_comm_candidate}/include/aicpu/asccomm")
+            break()
+        elseif(EXISTS "${_asc_comm_candidate}/include/aicpu/hcomm/asccomm_primitives.h")
+            set(ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} "${_asc_comm_candidate}/include/aicpu/hcomm")
+            break()
+        endif()
+    endforeach()
+endif()
+if(NOT DEFINED ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} AND ASC_COMM_SOURCE_PATH)
+    # 同级探测落空（CI 拉到非同级位置）时从 provider 定位的树同序推导。
+    if(EXISTS "${ASC_COMM_SOURCE_PATH}/include/aicpu_ts/asccomm/asccomm_primitives.h")
+        set(ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} "${ASC_COMM_SOURCE_PATH}/include/aicpu_ts/asccomm")
+    elseif(EXISTS "${ASC_COMM_SOURCE_PATH}/include/aicpu/asccomm/asccomm_primitives.h")
+        set(ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} "${ASC_COMM_SOURCE_PATH}/include/aicpu/asccomm")
+    elseif(EXISTS "${ASC_COMM_SOURCE_PATH}/include/aicpu/hcomm/asccomm_primitives.h")
+        set(ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR} "${ASC_COMM_SOURCE_PATH}/include/aicpu/hcomm")
+    endif()
+endif()
+if(NOT DEFINED ENV{ASCCOMM_PRIMITIVES_INCLUDE_DIR})
+    message(FATAL_ERROR
+        "[asc-comm] test tree could not locate asccomm_primitives.h (layouts: include/aicpu_ts/asccomm, "
+        "include/aicpu/asccomm, include/aicpu/hcomm): place an asc-comm checkout next to the devkit tree, "
+        "or set ASCCOMM_PRIMITIVES_INCLUDE_DIR in the environment.")
+endif()
+
 set(HCCL_CHECKER_COMMON_INCLUDE_LIST
     ${UT_COMMON_INCLUDE_LIST}
     ${CANN_3RD_LIB_PATH}/gtest/include

@@ -21,7 +21,10 @@
 namespace mc2_ops_hccl {
 // C++14 兼容的 header-only 全局（inline 变量是 C++17）：inline 函数内 static 跨 TU 唯一
 struct CcuDynResStubState {
+    // 并行注册场景下句柄与计数表须加锁（非原子计数会分发重复句柄致误判资源不足）。
+    std::mutex descMutex;
     uint32_t resDescCounter = 0U;
+    uint64_t insCounter = 0U;
     std::mutex assignedMutex;
     std::map<HcclComm, CcuInsHandle> assignedInsByComm;
 };
@@ -37,6 +40,21 @@ inline CcuStubDescNums& CcuStubDescNumsTable()
 {
     static CcuStubDescNums table;
     return table;
+}
+// 用例间复位：comm 地址复用会命中陈旧条目走 Reuse 分支构成碰撞窗口，复位保证确定性 create。
+inline void ResetCcuDynResStub()
+{
+    auto& state = CcuDynResStub();
+    {
+        std::lock_guard<std::mutex> descLock(state.descMutex);
+        state.resDescCounter = 0U;
+        state.insCounter = 0U;
+        CcuStubDescNumsTable() = CcuStubDescNums{};
+    }
+    {
+        std::lock_guard<std::mutex> assignedLock(state.assignedMutex);
+        state.assignedInsByComm.clear();
+    }
 }
 } // namespace mc2_ops_hccl
 
@@ -59,6 +77,7 @@ CcuResult HcommCcuInsResDescCreate(uint32_t dieId, HcommCcuResDescHandle* resDes
     if (resDesc == nullptr) {
         return CCU_E_PTR;
     }
+    std::lock_guard<std::mutex> lock(mc2_ops_hccl::CcuDynResStub().descMutex);
     const uint32_t handle = (mc2_ops_hccl::CcuDynResStub().resDescCounter++ % (256U - 1U)) + 1U;
     for (uint32_t t = 0; t < 7U; t++) {
         mc2_ops_hccl::CcuStubDescNumsTable().nums[handle][t] = 0U;
@@ -80,6 +99,7 @@ CcuResult HcommCcuInsResDescSetNum(HcommCcuResDescHandle resDesc, HcommCcuResTyp
     if (handle == 0U || handle >= 256U || type >= 7U) {
         return CCU_E_PARA;
     }
+    std::lock_guard<std::mutex> lock(mc2_ops_hccl::CcuDynResStub().descMutex);
     mc2_ops_hccl::CcuStubDescNumsTable().nums[handle][type] = num;
     return CCU_SUCCESS;
 }
@@ -94,6 +114,7 @@ CcuResult HcommCcuInsResDescQueryNum(HcommCcuResDescHandle resDesc, HcommCcuResT
     if (handle == 0U || handle >= 256U || type >= 7U) {
         return CCU_E_PARA;
     }
+    std::lock_guard<std::mutex> lock(mc2_ops_hccl::CcuDynResStub().descMutex);
     *num = mc2_ops_hccl::CcuStubDescNumsTable().nums[handle][type];
     return CCU_SUCCESS;
 }
@@ -104,8 +125,8 @@ CcuResult HcommCcuInsCreate(const HcommCcuResDescHandle* resDescs, uint32_t resD
     if (resDescNum == 0U || insHandle == nullptr) {
         return CCU_E_PARA;
     }
-    static uint64_t stubInsCounter = 0U;
-    *insHandle = static_cast<CcuInsHandle>(++stubInsCounter);
+    std::lock_guard<std::mutex> lock(mc2_ops_hccl::CcuDynResStub().descMutex);
+    *insHandle = static_cast<CcuInsHandle>(++mc2_ops_hccl::CcuDynResStub().insCounter);
     return CCU_SUCCESS;
 }
 

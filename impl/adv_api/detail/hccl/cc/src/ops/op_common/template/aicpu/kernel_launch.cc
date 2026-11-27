@@ -16,6 +16,7 @@
 #include "coll_alg_exec_registry.h"
 #include "coll_alg_v2_exec_registry.h"
 #include "hcomm_primitives.h"
+#include "asccomm_primitives.h"
 #include "dfx/task_exception_fun.h"
 #include "kernel_launch.h"
 #include "hcomm_diag_dl.h"
@@ -325,7 +326,7 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
         }
         // 获取Device测主thread
         ThreadHandle thread = resCtx.threads[0];
-        if (HcommBatchModeStart(param->algTag) != HCCL_SUCCESS) {
+        if (asccomm_batch_mode_start(param->algTag) != HCCL_SUCCESS) {
             HCCL_ERROR("failed set batch mode, tag is %s.", param->algTag);
             return 1;
         }
@@ -349,7 +350,8 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
         HCCL_DEBUG(
             "[%s]Notify wait on thread[%llu], maxNotifyNum[%u], timeout[%u]", __func__, thread, maxNotifyNum,
             CUSTOM_TIMEOUT);
-        CHK_RET(static_cast<HcclResult>(HcommThreadNotifyWaitOnThread(thread, maxNotifyNum, CUSTOM_TIMEOUT)));
+        // 等待 host 门铃：maxNotifyNum 槽，与 EntranceLaunch 记录配对（布局见 HcclGetThread）。
+        CHK_RET(static_cast<HcclResult>(asccomm_thread_notify_wait_on_thread(thread, maxNotifyNum, CUSTOM_TIMEOUT)));
 
         std::shared_ptr<InsCollAlgBase> executor = CollAlgExecRegistryV2::Instance().GetAlgExec(param->opType, algName);
         if (executor.get() == nullptr) {
@@ -368,12 +370,13 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
             return 1;
         }
 
-        constexpr u32 DEFAULT_NOTIFY_IDX = 0;
+        // 完成记录用专用尾槽 maxNotifyNum+1（与 host 完成等待配对），避开模板槽 0（set/clear 语义下互吞）。
+        const u32 EXECUTOR_DONE_NOTIFY_IDX = maxNotifyNum + 1;
         HCCL_DEBUG(
             "[%s]Notify record on srcThread[%llu], dstThread[%llu], notifyIdx[%u]", __func__, thread,
-            exportedAicpuTsThread, DEFAULT_NOTIFY_IDX);
+            exportedAicpuTsThread, EXECUTOR_DONE_NOTIFY_IDX);
         CHK_RET(static_cast<HcclResult>(
-            HcommThreadNotifyRecordOnThread(thread, exportedAicpuTsThread, DEFAULT_NOTIFY_IDX)));
+            asccomm_thread_notify_record_on_thread(thread, exportedAicpuTsThread, EXECUTOR_DONE_NOTIFY_IDX)));
 
         // 上报主流和最后一个task 在notify之后
         if (HcommProfilingReportKernelEndTask(thread, param->commName) != HCCL_SUCCESS) {
@@ -383,7 +386,7 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
             return 1;
         }
 
-        if (HcommBatchModeEnd(param->algTag) != HCCL_SUCCESS) {
+        if (asccomm_batch_mode_end(param->algTag) != HCCL_SUCCESS) {
             HCCL_ERROR("failed set eager mode, tag is %s.", param->algTag);
             return 1;
         }
@@ -400,7 +403,7 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
         ThreadHandle thread = threadHandlePtr[0];
         ThreadHandle exportedAicpuTsThread = resCtx->opThread;
         u32 notifyNumOnMainThread = resCtx->notifyNumOnMainThread;
-        if (HcommBatchModeStart(param->algTag) != HCCL_SUCCESS) {
+        if (asccomm_batch_mode_start(param->algTag) != HCCL_SUCCESS) {
             HCCL_ERROR("failed set batch mode, tag is %s.", param->algTag);
             return 1;
         }
@@ -421,9 +424,10 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
             HCCL_DEBUG(
                 "[%s]Notify wait on thread[%llu], notifyNumOnMainThread[%u], timeout[%u]", __func__, thread,
                 notifyNumOnMainThread, CUSTOM_TIMEOUT);
-            CHK_RET(
-                static_cast<HcclResult>(HcommThreadNotifyWaitOnThread(thread, notifyNumOnMainThread, CUSTOM_TIMEOUT)));
+            CHK_RET(static_cast<HcclResult>(
+                asccomm_thread_notify_wait_on_thread(thread, notifyNumOnMainThread, CUSTOM_TIMEOUT)));
         } else {
+            // asc-comm 无对应 aclrt C API，回退 hcomm 等价接口（语义相同：dstNotifyId 直入 SQE）。
             if (HcommAclrtNotifyWaitOnThread(thread, resCtx->notifyIds[0], CUSTOM_TIMEOUT) != HCCL_SUCCESS) {
                 HCCL_ERROR("failed to wait notify[%d] from host main stream", resCtx->notifyIds[0]);
                 return 1;
@@ -460,7 +464,7 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
                 "[%s]Notify record on srcThread[%llu], dstThread[%llu], notifyIdx[%u]", __func__, thread,
                 exportedAicpuTsThread, DEFAULT_NOTIFY_IDX);
             CHK_RET(static_cast<HcclResult>(
-                HcommThreadNotifyRecordOnThread(thread, exportedAicpuTsThread, DEFAULT_NOTIFY_IDX)));
+                asccomm_thread_notify_record_on_thread(thread, exportedAicpuTsThread, DEFAULT_NOTIFY_IDX)));
 
             // 上报主流和最后一个task 在notify之后
             if (HcommProfilingReportMainStreamAndLastTask(thread) != HCCL_SUCCESS) {
@@ -468,7 +472,7 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
                 return 1;
             }
 
-            if (HcommBatchModeEnd(param->algTag) != HCCL_SUCCESS) {
+            if (asccomm_batch_mode_end(param->algTag) != HCCL_SUCCESS) {
                 HCCL_ERROR("failed set eager mode, tag is %s.", param->algTag);
                 return 1;
             }
@@ -478,12 +482,13 @@ extern "C" __attribute__((visibility("default"))) unsigned int HcclLaunchAicpuKe
                 return 1;
             }
         } else {
+            // 同上：aclrt 记录走原 hcomm 接口。
             if (HcommAclrtNotifyRecordOnThread(thread, resCtx->notifyIds[1]) != HCCL_SUCCESS) {
                 HCCL_ERROR("failed to record host main stream");
                 return 1;
             }
 
-            if (HcommBatchModeEnd(param->algTag) != HCCL_SUCCESS) {
+            if (asccomm_batch_mode_end(param->algTag) != HCCL_SUCCESS) {
                 HCCL_ERROR("failed set eager mode, tag is %s.", param->algTag);
                 return 1;
             }

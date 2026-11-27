@@ -23,12 +23,22 @@
 
 extern "C" void SetTestLogLevel(uint32_t level);
 
+namespace mc2_ops_hccl {
+// ccu_dynamic_res_stub.h（经 hcomm_ccu_stub.cc 链入本目标）的桩态复位：清理 desc 句柄/
+// assignedInsByComm 跨用例陈旧状态，消除并行注册的句柄碰撞与 comm 地址复用引入的 Reuse 分支。
+void ResetCcuDynResStub();
+} // namespace mc2_ops_hccl
+
 namespace HcclSim {
 namespace CcuSt {
 
 class CcuStFixture : public ::testing::Test {
 protected:
-    void SetUp() override { RegisterManager::Global().Reset(); }
+    void SetUp() override
+    {
+        RegisterManager::Global().Reset();
+        mc2_ops_hccl::ResetCcuDynResStub();
+    }
 
     void TearDown() override { RegisterManager::Global().Reset(); }
 

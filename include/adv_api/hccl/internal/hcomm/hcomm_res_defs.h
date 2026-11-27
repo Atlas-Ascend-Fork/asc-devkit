@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCOMM_RES_DEFS_H
 #define HCOMM_RES_DEFS_H
 
@@ -20,10 +21,8 @@
 extern "C" {
 #endif // __cplusplus
 
-static const uint32_t COMM_ADDR_EID_LEN = 16U;
-static const uint32_t HCOMM_CHANNEL_MAGIC_WORD = 0x0fcf0f0fU;
-static const uint32_t HCOMM_CHANNEL_VERSION_ONE = 1U;
-static const uint32_t HCOMM_CHANNEL_VERSION = HCOMM_CHANNEL_VERSION_ONE;
+// 宏形态：C 数组维度需整型常量表达式。
+#define COMM_ADDR_EID_LEN 16U
 
 typedef int32_t HcommResult;
 
@@ -61,9 +60,50 @@ typedef uint64_t ThreadHandle;
 typedef enum {
     THREAD_TYPE_INVALID = -1,
     THREAD_TYPE_TS = 0,
+    THREAD_TYPE_CPU = 1, ///< HOST CPU thread (HostDpu kernel, 1 thread 1 kernel)
 } ThreadType;
 #endif
 
+static const uint32_t HCOMM_THREAD_CONFIG_MAGIC_WORD = 0x0f0f0f2f;
+static const uint32_t HCOMM_THREAD_CONFIG_VERSION = 1;
+
+typedef struct {
+    uint32_t version;
+    uint32_t magicWord;
+    uint32_t size;
+    uint32_t reserved;
+} CommAbiHeader;
+
+typedef struct {
+    CommAbiHeader header;
+    uint16_t notifyNumPerThread;
+    uint8_t reserved[14];
+} ThreadConfig;
+
+// 初始化失败码（与 HCCL_E_PTR/HCCL_E_INTERNAL 数值对齐，C/C++ 双消费用 enum 常量）
+enum { HCOMM_INIT_E_PTR = 2, HCOMM_INIT_E_INTERNAL = 4 };
+
+static inline HcommResult ThreadConfigInit(ThreadConfig* config, uint32_t num)
+{
+    if (config == NULL) {
+        return (HcommResult)HCOMM_INIT_E_PTR;
+    }
+
+    for (uint32_t idx = 0; idx < num; ++idx) {
+        errno_t memRet = memset_s(config, sizeof(ThreadConfig), 0, sizeof(ThreadConfig));
+        if (memRet != EOK) {
+            return (HcommResult)HCOMM_INIT_E_INTERNAL;
+        }
+        config->header.version = HCOMM_THREAD_CONFIG_VERSION;
+        config->header.magicWord = HCOMM_THREAD_CONFIG_MAGIC_WORD;
+        config->header.size = sizeof(ThreadConfig);
+        config->header.reserved = 0;
+        config->notifyNumPerThread = 0;
+        ++config;
+    }
+
+    return 0;
+}
 /**
  * @brief 通信引擎类型枚举
  */
@@ -81,14 +121,19 @@ typedef enum {
  * @brief 通信协议类型枚举
  */
 typedef enum {
-    COMM_PROTOCOL_RESERVED = -1, ///< 保留协议类型
-    COMM_PROTOCOL_HCCS = 0,      ///< HCCS协议
-    COMM_PROTOCOL_ROCE = 1,      ///< RDMA over Converged Ethernet
-    COMM_PROTOCOL_PCIE = 2,      ///< PCIE协议
-    COMM_PROTOCOL_SIO = 3,       ///< SIO协议
-    COMM_PROTOCOL_UBC_CTP = 4,   ///< 华为统一总线UBC_CTP
-    COMM_PROTOCOL_UBC_TP = 5,    ///< 华为统一总线UBC_TP
-    COMM_PROTOCOL_UB_MEM = 6,    ///< UB_MEM
+    COMM_PROTOCOL_RESERVED = -1,                  ///< reserved protocol type
+    COMM_PROTOCOL_HCCS = 0,                       ///< HCCS protocol
+    COMM_PROTOCOL_ROCE = 1,                       ///< RDMA over Converged Ethernet
+    COMM_PROTOCOL_PCIE = 2,                       ///< PCIE protocol
+    COMM_PROTOCOL_SIO = 3,                        ///< SIO protocol
+    COMM_PROTOCOL_UB_CTP = 4,                     ///< Huawei unified bus UB_CTP
+    COMM_PROTOCOL_UBC_CTP = COMM_PROTOCOL_UB_CTP, ///< legacy alias UBC_CTP
+    COMM_PROTOCOL_UBC_TP = 5,                     ///< Huawei unified bus UBC_TP
+    COMM_PROTOCOL_UB_MEM = 6,                     ///< UB_MEM
+    COMM_PROTOCOL_UBOE = 7,                       ///< UBoE
+    COMM_PROTOCOL_HCCS_ONLY = 8,                  ///< HCCS within one dual-die card
+    COMM_PROTOCOL_UB_RTP = 9,                     ///< UB_RTP
+    COMM_PROTOCOL_UBG = COMM_PROTOCOL_UB_RTP,     ///< legacy alias UBG
 } CommProtocol;
 
 /**
@@ -166,6 +211,7 @@ typedef enum {
     COMM_MEM_TYPE_INVALID = -1, ///< 无效的内存类别
     COMM_MEM_TYPE_DEVICE = 0,   ///< 设备侧内存（如NPU等）
     COMM_MEM_TYPE_HOST = 1,     ///< 主机侧内存
+    COMM_MEM_TYPE_CCU = 2,      ///< CCU resource space
 } CommMemType;
 
 /**
@@ -178,14 +224,9 @@ typedef struct {
 } CommMem;
 
 /**
- * @brief 兼容Abi字段结构体
+ * @brief Maximum memTag length, used by HcommMemReg input validation
  */
-typedef struct {
-    uint32_t version;
-    uint32_t magicWord;
-    uint32_t size;
-    uint32_t reserved;
-} CommAbiHeader;
+static const uint32_t HCOMM_RES_TAG_MAX_LEN = 255U;
 
 /**
  * @brief 套接字角色
@@ -197,35 +238,6 @@ typedef enum {
 } HcommSocketRole;
 
 /**
- * @brief 通道描述参数
- * @note 结构体末尾扩展需要自增版本号，并补充兼容处理逻辑。
- */
-typedef struct {
-    CommAbiHeader header;        ///< ABI头部，包含版本等信息
-    EndpointDesc remoteEndpoint; ///< 远端网络设备端侧描述
-    uint32_t notifyNum;          ///< channel上使用的通知消息数量
-    bool exchangeAllMems;        ///< true表示无需显式传入memHandles
-    HcommMemHandle* memHandles;  ///< 注册到通信域的待交换内存句柄
-    uint32_t memHandleNum;       ///< 待交换内存句柄数量
-    HcommSocket socket;          ///< 预创建socket句柄
-    HcommSocketRole role;        ///< 本端角色(SERVER或CLIENT)
-    uint16_t port;               ///< 监听端口或目标端口
-    union {
-        uint8_t raws[128]; ///< 通用缓存
-        struct {
-            uint32_t queueNum;      ///< QP数量
-            uint32_t retryCnt;      ///< 最大重传次数
-            uint32_t retryInterval; ///< 重传间隔（ms）
-            uint8_t tc;             ///< 流量类别（QoS)
-            uint8_t sl;             ///< 服务等级（QoS)
-        } roceAttr;
-        struct {
-            uint32_t qos; ///< HCCS QoS
-        } hccsAttr;
-    };
-} HcommChannelDesc;
-
-/**
  * @brief 初始化EndpointDesc结构体
  *
  * @param[inout] endpoint 返回的端点描述参数
@@ -234,17 +246,15 @@ typedef struct {
  */
 static inline HcommResult EndpointDescInit(EndpointDesc* endpoint, uint32_t num)
 {
-    const HcommResult hcommEPointer = static_cast<HcommResult>(2);  // 对齐HCCL_E_PTR
-    const HcommResult hcommEInternal = static_cast<HcommResult>(4); // 对齐HCCL_E_INTERNAL
-
     for (uint32_t idx = 0; idx < num; ++idx) {
-        if (endpoint == nullptr) {
-            return hcommEPointer;
+        if (endpoint == NULL) {
+            return (HcommResult)HCOMM_INIT_E_PTR;
         }
 
         // 用0xFF填充整个结构体
-        if (memset_s(endpoint, sizeof(EndpointDesc), 0xFF, sizeof(EndpointDesc)) != EOK) {
-            return hcommEInternal;
+        errno_t memRet = memset_s(endpoint, sizeof(EndpointDesc), 0xFF, sizeof(EndpointDesc));
+        if (memRet != EOK) {
+            return (HcommResult)HCOMM_INIT_E_INTERNAL;
         }
 
         // 显式设置关键字段为无效值
@@ -258,44 +268,15 @@ static inline HcommResult EndpointDescInit(EndpointDesc* endpoint, uint32_t num)
 }
 
 /**
- * @brief 初始化HcommChannelDesc结构体
- *
- * @param[inout] channelDesc 返回的通道描述参数
- * @param[in] descNum 描述数量
- * @return HcommResult 执行结果状态码
+ * @brief Endpoint feature types
  */
-static inline HcommResult HcommChannelDescInit(HcommChannelDesc* channelDesc, uint32_t descNum)
-{
-    const HcommResult hcommEPointer = (HcommResult)2;  // 对齐HCCL_E_PTR
-    const HcommResult hcommEInternal = (HcommResult)4; // 对齐HCCL_E_INTERNAL
+typedef enum {
+    HCOMM_ENDPOINT_FEATURE_INVALID = -1,
+    HCOMM_ENDPOINT_FEATURE_NDA = 0,           // NPU Direct RDMA Async
+    HCOMM_ENDPOINT_FEATURE_INLINE_REDUCE = 1, // host NIC inline-reduce
+} HcommEndpointFeatureType;
 
-    for (uint32_t idx = 0; idx < descNum; ++idx) {
-        if (channelDesc == nullptr) {
-            return hcommEPointer;
-        }
-
-        if (memset_s(channelDesc, sizeof(HcommChannelDesc), 0xFF, sizeof(HcommChannelDesc)) != EOK) {
-            return hcommEInternal;
-        }
-        channelDesc->header.version = HCOMM_CHANNEL_VERSION;
-        channelDesc->header.magicWord = HCOMM_CHANNEL_MAGIC_WORD;
-        channelDesc->header.size = sizeof(HcommChannelDesc);
-        channelDesc->header.reserved = 0;
-        channelDesc->notifyNum = 0;
-        channelDesc->exchangeAllMems = false;
-        channelDesc->memHandles = nullptr;
-        channelDesc->memHandleNum = 0;
-        channelDesc->socket = nullptr;
-        channelDesc->role = HCOMM_SOCKET_ROLE_RESERVED;
-        channelDesc->port = 0;
-        if (EndpointDescInit(&channelDesc->remoteEndpoint, 1) != 0) {
-            return hcommEInternal;
-        }
-        ++channelDesc;
-    }
-
-    return 0;
-}
+// 上游此处定义 ThreadResType；本仓 hccl/hccl_res.h 已有同枚举且全树消费，为唯一已知偏差，同步时保留。
 
 #ifdef __cplusplus
 }

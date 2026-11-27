@@ -84,7 +84,8 @@ TaskCacheInputs MakeTaskCacheInputs(HcclCMDType opType)
     inputs.param.inputPtr = reinterpret_cast<void*>(0x100000U);
     inputs.param.outputPtr = reinterpret_cast<void*>(0x100000000ULL);
     inputs.param.opMode = OpMode::OPBASE;
-    inputs.param.engine = CommEngine::COMM_ENGINE_AICPU_TS;
+    // 缓存路径的合法引擎只剩 CCU（AICPU_TS 数据面不经过 hcomm 捕获钩子，见 plan bypass）。
+    inputs.param.engine = CommEngine::COMM_ENGINE_CCU;
     inputs.param.opType = opType;
     inputs.param.DataDes.count = 871U;
     inputs.param.DataDes.dataType = HCCL_DATA_TYPE_FP32;
@@ -200,6 +201,15 @@ TEST_F(Mc2AicpuTaskCacheTest, MissingDynamicSymbolsBypassPlan)
 {
     Mc2HcommAicpuTsTaskCacheResetTestFunctions();
     auto inputs = MakeTaskCacheInputs(HCCL_CMD_ALLGATHER);
+    Mc2AicpuTaskCachePlan plan;
+    ASSERT_EQ(BuildMc2AicpuTaskCachePlan(inputs.param, inputs.resCtx, plan), HCCL_SUCCESS);
+    EXPECT_FALSE(plan.enabled);
+}
+
+TEST_F(Mc2AicpuTaskCacheTest, AicpuTsEngineBypassesPlan)
+{
+    auto inputs = MakeTaskCacheInputs(HCCL_CMD_ALLGATHER);
+    inputs.param.engine = CommEngine::COMM_ENGINE_AICPU_TS;
     Mc2AicpuTaskCachePlan plan;
     ASSERT_EQ(BuildMc2AicpuTaskCachePlan(inputs.param, inputs.resCtx, plan), HCCL_SUCCESS);
     EXPECT_FALSE(plan.enabled);

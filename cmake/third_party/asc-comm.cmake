@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 # 后续如果更新asc-comm代码需要同步更新至devkit run包需要更新change id
-set(ASC_COMM_TAG_ID f702a65bbfec65b8c0983cfd320606a89cf4a374)
+set(ASC_COMM_TAG_ID cc2a082a7cb4f8d09f55bb22a676ec6841de4b32)
 
 # asc-comm 与 asc-devkit 按同级目录放置。路径以本文件所在目录(<devkit>/cmake/third_party)为锚，
 # 对于CI环境已经存在asc-comm代码, 不去拉取代码否则使用submodule方式拉取asc-comm仓代码
@@ -123,12 +123,176 @@ install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${INSTA
 install(CODE "file(CREATE_LINK ../../adv_api/hcomm \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIBRARY_DIR}/asc/include/comm_api/aicore/hcomm SYMBOLIC)" COMPONENT asc-devkit)
 
 # AICPU 公共 API 头由 asc-devkit 直接交付；运行期库仍由 runtime 包提供。
-set(ASC_COMM_AICPU_HEADER_DIR ${ASC_COMM_SOURCE_PATH}/include/aicpu/hcomm)
-if(EXISTS "${ASC_COMM_AICPU_HEADER_DIR}")
+# asc-comm include 布局沿革：aicpu/hcomm（旧）→ aicpu/asccomm → aicpu_ts/asccomm（现行，cann 9.3.0）。
+set(ASC_COMM_AICPU_HEADER_DIR "")
+foreach(_asc_comm_hdr_layout "aicpu_ts/asccomm" "aicpu/asccomm" "aicpu/hcomm")
+    if(EXISTS "${ASC_COMM_SOURCE_PATH}/include/${_asc_comm_hdr_layout}")
+        set(ASC_COMM_AICPU_HEADER_DIR "${ASC_COMM_SOURCE_PATH}/include/${_asc_comm_hdr_layout}")
+        break()
+    endif()
+endforeach()
+if(ASC_COMM_AICPU_HEADER_DIR)
     install(DIRECTORY ${ASC_COMM_AICPU_HEADER_DIR}/
         DESTINATION ${INSTALL_LIBRARY_DIR}/asc/include/comm_api/aicpu/hcomm
         COMPONENT asc-devkit
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+endif()
+
+# mc2_client 硬依赖 libasccomm_aicpu.so，须随消费者交付到顶层 lib64；-DASC_COMM_AICPU_SO 可指定预编译件。
+set(ASC_COMM_AICPU_SO "" CACHE PATH "Prebuilt libasccomm_aicpu.so to deliver under top-level lib64")
+if(NOT ASC_COMM_AICPU_SO)
+    set(_asc_comm_aicpu_out "${CMAKE_BINARY_DIR}/package-aicpu-device/asc-comm-build/libasccomm_aicpu.so")
+    # The device sub-project resolves cann-cmake itself; prefer the devkit-resolved
+    # CANN_CMAKE_DIR when present so both stay on one checkout.
+    if(NOT DEFINED CANN_CMAKE_DIR OR CANN_CMAKE_DIR STREQUAL "")
+        set(_asc_comm_toolchain_file "")
+    else()
+        set(_asc_comm_toolchain_file "-DCMAKE_TOOLCHAIN_FILE=${CANN_CMAKE_DIR}/toolchain/aarch64-hcc-toolchain.cmake")
+    endif()
+    if(NOT EXISTS "${_asc_comm_aicpu_out}" AND EXISTS "${ASC_COMM_SOURCE_PATH}/cmake/device/CMakeLists.txt"
+        AND ASCEND_CANN_PACKAGE_PATH)
+        include(ExternalProject)
+        # Mirror the superbuild's device-pass -I set (CANN arch/toplevel, runtime
+        # pkg_inc, libc_sec); component-isolated builds point ASCEND_CANN_PACKAGE_PATH
+        # at a build-area tree whose layout differs from an installed package.
+        # Keep only real directories — -I<file> warns.
+        set(_asc_comm_aicpu_extra_inc "")
+        set(_asc_comm_aicpu_inc_candidates "")
+        foreach(_asc_arch aarch64-linux x86_64-linux)
+            file(GLOB _asc_comm_cann_glob_dirs
+                    "${ASCEND_CANN_PACKAGE_PATH}/${_asc_arch}/pkg_inc"
+                    "${ASCEND_CANN_PACKAGE_PATH}/${_asc_arch}/pkg_inc/*"
+                    "${ASCEND_CANN_PACKAGE_PATH}/${_asc_arch}/pkg_inc/*/*"
+                    "${ASCEND_CANN_PACKAGE_PATH}/${_asc_arch}/include"
+                    "${ASCEND_CANN_PACKAGE_PATH}/${_asc_arch}/include/*")
+            list(APPEND _asc_comm_aicpu_inc_candidates ${_asc_comm_cann_glob_dirs})
+        endforeach()
+        file(GLOB _asc_comm_cann_glob_dirs
+                "${ASCEND_CANN_PACKAGE_PATH}/include"
+                "${ASCEND_CANN_PACKAGE_PATH}/include/*"
+                "${ASCEND_CANN_PACKAGE_PATH}/include/*/*"
+                "${ASCEND_CANN_PACKAGE_PATH}/pkg_inc"
+                "${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/*")
+        list(APPEND _asc_comm_aicpu_inc_candidates ${_asc_comm_cann_glob_dirs})
+        foreach(_rt_anchor ".." "../..")
+            file(GLOB _asc_comm_rt_pkg_inc_dirs
+                    "${PROJECT_SOURCE_DIR}/${_rt_anchor}/runtime/pkg_inc"
+                    "${PROJECT_SOURCE_DIR}/${_rt_anchor}/runtime/pkg_inc/*")
+            list(APPEND _asc_comm_aicpu_inc_candidates ${_asc_comm_rt_pkg_inc_dirs})
+            foreach(_rt_sub
+                    "src/dfx/log/inc"
+                    "src/dfx/log/inc/toolchain"
+                    "include/dfx"
+                    "include/dfx/base"
+                    "include/external"
+                    "include/external/acl")
+                list(APPEND _asc_comm_aicpu_inc_candidates
+                    "${PROJECT_SOURCE_DIR}/${_rt_anchor}/runtime/${_rt_sub}")
+            endforeach()
+        endforeach()
+        list(APPEND _asc_comm_aicpu_inc_candidates
+                "${CANN_3RD_LIB_PATH}/libc_sec/include"
+                "${PROJECT_SOURCE_DIR}/../open_source/libc_sec/include"
+                "${PROJECT_SOURCE_DIR}/../../open_source/libc_sec/include")
+        foreach(_inc ${_asc_comm_aicpu_inc_candidates})
+            if(IS_DIRECTORY "${_inc}")
+                string(APPEND _asc_comm_aicpu_extra_inc " -I${_inc}")
+            endif()
+        endforeach()
+        ExternalProject_Add(asccomm_aicpu_provider
+            SOURCE_DIR "${ASC_COMM_SOURCE_PATH}/cmake/device"
+            BINARY_DIR "${CMAKE_BINARY_DIR}/package-aicpu-device"
+            CMAKE_ARGS
+                "-DASCEND_CANN_PACKAGE_PATH=${ASCEND_CANN_PACKAGE_PATH}"
+                "-DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
+                "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+                "-DTOOLCHAIN_DIR=${ASCEND_CANN_PACKAGE_PATH}/toolkit/toolchain/hcc"
+                "-DCMAKE_C_FLAGS=${_asc_comm_aicpu_extra_inc}"
+                "-DCMAKE_CXX_FLAGS=${_asc_comm_aicpu_extra_inc}"
+                ${_asc_comm_toolchain_file}
+            BUILD_COMMAND "${CMAKE_COMMAND}" --build . --target pack_asccomm_aicpu
+            INSTALL_COMMAND ""
+            BUILD_BYPRODUCTS "${_asc_comm_aicpu_out}")
+        # The custom ALL target drives build order that install() cannot express.
+    endif()
+    if(EXISTS "${_asc_comm_aicpu_out}")
+        set(ASC_COMM_AICPU_SO "${_asc_comm_aicpu_out}")
+    endif()
+endif()
+
+# ASC_COMM_AICPU_SO 始终为 aarch64 设备 ELF：aarch64 host 可直接占位顶层 lib64；
+# x86 host 上 loader 拒绝异构 ELF（561000），host 槽位须用 host 编译的同名 stub
+# （cmake/stub/asccomm_aicpu_host_stub.cc）替代，devlib 槽位两种 host 均留真身。
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    if(NOT TARGET asccomm_aicpu_host_stub)
+        add_library(asccomm_aicpu_host_stub SHARED
+            ${CMAKE_CURRENT_LIST_DIR}/../stub/asccomm_aicpu_host_stub.cc)
+        set_target_properties(asccomm_aicpu_host_stub PROPERTIES
+            OUTPUT_NAME asccomm_aicpu
+            POSITION_INDEPENDENT_CODE ON)
+        # Header surface: asccomm primitives + hcomm entity defs + libc_sec.
+        target_include_directories(asccomm_aicpu_host_stub PRIVATE
+            ${ASC_COMM_AICPU_HEADER_DIR}
+            ${ASC_COMM_SOURCE_PATH}/pkg_inc/hcomm
+            ${CANN_3RD_LIB_PATH}/libc_sec/include
+            ${PROJECT_SOURCE_DIR}/../open_source/libc_sec/include
+            ${PROJECT_SOURCE_DIR}/../../open_source/libc_sec/include)
+        target_compile_options(asccomm_aicpu_host_stub PRIVATE -fvisibility=hidden)
+    endif()
+endif()
+
+if(ASC_COMM_AICPU_SO AND EXISTS "${ASC_COMM_AICPU_SO}")
+    message(STATUS "[ThirdPartyLib][asc-comm] Deliver AICPU data plane: ${ASC_COMM_AICPU_SO}")
+    # devlib 槽位走既有 devlib 打包；此处只处理顶层 host 槽位。
+    if(TARGET asccomm_aicpu_host_stub)
+        # x86_64 host: host-facing slots get the host-compiled stub.
+        install(TARGETS asccomm_aicpu_host_stub
+            LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}/lib64
+            COMPONENT asc-devkit)
+        install(TARGETS asccomm_aicpu_host_stub
+            LIBRARY DESTINATION ${CMAKE_SYSTEM_PROCESSOR}-linux/lib64
+            COMPONENT asc-devkit)
+    else()
+        # aarch64 host: the original doubles as the host copy (same ELF class).
+        install(FILES "${ASC_COMM_AICPU_SO}"
+            DESTINATION ${INSTALL_LIBRARY_DIR}/lib64
+            COMPONENT asc-devkit)
+        install(FILES "${ASC_COMM_AICPU_SO}"
+            DESTINATION ${CMAKE_SYSTEM_PROCESSOR}-linux/lib64
+            COMPONENT asc-devkit)
+    endif()
+elseif(TARGET asccomm_aicpu_provider)
+    # Defer the artifact pick to install time (ExternalProject builds after configure);
+    # fail loud when the build did not produce it.
+    # NOTE: file(INSTALL) prepends $ENV{DESTDIR} itself — DESTINATION must not repeat it.
+    message(STATUS "[ThirdPartyLib][asc-comm] AICPU data plane delivery deferred to install: ${_asc_comm_aicpu_out}")
+    if(TARGET asccomm_aicpu_host_stub)
+        # x86_64 host: device slot gets the deferred artifact; host slots use the stub.
+        install(CODE "
+            set(_out \"${_asc_comm_aicpu_out}\")
+            if(NOT EXISTS \"\${_out}\")
+                message(FATAL_ERROR \"asccomm_aicpu_provider did not produce \${_out}; cannot deliver libasccomm_aicpu.so\")
+            endif()
+        " COMPONENT asc-devkit)
+        install(TARGETS asccomm_aicpu_host_stub
+            LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}/lib64
+            COMPONENT asc-devkit)
+        install(TARGETS asccomm_aicpu_host_stub
+            LIBRARY DESTINATION ${CMAKE_SYSTEM_PROCESSOR}-linux/lib64
+            COMPONENT asc-devkit)
+    else()
+        install(CODE "
+            set(_out \"${_asc_comm_aicpu_out}\")
+            if(NOT EXISTS \"\${_out}\")
+                message(FATAL_ERROR \"asccomm_aicpu_provider did not produce \${_out}; cannot deliver libasccomm_aicpu.so\")
+            endif()
+            file(INSTALL \"\${_out}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIBRARY_DIR}/lib64\")
+        " COMPONENT asc-devkit)
+    endif()
+else()
+    message(WARNING "[ThirdPartyLib][asc-comm] libasccomm_aicpu.so unavailable: no prebuilt (-DASC_COMM_AICPU_SO), "
+        "no source device build (asc-comm cmake/device), no ASCEND_CANN_PACKAGE_PATH — top-level lib64 delivery "
+        "skipped; the assembled toolkit will miss the mc2_client DT_NEEDED provider")
 endif()
 
 # 构建 asc-comm CCU 动态库（数据面实现 + host-launch 兼容 wrapper），
@@ -136,8 +300,7 @@ endif()
 # CCU 源码归属 asc-comm，跨 SO 依赖通过已安装 CANN pkg_inc 和 POD ABI 解决。
 set(ASC_COMM_CCU_CMAKE_DIR ${ASC_COMM_SOURCE_PATH}/src/ccu)
 if(EXISTS "${ASC_COMM_CCU_CMAKE_DIR}/CMakeLists.txt")
-    # The compiler-facing runtime is delivered as a static archive by
-    # asc-devkit.  Disable asc-comm's separate DSO target; the archive below
+    # The compiler-facing runtime is delivered as a static archive; the archive below
     # compiles the same sources with the real HComm backend.
     set(ASCCOMM_BUILD_CCU_RUNTIME OFF CACHE BOOL "" FORCE)
     if(NOT TARGET asccomm_ccu)
@@ -160,13 +323,8 @@ if(EXISTS "${ASC_COMM_CCU_CMAKE_DIR}/CMakeLists.txt")
             COMPONENT asc-devkit)
     endif()
 
-    # ccu_runtime 是 asc-comm 的编译器侧 CCU runtime；作为 asc-devkit 子目录构建时，
-    # asc-comm/experimental 下的独立 install 规则不会生效，因此由 asc-devkit 统一接管交付。
-    # The compiler-facing runtime is delivered as a static archive so generated
-    # CCU launch stubs are resolved into the final host image instead of requiring
-    # a separate libccu_runtime DSO at runtime.
-    # Runtime launch ABI headers live in the workspace runtime source tree
-    # during the CANN superbuild and in the installed package for standalone builds.
+    # ccu_runtime 由 asc-devkit 统一交付（子目录构建时 asc-comm/experimental 的独立 install 不生效）。
+    # Static archive so generated launch stubs resolve into the final host image.
     get_filename_component(_ASCCOMM_RUNTIME_SOURCE_PATH
         "${ASC_COMM_SOURCE_PATH}/../../runtime" REALPATH BASE_DIR "${ASC_COMM_SOURCE_PATH}")
 
@@ -202,9 +360,8 @@ if(EXISTS "${ASC_COMM_CCU_CMAKE_DIR}/CMakeLists.txt")
                 ${_ASCCOMM_CANN_ARCH_DIR}/include
                 ${_ASCCOMM_CANN_ARCH_DIR}/asc/include/comm_api
                 ${_ASCCOMM_CANN_ARCH_DIR}/pkg_inc)
-            # Static archives do not link their dependencies into the archive.
-            # Keep the dependency surface PUBLIC for in-tree consumers and
-            # deliver ccu_runtime.pc so external link lines retain it.
+            # Static archives do not link dependencies into the archive: keep the
+            # dependency surface PUBLIC and deliver ccu_runtime.pc for external link lines.
             target_link_libraries(ccu_runtime_static PUBLIC
                 acl_rt runtime c_sec pthread)
             set_target_properties(ccu_runtime_static PROPERTIES
@@ -231,6 +388,7 @@ endif()
 
 # 构建 asc-comm CPU TS 同步库，并交付到 asc-devkit run 包。
 # 该库仅依赖运行时已导出的 notify API，不依赖 hcomm 源码或符号。
+# 同步将 include/cpu 改名为 include/cpu_ts（旧树回退探测）。
 set(ASC_COMM_CPU_TS_CMAKE_DIR ${ASC_COMM_SOURCE_PATH}/src/cpu)
 if(EXISTS "${ASC_COMM_CPU_TS_CMAKE_DIR}/CMakeLists.txt")
     if(NOT TARGET asccomm_cpu_ts)
@@ -244,10 +402,19 @@ if(EXISTS "${ASC_COMM_CPU_TS_CMAKE_DIR}/CMakeLists.txt")
         install(TARGETS asccomm_cpu_ts
             LIBRARY DESTINATION ${CMAKE_SYSTEM_PROCESSOR}-linux/lib64 ${INSTALL_OPTIONAL}
             COMPONENT asc-devkit)
-        install(DIRECTORY ${ASC_COMM_SOURCE_PATH}/include/cpu/
-            DESTINATION ${INSTALL_LIBRARY_DIR}/asc/include/comm_api/cpu
-            COMPONENT asc-devkit
-            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+        set(ASC_COMM_CPU_TS_HDR_DIR "")
+        foreach(_asc_comm_cpu_layout "cpu_ts" "cpu")
+            if(EXISTS "${ASC_COMM_SOURCE_PATH}/include/${_asc_comm_cpu_layout}")
+                set(ASC_COMM_CPU_TS_HDR_DIR "${ASC_COMM_SOURCE_PATH}/include/${_asc_comm_cpu_layout}")
+                break()
+            endif()
+        endforeach()
+        if(ASC_COMM_CPU_TS_HDR_DIR)
+            install(DIRECTORY ${ASC_COMM_CPU_TS_HDR_DIR}/
+                DESTINATION ${INSTALL_LIBRARY_DIR}/asc/include/comm_api/cpu
+                COMPONENT asc-devkit
+                FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+        endif()
     endif()
 else()
     message(STATUS "[ThirdPartyLib][asc-comm] Missing CPU TS cmake dir: ${ASC_COMM_CPU_TS_CMAKE_DIR}, skip CPU TS so build")

@@ -27,6 +27,11 @@
 
 using namespace hcomm::CcuRep;
 
+// 未被 odr-use 的 inline 函数不保证发射符号（CI 链接失败），用 __attribute__((used)) 锚函数强制发射。
+namespace mc2_ops_hccl {
+__attribute__((used)) void EmitAnchorResetCcuDynResStub() { ResetCcuDynResStub(); }
+} // namespace mc2_ops_hccl
+
 namespace hcomm {
 
 CcuKernel::CcuKernel(const CcuKernelArg& arg) {}

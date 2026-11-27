@@ -208,6 +208,7 @@ void CcuStFixture::VerifyScenario(const CcuStScenario& scenario)
 
     RegisterManager::Global().Reset();
     ResetCcuKernelRegisterCount();
+    mc2_ops_hccl::ResetCcuDynResStub();
 
     // RAII: 保证 ASSERT 失败时也能清理 SimWorld 和环境变量
     struct ScopeGuard {

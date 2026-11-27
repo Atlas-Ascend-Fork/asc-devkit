@@ -62,7 +62,7 @@ public:
     void AddDouble(double value)
     {
         static_assert(sizeof(value) == sizeof(uint64_t), "unexpected double size");
-        // The cache is process-local on little-endian A5, so its object representation preserves the exact key.
+        // 进程内缓存，字节序不变，对象表示即键值。
         AddBytes(&value, sizeof(value));
     }
 
@@ -136,7 +136,7 @@ inline bool ReserveBytes(std::atomic<uint64_t>& used, uint64_t bytes, uint64_t l
     return true;
 }
 
-// The caller holds the domain mutex while using an entry or its repeat binding.
+// 调用方持有域互斥锁访问条目与其重复绑定。
 template <class Entry>
 struct EntryTable {
     struct Recent {
@@ -147,7 +147,7 @@ struct EntryTable {
     const std::string* recentKey = nullptr;
     Entry* recent = nullptr;
     std::vector<Recent> repeats;
-    // Only for a caller that has already proved scope and repeat shape invariance.
+    // 仅限已证明 scope 与 repeat 形状不变的调用方。
     Entry* BoundRepeatEntry() const { return recent; }
 
     Entry* Lookup(const std::string& key, size_t repeatIndex)
@@ -202,8 +202,7 @@ public:
             return found->second->comm == comm ? found->second : nullptr;
         }
         if (domains.size() >= limit) {
-            // Pressure path only. A holder retained by OpenResCtx or any live Server
-            // is not retired. Active cache scopes also retain their domain.
+            // 压力路径：仅淘汰引用计数为 1 的域（活跃持有者不淘汰）。
             for (auto it = domains.begin(); it != domains.end();) {
                 if (it->second.use_count() == 1 && it->second->holder.use_count() == 1) {
                     it = domains.erase(it);

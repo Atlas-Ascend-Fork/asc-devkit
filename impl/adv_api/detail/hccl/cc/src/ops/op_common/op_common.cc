@@ -470,8 +470,7 @@ HcclResult HcclExecOp(
     ThreadHandle exportedAicpuTsThread{0};
     if ((param.engine == COMM_ENGINE_AICPU_TS) || (param.engine == COMM_ENGINE_CPU)) {
         CHK_RET(HcclThreadAcquireWithStream(comm, COMM_ENGINE_CPU_TS, param.stream, 1, &cpuTsThread));
-        // Export cpuTsThread
-        CHK_RET(HcclThreadExportToCommEngine(comm, 1, &cpuTsThread, COMM_ENGINE_AICPU_TS, &exportedAicpuTsThread));
+        // 导出推迟到主流 notify 数确定后（见下方 GetMainThreadInfo 块），避免 1 槽位实体被引擎句柄表缓存。
     }
 
     HCCL_INFO(
@@ -505,6 +504,7 @@ HcclResult HcclExecOp(
     hcclDfxOpInfo.root = param.root;
     hcclDfxOpInfo.engine = param.engine;
     hcclDfxOpInfo.cpuTsThread = cpuTsThread;
+    // DFX 字段保留历史值（真实完成等待槽为尾槽，此处槽位数尚未确定）。
     hcclDfxOpInfo.cpuWaitAicpuNotifyIdx = HOST_WAIT_AICPU_NOTIFYIDX;
     hcclDfxOpInfo.inputMemAddr = reinterpret_cast<uint64_t>(param.inputPtr);
     hcclDfxOpInfo.inputMemSize = param.inputSize;
@@ -524,6 +524,10 @@ HcclResult HcclExecOp(
     if ((param.engine == COMM_ENGINE_AICPU_TS) || (param.engine == COMM_ENGINE_CPU)) {
         // 获取主流信息
         CHK_RET(GetMainThreadInfo(comm, param, mainThread, notifyNumOnMainThread));
+        // 完成对用尾槽，须按全槽位数重取该流线程，导出的实体才带全槽位。
+        CHK_RET(HcclThreadAcquireWithStream(
+            comm, COMM_ENGINE_CPU_TS, param.stream, std::max(notifyNumOnMainThread, 1U), &cpuTsThread));
+        CHK_RET(HcclThreadExportToCommEngine(comm, 1, &cpuTsThread, COMM_ENGINE_AICPU_TS, &exportedAicpuTsThread));
         // Export mainThread
         CHK_RET(HcclThreadExportToCommEngine(comm, 1, &mainThread, COMM_ENGINE_CPU_TS, &exportedCpuTsThread));
         // cpuTsThread 添加到param里
@@ -625,9 +629,9 @@ HcclResult HcclAicpuKernelEntranceLaunch(
         CHK_RET(static_cast<HcclResult>(HcclTaskRegister(comm, param.algTag, HcclLaunchDPUKernel)));
     }
 
-    // Host stream通知Device主thread，使用主流上idx最大的notify
+    // host 向设备主流打门铃：槽 maxNotifyNum（倒数第二，布局见 HcclGetThread），与 kernel_launch.cc 的等待配对。
     CHK_RET(static_cast<HcclResult>(
-        HcommThreadNotifyRecordOnThread(cpuTsThread, exportedCpuTsThread, notifyNumOnMainThread - 1)));
+        HcommThreadNotifyRecordOnThread(cpuTsThread, exportedCpuTsThread, notifyNumOnMainThread - 2)));
     // AicpuKernel report
     uint64_t beginTime = HcommGetProfilingSysCycleTime();
     HcclResult launchRet = AicpuKernelLaunch(comm, param, unfoldThread);
@@ -645,10 +649,10 @@ HcclResult HcclAicpuKernelEntranceLaunch(
             beginTime, kernelNameCStr, ret);
         return ret;
     }
-    // Host stream等待Device的通知
+    // host 在专用尾槽（notifyNumOnMainThread-1）等待完成通知，与 executor 完成记录配对。
     u16 NOTIFY_WAIT_TIME = 27 * 68;
     CHK_RET(static_cast<HcclResult>(
-        HcommThreadNotifyWaitOnThread(cpuTsThread, HOST_WAIT_AICPU_NOTIFYIDX, NOTIFY_WAIT_TIME)));
+        HcommThreadNotifyWaitOnThread(cpuTsThread, notifyNumOnMainThread - 1, NOTIFY_WAIT_TIME)));
 
     HCCL_INFO(
         "[asc][AlgoExecute][HcclAicpuKernelEntranceLaunch] end, opType[%d], algName[%s], algTag[%s].", param.opType,
@@ -1149,9 +1153,11 @@ HcclResult HcclGetThread(
         }
         u32 threadNum = resRequest.slaveThreadNum + 1;
         std::vector<ThreadHandle> threads(threadNum);
-        // maxNotifyNum需要再增加一个用于host-device同步
-        CHK_RET(HcclThreadAcquire(comm, COMM_ENGINE_AICPU_TS, threadNum, maxNotifyNum + 1, threads.data()));
-        CHK_RET(SaveMainThreadInfo(comm, param, threads[0], maxNotifyNum + 1));
+        // 主流槽位布局：0..maxNotifyNum-1 算法模板；maxNotifyNum host 门铃（对 executor 等待）；
+        // maxNotifyNum+1 executor 完成记录（对 host 等待）。+2 使完成对避开模板槽 0
+        // （set/clear 语义下两记录源同槽互吞）。
+        CHK_RET(HcclThreadAcquire(comm, COMM_ENGINE_AICPU_TS, threadNum, maxNotifyNum + 2, threads.data()));
+        CHK_RET(SaveMainThreadInfo(comm, param, threads[0], maxNotifyNum + 2));
         // MC2 and HCCL share the communication-domain unfold thread. Resource preparation is serialized.
         const auto unfoldRet = GetUnfoldThreadInfo(comm, param, resCtxHost->unfoldThread);
         if (unfoldRet == HCCL_E_NOT_FOUND) {
@@ -1899,11 +1905,8 @@ static HcclResult QueryAssignedCcuInstanceEntity(HcclComm comm, void*& insEntity
     return HCCL_SUCCESS;
 }
 
-// asc-comm 摸底桥接：签名与 hcomm HcommCcuKernelQueryResReq 同构（增加 insEntity/kernelFuncName 入参）。
-// 内部调 asccomm_ccu_kernel_query_res_req 走 asc-comm 数据面回放（POD 出参，与注册同数据面，保证
-// plan_kernel_resources 校验口径一致），再逐类型 HcommCcuInsResDescSetNum 写回 hcomm desc，调用方
-// （AccumulateKernelRes）感知与基线完全同构。CCU_THREAD（外部枚举值 5）经 hcomm 内部 converter 映射
-// ResType::MISSION，与基线 SetNum(MISSION) 语义等价；INVALID=-1 不可作下标，从 0 起遍历。
+// asc-comm 摸底桥接：与 hcomm HcommCcuKernelQueryResReq 同构，内部走 asccomm_ccu_kernel_query_res_req
+// 回放（与注册同数据面），POD 出参逐类写回 hcomm desc，调用方与基线同构。
 static HcclResult AsccommKernelQueryResReq(
     void* insEntity, const char* kernelFuncName, const void* kernelFunc, const void** kernelArgs, uint32_t argNum,
     uint32_t dieId, HcommCcuResDescHandle resDesc)
@@ -2076,9 +2079,8 @@ static HcclResult CalcMaxResReqWithDefault(
     return HCCL_SUCCESS;
 }
 
-// asc-comm（V1/A5）通路注册：insEntity 为 hcomm 控制面 HcclCommQueryCcuIns（entity 查询模式）
-// 返回的 HcommCcuInstanceEntity*（借用，不转移所有权）。注册链直接走 asc-comm；
-// CCU 资源不足时 asccomm_ccu_kernel_register 返回 CCU_E_UNAVAIL，注册事务在 asc-comm 内部回滚。
+// asc-comm（V1/A5）注册：insEntity 为 hcomm HcclCommQueryCcuIns 借用的实例实体（不转移所有权）；
+// 注册走 asc-comm，资源不足返回 CCU_E_UNAVAIL 并在 asc-comm 内部回滚。
 static HcclResult RegisterCcuKernels(
     void* insEntity, AlgResourceRequest& resRequest, std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost)
 {
@@ -2242,8 +2244,7 @@ static HcclResult PadEnabledDies(std::map<uint32_t, std::map<u32, std::map<Hcomm
     return HCCL_SUCCESS;
 }
 
-// 聚合所有 kernel 的资源需求到 reqDescs（按 dieId 分组，asc-comm/V1 通路）。
-// 聚合规则：同 (dieId, resGroup) 内逐 kernel 相加、同 dieId 不同 resGroup 之间取最大。
+// 聚合全部 kernel 资源需求（asc-comm/V1 通路）：同 (dieId, resGroup) 相加、同 dieId 跨 resGroup 取最大。
 static HcclResult BuildAggregatedResReq(AlgResourceRequest& resRequest, ResDescByDie& reqDescs, void* insEntity)
 {
     u32 totalKernelNum = resRequest.ccuKernelInfos.size();
@@ -2290,8 +2291,7 @@ static HcclResult BuildAggregatedResReq(AlgResourceRequest& resRequest, ResDescB
     return HCCL_SUCCESS;
 }
 
-// 聚合所有 kernel 的资源需求到 reqDescs（按 dieId 分组，hcomm/V2 通路）。
-// 聚合规则：同 (dieId, resGroup) 内逐 kernel 相加、同 dieId 不同 resGroup 之间取最大。
+// 聚合全部 kernel 资源需求（hcomm/V2 通路），聚合规则同上。
 static HcclResult BuildAggregatedResReqHcomm(AlgResourceRequest& resRequest, ResDescByDie& reqDescs)
 {
     u32 totalKernelNum = resRequest.ccuKernelInfos.size();
@@ -2603,10 +2603,8 @@ static HcclResult CreateAndAssignNewCcuInsHcomm(
     return RegisterCcuKernelsHcomm(newInsHandle, resRequest, resCtxHost);
 }
 
-// CCU kernel 动态资源申请主流程（asc-comm/V1 通路）：1.摸底借实例 entity（取版本与 die 掩码）
-// → 2.聚合资源需求（含翻译器余量）→ 3.查询可复用 CcuIns → 3a.容量充足则复用 / 3b.新建并绑定。
-// 摸底经 AsccommKernelQueryResReq 走 asc-comm 回放（与注册同数据面），聚合/建实例/绑定仍走 hcomm
-// 控制面，注册链走 asc-comm。接口返回 CCU_E_UNAVAIL 时触发回退。链内无版本判断。
+// CCU 动态资源申请（asc-comm/V1）：摸底借实例→聚合需求→复用或新建绑定；摸底走 asc-comm 回放
+// （与注册同数据面），聚合/建实例/绑定走 hcomm 控制面，CCU_E_UNAVAIL 触发回退。
 static HcclResult HcclGetCcuKernelDynamic(
     HcclComm comm, OpExecuteConfig opMode, AlgResourceRequest& resRequest,
     std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, bool checkRes)
@@ -2615,8 +2613,7 @@ static HcclResult HcclGetCcuKernelDynamic(
         "[HcclGetCcuKernelDynamic] start, opMode[%u], kernelNum[%zu].", static_cast<uint32_t>(opMode),
         resRequest.ccuKernelInfos.size());
 
-    // 摸底借实体：优先 Assign 绑定实例（与注册目标同源），未绑定再取通信域自有实例
-    // （entity 查询模式，必要时 hcomm 创建固定规格实例）
+    // 摸底借实体：优先 Assign 绑定实例，未绑定再取通信域自有实例。
     void* insEntity = nullptr;
     HcclResult entityRet = QueryAssignedCcuInstanceEntity(comm, insEntity);
     CHK_PRT_RET(
@@ -2744,12 +2741,8 @@ HcclResult HcclGetCcuKernel(
     CHK_RET(ValidateCcuKernelRequest(resRequest, totalKernelNum));
     CHK_RET(RegisterCcuDfxOpInfo(comm, param));
 
-    // 按芯片版本选注册链（全流程唯一的版本判断点）：V1（A5）走 asc-comm 链（沿用原方法名）——摸底
-    // 经 asc-comm 回放（与注册同数据面，hcomm 摸底的回放上下文与 asc-comm kernel 不兼容），
-    // 聚合/建实例/绑定复用 hcomm 控制面，注册链走 asc-comm；依赖 hcomm 动态资源控制面接口集，
-    // 旧 hcomm 包不支持时返回 NOT_SUPPORT（无 legacy 退路），由上层回退非 CCU 路径。
-    // V2（A6）走 Hcomm 链（方法带 Hcomm 后缀，hcomm 退场时整链删除、asc-comm 链收回原名）：
-    // 动态资源流优先，旧 hcomm 包回退预分配流程。
+    // 全流程唯一版本判断：V1(A5) 走 asc-comm 注册链（摸底 asc-comm 回放，聚合/建实例/绑定走 hcomm
+    // 控制面，旧 hcomm 包返回 NOT_SUPPORT 由上层回退）；V2(A6) 走 Hcomm 链（动态资源流优先）。
     if (GetCcuVersion() == CcuVersion::CCU_V1) {
         HCCL_RUN_INFO(
             "[MC2_DATAPLANE] asccomm CCU dataplane branch: dynamic res flow with asccomm probe, opType[%u], "
