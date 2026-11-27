@@ -133,10 +133,10 @@ __aicore__ inline int64_t asc_get_program_counter();
  * @brief Reads the AI processor architecture version into an output parameter.
  *
  * @override_id asc_get_arch_ver__Ru32
- * @archs 2201 3510
+ * @archs 2201 3510 9201
  * @param [out] core_version Receives the core version field of the ARCH_VER register as uint32_t; the parameter is
  * overwritten by the call, needs no initialization beforehand, and the documented values are 3510 for Ascend
- * 950PR&950DT and 2201 for Atlas A3 and Atlas A2 products.
+ * 950PR&950DT, 9201 for Ascend 960DT, and 2201 for Atlas A3 and Atlas A2 products.
  */
 __aicore__ inline void asc_get_arch_ver(uint32_t& core_version);
 /**

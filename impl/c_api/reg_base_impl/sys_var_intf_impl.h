@@ -20,6 +20,8 @@
 
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510)
 #include "impl/c_api/reg_base_impl/npu_arch_3510/sys_var_intf_impl.h"
+#elif defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201)
+#include "impl/c_api/reg_base_impl/npu_arch_9201/sys_var_intf_impl_arch_9201.h"
 #endif
 
 constexpr int64_t SYSTEM_CLOCK_FREQ_MHZ = 1000;
@@ -47,8 +49,6 @@ __aicore__ inline constexpr int64_t asc_get_vf_len()
 }
 
 __aicore__ inline uint64_t asc_get_phy_buf_addr(uint64_t offset) { return get_imm(offset); }
-
-__aicore__ inline void asc_get_arch_ver(uint32_t& core_version) { core_version = 3510U; }
 
 __aicore__ inline int64_t asc_get_core_id() { return get_coreid(); }
 

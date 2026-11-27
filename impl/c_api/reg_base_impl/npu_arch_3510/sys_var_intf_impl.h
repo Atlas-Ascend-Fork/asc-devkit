@@ -18,6 +18,8 @@
 #ifndef IMPL_C_API_REG_BASE_IMPL_NPU_ARCH_3510_SYS_VAR_INTF_IMPL_H
 #define IMPL_C_API_REG_BASE_IMPL_NPU_ARCH_3510_SYS_VAR_INTF_IMPL_H
 
+__aicore__ inline void asc_get_arch_ver(uint32_t& core_version) { core_version = 3510U; }
+
 ASC_DEPRECATED(9.2.0, "2027/09/07", block_idx and asc_get_sub_block_num and asc_get_sub_block_id)
 __aicore__ inline int64_t asc_get_block_idx()
 {
