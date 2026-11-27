@@ -2244,7 +2244,6 @@ static HcclResult PadEnabledDies(std::map<uint32_t, std::map<u32, std::map<Hcomm
 
 // 聚合所有 kernel 的资源需求到 reqDescs（按 dieId 分组，asc-comm/V1 通路）。
 // 聚合规则：同 (dieId, resGroup) 内逐 kernel 相加、同 dieId 不同 resGroup 之间取最大。
-// Translator 属于 instance 侧专用资源，不参与 kernel 需求聚合。
 static HcclResult BuildAggregatedResReq(AlgResourceRequest& resRequest, ResDescByDie& reqDescs, void* insEntity)
 {
     u32 totalKernelNum = resRequest.ccuKernelInfos.size();
