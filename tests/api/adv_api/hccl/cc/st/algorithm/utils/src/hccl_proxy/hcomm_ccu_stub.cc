@@ -514,7 +514,6 @@ extern ccu_result asccomm_ccu_kernel_register_end(void* ins_handle)
 typedef struct asccomm_ccu_res_desc_tag_stub {
     unsigned int dieId;
     unsigned int resNum[ASCCOMM_CCU_RES_DESC_TYPE_COUNT];
-    unsigned int translatorResNum[ASCCOMM_CCU_RES_DESC_TYPE_COUNT];
 } asccomm_ccu_res_desc;
 #endif
 extern ccu_result asccomm_ccu_kernel_query_res_req(
