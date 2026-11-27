@@ -678,7 +678,6 @@ install_run() {
         sh "${curpath}/run_asc-devkit_install.sh" "install" "${asc_devkit_input_install_path}" "${asc_devkit_install_type}" \
             "${is_quiet}" "${input_setenv}" "${docker_root}" "${in_install_for_all}" "$pkg_version_dir"
         if [ $? -eq 0 ]; then
-            update_version_info_version
             log "INFO" "AscDevkit package installed successfully! The new version takes effect immediately."
             log_operation "${operation}" "succeeded"
             chmod_end
@@ -719,7 +718,6 @@ upgrade_run() {
         sh "${curpath}/run_asc-devkit_upgrade.sh" "upgrade" "${asc_devkit_input_install_path}" "${asc_devkit_install_type}" \
             "${is_quiet}" "${input_setenv}" "${docker_root}" "${in_install_for_all}" "$pkg_version_dir"
         if [ $? -eq 0 ]; then
-            update_version_info_version
             log "INFO" "AscDevkit package upgraded successfully! The new version takes effect immediately."
             log_operation "${operation}" "succeeded"
             chmod_end
