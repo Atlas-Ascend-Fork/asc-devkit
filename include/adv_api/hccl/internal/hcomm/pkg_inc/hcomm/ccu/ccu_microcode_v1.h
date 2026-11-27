@@ -11,6 +11,7 @@
 #define CCU_MICROCODE_H
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 
 namespace hcomm {
@@ -41,8 +42,14 @@ union CcuInstrHeader {
 };
 #pragma pack(pop)
 
+constexpr uint16_t CCU_INSTR_CODE_MAX = 0x7FF; // code bitfield上限值（11位）
+constexpr uint16_t CCU_INSTR_TYPE_MAX = 0xF;   // type bitfield上限值（4位）
+
 inline CcuInstrHeader InstrHeader(uint16_t type, uint16_t code)
 {
+    if (type > CCU_INSTR_TYPE_MAX || code > CCU_INSTR_CODE_MAX) {
+        throw std::runtime_error("Invalid instruction header type or code");
+    }
     CcuInstrHeader header = {};
     header.type = type;
     header.code = code;
