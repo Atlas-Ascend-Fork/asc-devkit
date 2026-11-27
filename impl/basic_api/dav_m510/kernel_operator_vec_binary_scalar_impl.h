@@ -863,6 +863,30 @@ __aicore__ inline void FusedMulsCastImpl(__ubuf__ T* dst, __ubuf__ U* src, U sca
     }
 }
 
+template <typename T, BinaryScalarOp op>
+__aicore__ inline void BinaryScalarB64Compute(
+    Reg::RegTensor<T, Reg::RegTraitNumTwo>& dstReg, Reg::RegTensor<T, Reg::RegTraitNumTwo>& srcReg0,
+    Reg::RegTensor<T, Reg::RegTraitNumTwo>& srcReg1, Reg::MaskReg& mask)
+{
+    if constexpr (op == BinaryScalarOp::ADDS) {
+        Reg::Add(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::MULS) {
+        Reg::Mul(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::MAXS) {
+        Reg::Max(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::MINS) {
+        Reg::Min(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::SUBS) {
+        Reg::Sub(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::DIVS) {
+        Reg::Div(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::ANDS) {
+        Reg::And(dstReg, srcReg0, srcReg1, mask);
+    } else if constexpr (op == BinaryScalarOp::ORS) {
+        Reg::Or(dstReg, srcReg0, srcReg1, mask);
+    }
+}
+
 template <typename T, BinaryScalarOp op, uint8_t scalarIdx>
 __aicore__ inline void BinaryScalarOpTemplateCntB64(
     __ubuf__ T* dst, __ubuf__ T* src0, __ubuf__ T* src1, const int32_t& calCount)
@@ -901,23 +925,7 @@ __aicore__ inline void BinaryScalarOpTemplateCntB64(
         } else if (scalarIdx == 1) {
             Reg::LoadAlign<T>(srcReg0, src0 + i * repeatStride);
         }
-        if constexpr (op == BinaryScalarOp::ADDS) {
-            Reg::Add(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::MULS) {
-            Reg::Mul(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::MAXS) {
-            Reg::Max(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::MINS) {
-            Reg::Min(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::SUBS) {
-            Reg::Sub(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::DIVS) {
-            Reg::Div(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::ANDS) {
-            Reg::And(dstReg, srcReg0, srcReg1, mask);
-        } else if constexpr (op == BinaryScalarOp::ORS) {
-            Reg::Or(dstReg, srcReg0, srcReg1, mask);
-        }
+        BinaryScalarB64Compute<T, op>(dstReg, srcReg0, srcReg1, mask);
         Reg::StoreAlign<T>(dst + i * repeatStride, dstReg, mask);
     }
 }

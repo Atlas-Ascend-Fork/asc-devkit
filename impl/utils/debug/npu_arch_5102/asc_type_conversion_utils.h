@@ -57,13 +57,47 @@ __aicore__ __callee__ inline uint32_t fp32_constructor(uint32_t s, uint32_t e, u
     return (((s) << 31) | ((e) << 23) | ((m)&fp32_max_man));
 }
 
+__aicore__ __callee__ inline uint32_t hif8_normal_to_fp32(
+    const uint8_t fpVal, const uint8_t inputSign, const uint8_t expBitWidth, const uint8_t manBitWidth)
+{
+    constexpr uint32_t bitWidth = 22;
+    uint32_t ret = 0;
+    uint8_t expBitMask = 0x0;
+    // extract exp bits
+    for (uint8_t i = 0; i < expBitWidth; i++) {
+        expBitMask |= 0x1 << i; // e.g. expBitWidth = 4 -> 1111
+    }
+
+    // cal Exp value
+    int8_t exp = 0;
+    int8_t expMsb = 0;
+    expMsb = (fpVal >> (manBitWidth + expBitWidth - 1)) & 0x1;
+    if (expBitWidth != 0) {
+        exp = ((fpVal >> manBitWidth) & (expBitMask)) | (1 << (expBitWidth - 1)); // (1xxx)
+        if (expMsb != 0) {                                                        // -ve
+            exp = -1 * exp;
+        }
+    }
+    exp = exp + CONST_FP32_EXP_BIAS;
+
+    // cal Man value
+    uint32_t man = 0;
+    uint8_t manBitMask = 0;
+    for (uint8_t i = 0; i < manBitWidth; i++) {
+        manBitMask |= 0x1 << i;
+    }
+    man = fpVal & manBitMask;
+    man = man << (bitWidth - manBitWidth + 1);
+
+    ret = fp32_constructor(inputSign, (exp & 0xff), man);
+    return ret;
+}
+
 __aicore__ __callee__ inline uint32_t hif8_to_fp32(const uint8_t fpVal)
 {
     constexpr uint8_t hif8Nan = 0x80;
     constexpr uint8_t hif8PosInf = 0x6F;
     constexpr uint8_t hif8NegInf = 0xEF;
-    constexpr uint32_t bitWidth = 22;
-    uint32_t ret = 0;
     uint8_t inputSign = (((fpVal) >> 7) & 0x1);
     uint8_t bit6 = (((fpVal) >> 6) & 0x1);
     uint8_t bit5 = (((fpVal) >> 5) & 0x1);
@@ -71,7 +105,6 @@ __aicore__ __callee__ inline uint32_t hif8_to_fp32(const uint8_t fpVal)
     uint8_t bit3 = (((fpVal) >> 3) & 0x1);
     uint8_t dBitWidth = 0;
     uint8_t expBitWidth = 0;
-    uint8_t manBitWidth = 0;
 
     // special case
     if (fpVal == 0x0) {
@@ -114,37 +147,9 @@ __aicore__ __callee__ inline uint32_t hif8_to_fp32(const uint8_t fpVal)
         }
         dBitWidth = 0x2;
     }
-    manBitWidth = 0x8 - dBitWidth - expBitWidth - 1;
+    uint8_t manBitWidth = 0x8 - dBitWidth - expBitWidth - 1;
 
-    uint8_t expBitMask = 0x0;
-    // extract exp bits
-    for (uint8_t i = 0; i < expBitWidth; i++) {
-        expBitMask |= 0x1 << i; // e.g. expBitWidth = 4 -> 1111
-    }
-
-    // cal Exp value
-    int8_t exp = 0;
-    int8_t expMsb = 0;
-    expMsb = (fpVal >> (manBitWidth + expBitWidth - 1)) & 0x1;
-    if (expBitWidth != 0) {
-        exp = ((fpVal >> manBitWidth) & (expBitMask)) | (1 << (expBitWidth - 1)); // (1xxx)
-        if (expMsb != 0) {                                                        // -ve
-            exp = -1 * exp;
-        }
-    }
-    exp = exp + CONST_FP32_EXP_BIAS;
-
-    // cal Man value
-    uint32_t man = 0;
-    uint8_t manBitMask = 0;
-    for (uint8_t i = 0; i < manBitWidth; i++) {
-        manBitMask |= 0x1 << i;
-    }
-    man = fpVal & manBitMask;
-    man = man << (bitWidth - manBitWidth + 1);
-
-    ret = fp32_constructor(inputSign, (exp & 0xff), man);
-    return ret;
+    return hif8_normal_to_fp32(fpVal, inputSign, expBitWidth, manBitWidth);
 }
 
 // FP8 (E5M2) -> Fp32

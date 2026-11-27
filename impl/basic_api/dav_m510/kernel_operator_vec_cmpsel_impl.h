@@ -82,6 +82,88 @@ __aicore__ inline void CompareWithoutDstNormalModeImplVF(
     Reg::StoreUnAlignPost<uint64_t, Reg::PostLiteral::POST_MODE_NORMAL>(tempBuf, uReg, 0);
 }
 
+template <typename T, bool isSetMask>
+__aicore__ inline void VcmpBitmapCounterDispatch(
+    __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask[], const BinaryRepeatParams& repeatParams,
+    __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LT>>(
+                src0, src1, tempBuf, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GT>>(
+                src0, src1, tempBuf, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::EQ>>(
+                src0, src1, tempBuf, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LE>>(
+                src0, src1, tempBuf, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GE>>(
+                src0, src1, tempBuf, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::NE>>(
+                src0, src1, tempBuf, mask[0], repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, bool isSetMask>
+__aicore__ inline void VcmpBitmapNormalDispatch(
+    __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const BinaryRepeatParams& repeatParams,
+    __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::LT>>(
+                src0, src1, tempBuf, 0, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::GT>>(
+                src0, src1, tempBuf, 0, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::EQ>>(
+                src0, src1, tempBuf, 0, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::LE>>(
+                src0, src1, tempBuf, 0, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::GE>>(
+                src0, src1, tempBuf, 0, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::NE>>(
+                src0, src1, tempBuf, 0, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 template <typename T, bool isSetMask = true>
 __aicore__ inline void VcmpImpl(
     __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask[], const BinaryRepeatParams& repeatParams)
@@ -93,78 +175,12 @@ __aicore__ inline void VcmpImpl(
     WaitFlag<HardEvent::S_V>(eventIdSToV);
     __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
     if (isCounterMode) {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LT>>(
-                    src0, src1, tempBuf, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GT>>(
-                    src0, src1, tempBuf, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::EQ>>(
-                    src0, src1, tempBuf, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LE>>(
-                    src0, src1, tempBuf, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GE>>(
-                    src0, src1, tempBuf, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::NE>>(
-                    src0, src1, tempBuf, mask[0], repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpBitmapCounterDispatch<T, isSetMask>(src0, src1, cmpMode, mask, repeatParams, tempBuf);
     } else {
         if constexpr (isSetMask) {
             SetVectorMask<T>(mask[1], mask[0]);
         }
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::LT>>(
-                    src0, src1, tempBuf, 0, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::GT>>(
-                    src0, src1, tempBuf, 0, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::EQ>>(
-                    src0, src1, tempBuf, 0, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::LE>>(
-                    src0, src1, tempBuf, 0, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::GE>>(
-                    src0, src1, tempBuf, 0, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, true, CMPMODE::NE>>(
-                    src0, src1, tempBuf, 0, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpBitmapNormalDispatch<T, isSetMask>(src0, src1, cmpMode, repeatParams, tempBuf);
     }
     event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIdVToS);
@@ -179,6 +195,88 @@ __aicore__ inline void VcmpImpl(
     AscendCUtils::FreeTemporaryBuffer<uint64_t>(tempBuf);
 }
 
+template <typename T, bool isSetMask>
+__aicore__ inline void VcmpCountCounterDispatch(
+    __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, const BinaryRepeatParams& repeatParams,
+    __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LT>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GT>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::EQ>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LE>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GE>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::NE>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, bool isSetMask>
+__aicore__ inline void VcmpCountNormalDispatch(
+    __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, const BinaryRepeatParams& repeatParams,
+    __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::LT>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::GT>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::EQ>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::LE>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::GE>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::NE>>(
+                src0, src1, tempBuf, mask, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 template <typename T, bool isSetMask = true>
 __aicore__ inline void VcmpImpl(
     __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, const BinaryRepeatParams& repeatParams)
@@ -190,75 +288,9 @@ __aicore__ inline void VcmpImpl(
     WaitFlag<HardEvent::S_V>(eventIdSToV);
     __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
     if (isCounterMode) {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LT>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GT>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::EQ>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::LE>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::GE>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareWithoutDstCounterModeImplVF<T, isSetMask, CMPMODE::NE>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpCountCounterDispatch<T, isSetMask>(src0, src1, cmpMode, mask, repeatParams, tempBuf);
     } else {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::LT>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::GT>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::EQ>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::LE>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::GE>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareWithoutDstNormalModeImplVF<T, isSetMask, false, CMPMODE::NE>>(
-                    src0, src1, tempBuf, mask, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpCountNormalDispatch<T, isSetMask>(src0, src1, cmpMode, mask, repeatParams, tempBuf);
     }
     event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIdVToS);
@@ -324,6 +356,76 @@ __aicore__ inline void CompareLevel0NormalMode(
     Reg::StoreUnAlignPost<U, Reg::PostLiteral::POST_MODE_NORMAL>(dst, uReg, 0);
 }
 
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvBitmapCounterDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask[],
+    const BinaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LT>>(dst, src0, src1, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GT>>(dst, src0, src1, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::EQ>>(dst, src0, src1, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LE>>(dst, src0, src1, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GE>>(dst, src0, src1, mask[0], repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::NE>>(dst, src0, src1, mask[0], repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvBitmapNormalDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, uint8_t repeatTime,
+    const BinaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LT, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GT, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::EQ, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LE, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GE, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::NE, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 template <typename T, typename U, bool isSetMask = true>
 __aicore__ inline void VcmpvImpl(
     __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask[], uint8_t repeatTime,
@@ -335,66 +437,82 @@ __aicore__ inline void VcmpvImpl(
     static_assert(SupportType<U, uint8_t, int8_t>(), "current data type is not supported!");
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LT>>(dst, src0, src1, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GT>>(dst, src0, src1, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::EQ>>(dst, src0, src1, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LE>>(dst, src0, src1, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GE>>(dst, src0, src1, mask[0], repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::NE>>(dst, src0, src1, mask[0], repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvBitmapCounterDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatParams);
     } else {
         if constexpr (isSetMask) {
             SetVectorMask<T>(mask[1], mask[0]);
         }
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LT, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GT, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::EQ, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LE, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GE, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::NE, true>>(dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
+        VcmpvBitmapNormalDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, repeatTime, repeatParams);
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvCountCounterDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask,
+    const BinaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LT>>(dst, src0, src1, mask, repeatParams);
+            break;
         }
+        case CMPMODE::GT: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GT>>(dst, src0, src1, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::EQ>>(dst, src0, src1, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LE>>(dst, src0, src1, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GE>>(dst, src0, src1, mask, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::NE>>(dst, src0, src1, mask, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvCountNormalDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, uint8_t repeatTime,
+    const BinaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LT, false>>(dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GT, false>>(dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::EQ, false>>(dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LE, false>>(dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GE, false>>(dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::NE, false>>(dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -409,69 +527,9 @@ __aicore__ inline void VcmpvImpl(
     static_assert(SupportType<U, uint8_t, int8_t>(), "current data type is not supported!");
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LT>>(dst, src0, src1, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GT>>(dst, src0, src1, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::EQ>>(dst, src0, src1, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::LE>>(dst, src0, src1, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::GE>>(dst, src0, src1, mask, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareLevel0CounterMode<T, U, CMPMODE::NE>>(dst, src0, src1, mask, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvCountCounterDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatParams);
     } else {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LT, false>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GT, false>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::EQ, false>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::LE, false>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::GE, false>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareLevel0NormalMode<T, U, CMPMODE::NE, false>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvCountNormalDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatTime, repeatParams);
     }
 }
 
@@ -535,6 +593,88 @@ __aicore__ inline void CompareScalarLevel0NormalMode(
     Reg::StoreUnAlignPost<U, Reg::PostLiteral::POST_MODE_NORMAL>(dst, uReg, 0);
 }
 
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc1BitmapCounterDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, const T src1, CMPMODE cmpMode, const uint64_t mask[],
+    const UnaryRepeatParams& repeatParams, __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc1BitmapNormalDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, const T src1, CMPMODE cmpMode, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LT, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GT, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::EQ, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LE, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GE, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::NE, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 template <typename T, typename U, bool isSetMask = true>
 __aicore__ inline void VcmpvsImpl(
     __ubuf__ U* dst, __ubuf__ T* src0, const T src1, CMPMODE cmpMode, const uint64_t mask[], uint8_t repeatTime,
@@ -547,79 +687,95 @@ __aicore__ inline void VcmpvsImpl(
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
         __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsSrc1BitmapCounterDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatParams, tempBuf);
         AscendCUtils::FreeTemporaryBuffer<uint64_t>(tempBuf);
     } else {
         if constexpr (isSetMask) {
             SetVectorMask<T>(mask[1], mask[0]);
         }
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LT, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GT, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::EQ, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LE, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GE, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::NE, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
+        VcmpvsSrc1BitmapNormalDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, repeatTime, repeatParams);
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc1CountCounterDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, const T src1, CMPMODE cmpMode, const uint64_t mask,
+    const UnaryRepeatParams& repeatParams, __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
         }
+        case CMPMODE::GT: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc1CountNormalDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, const T src1, CMPMODE cmpMode, const uint64_t mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LT, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GT, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::EQ, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LE, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GE, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::NE, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -635,76 +791,10 @@ __aicore__ inline void VcmpvsImpl(
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
         __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsSrc1CountCounterDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatParams, tempBuf);
         AscendCUtils::FreeTemporaryBuffer<uint64_t>(tempBuf);
     } else {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LT, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GT, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::EQ, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::LE, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::GE, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareScalarLevel0NormalMode<T, U, CMPMODE::NE, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsSrc1CountNormalDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatTime, repeatParams);
     }
 }
 
@@ -848,6 +938,88 @@ __aicore__ inline void CompareSrc0ScalarLevel0NormalMode(
     Reg::StoreUnAlignPost<U, Reg::PostLiteral::POST_MODE_NORMAL>(dst, uReg, 0);
 }
 
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc0BitmapCounterDispatch(
+    __ubuf__ U* dst, const T src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask[],
+    const UnaryRepeatParams& repeatParams, __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
+                dst, src0, src1, mask[0], tempBuf, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc0BitmapNormalDispatch(
+    __ubuf__ U* dst, const T src0, __ubuf__ T* src1, CMPMODE cmpMode, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LT, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GT, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::EQ, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LE, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GE, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::NE, true, isSetMask>>(
+                dst, src0, src1, 0, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 template <typename T, typename U, bool isSetMask = true>
 __aicore__ inline void VcmpvsImpl(
     __ubuf__ U* dst, const T src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask[], uint8_t repeatTime,
@@ -860,79 +1032,95 @@ __aicore__ inline void VcmpvsImpl(
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
         __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
-                    dst, src0, src1, mask[0], tempBuf, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsSrc0BitmapCounterDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatParams, tempBuf);
         AscendCUtils::FreeTemporaryBuffer<uint64_t>(tempBuf);
     } else {
         if constexpr (isSetMask) {
             SetVectorMask<T>(mask[1], mask[0]);
         }
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LT, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GT, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::EQ, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LE, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GE, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::NE, true, isSetMask>>(
-                    dst, src0, src1, 0, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
+        VcmpvsSrc0BitmapNormalDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, repeatTime, repeatParams);
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc0CountCounterDispatch(
+    __ubuf__ U* dst, const T src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask,
+    const UnaryRepeatParams& repeatParams, __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
         }
+        case CMPMODE::GT: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask>
+__aicore__ inline void VcmpvsSrc0CountNormalDispatch(
+    __ubuf__ U* dst, const T src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LT, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GT, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::EQ, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LE, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GE, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::NE, false, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -948,76 +1136,10 @@ __aicore__ inline void VcmpvsImpl(
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
         __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LT, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GT, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::EQ, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::LE, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::GE, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareSrc0ScalarLevel0CounterMode<T, U, CMPMODE::NE, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsSrc0CountCounterDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatParams, tempBuf);
         AscendCUtils::FreeTemporaryBuffer<uint64_t>(tempBuf);
     } else {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LT, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GT, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::EQ, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::LE, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::GE, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareSrc0ScalarLevel0NormalMode<T, U, CMPMODE::NE, false, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsSrc0CountNormalDispatch<T, U, isSetMask>(dst, src0, src1, cmpMode, mask, repeatTime, repeatParams);
     }
 }
 
@@ -1356,6 +1478,100 @@ __aicore__ inline void CompareScalarBothTensorLevel0NormalMode(
     Reg::StoreUnAlignPost<U, Reg::PostLiteral::POST_MODE_NORMAL>(dst, uReg, 0);
 }
 
+template <typename T, typename U, bool isSetMask, bool isBitMapMode, uint8_t scalarIdx, Reg::LoadDist pattern>
+__aicore__ inline void VcmpvsTensorCountCounterDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask,
+    const UnaryRepeatParams& repeatParams, __ubuf__ uint64_t* tempBuf)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareScalarBothTensorLevel0CounterMode<
+                T, U, CMPMODE::LT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareScalarBothTensorLevel0CounterMode<
+                T, U, CMPMODE::GT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareScalarBothTensorLevel0CounterMode<
+                T, U, CMPMODE::EQ, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareScalarBothTensorLevel0CounterMode<
+                T, U, CMPMODE::LE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareScalarBothTensorLevel0CounterMode<
+                T, U, CMPMODE::GE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareScalarBothTensorLevel0CounterMode<
+                T, U, CMPMODE::NE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, tempBuf, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+template <typename T, typename U, bool isSetMask, bool isBitMapMode, uint8_t scalarIdx, Reg::LoadDist pattern>
+__aicore__ inline void VcmpvsTensorCountNormalDispatch(
+    __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    switch (cmpMode) {
+        case CMPMODE::LT: {
+            VF_CALL<CompareScalarBothTensorLevel0NormalMode<
+                T, U, CMPMODE::LT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GT: {
+            VF_CALL<CompareScalarBothTensorLevel0NormalMode<
+                T, U, CMPMODE::GT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::EQ: {
+            VF_CALL<CompareScalarBothTensorLevel0NormalMode<
+                T, U, CMPMODE::EQ, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::LE: {
+            VF_CALL<CompareScalarBothTensorLevel0NormalMode<
+                T, U, CMPMODE::LE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::GE: {
+            VF_CALL<CompareScalarBothTensorLevel0NormalMode<
+                T, U, CMPMODE::GE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        case CMPMODE::NE: {
+            VF_CALL<CompareScalarBothTensorLevel0NormalMode<
+                T, U, CMPMODE::NE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
+                dst, src0, src1, mask, repeatTime, repeatParams);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 template <typename T, typename U, bool isSetMask = true, bool isBitMapMode, uint8_t scalarIdx, Reg::LoadDist pattern>
 __aicore__ inline void VcmpvsImpl(
     __ubuf__ U* dst, __ubuf__ T* src0, __ubuf__ T* src1, CMPMODE cmpMode, const uint64_t mask, uint8_t repeatTime,
@@ -1364,88 +1580,12 @@ __aicore__ inline void VcmpvsImpl(
     bool isCounterMode = Internal::IsCounterMode();
     if (isCounterMode) {
         __ubuf__ uint64_t* tempBuf = AscendCUtils::GetTemporaryBufferAddr<uint64_t>(GetRuntimeUBSize(), 2);
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareScalarBothTensorLevel0CounterMode<
-                    T, U, CMPMODE::LT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareScalarBothTensorLevel0CounterMode<
-                    T, U, CMPMODE::GT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareScalarBothTensorLevel0CounterMode<
-                    T, U, CMPMODE::EQ, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareScalarBothTensorLevel0CounterMode<
-                    T, U, CMPMODE::LE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareScalarBothTensorLevel0CounterMode<
-                    T, U, CMPMODE::GE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareScalarBothTensorLevel0CounterMode<
-                    T, U, CMPMODE::NE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, tempBuf, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsTensorCountCounterDispatch<T, U, isSetMask, isBitMapMode, scalarIdx, pattern>(
+            dst, src0, src1, cmpMode, mask, repeatParams, tempBuf);
         AscendCUtils::FreeTemporaryBuffer<uint64_t>(tempBuf);
     } else {
-        switch (cmpMode) {
-            case CMPMODE::LT: {
-                VF_CALL<CompareScalarBothTensorLevel0NormalMode<
-                    T, U, CMPMODE::LT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GT: {
-                VF_CALL<CompareScalarBothTensorLevel0NormalMode<
-                    T, U, CMPMODE::GT, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::EQ: {
-                VF_CALL<CompareScalarBothTensorLevel0NormalMode<
-                    T, U, CMPMODE::EQ, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::LE: {
-                VF_CALL<CompareScalarBothTensorLevel0NormalMode<
-                    T, U, CMPMODE::LE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::GE: {
-                VF_CALL<CompareScalarBothTensorLevel0NormalMode<
-                    T, U, CMPMODE::GE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            case CMPMODE::NE: {
-                VF_CALL<CompareScalarBothTensorLevel0NormalMode<
-                    T, U, CMPMODE::NE, isBitMapMode, scalarIdx, pattern, isSetMask>>(
-                    dst, src0, src1, mask, repeatTime, repeatParams);
-                break;
-            }
-            default:
-                break;
-        }
+        VcmpvsTensorCountNormalDispatch<T, U, isSetMask, isBitMapMode, scalarIdx, pattern>(
+            dst, src0, src1, cmpMode, mask, repeatTime, repeatParams);
     }
 }
 
