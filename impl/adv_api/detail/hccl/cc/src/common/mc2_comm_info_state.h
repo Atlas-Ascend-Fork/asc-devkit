@@ -29,7 +29,7 @@ struct Mc2CommRelation {
     std::vector<uint32_t> queues;
 };
 
-// Host-only, single-capture experiment. Stored values never dereference communication resources.
+// Host-only. Stored values never dereference communication resources.
 class Mc2CommInfoState {
 public:
     using Sink = std::function<bool(const Mc2CommRelation&, size_t, size_t)>;
@@ -43,6 +43,8 @@ public:
             return;
         }
         {
+            // Draining snapshots reported before calling the sink; reset it under reportMutex_.
+            std::lock_guard<std::mutex> reportLock(reportMutex_);
             std::lock_guard<std::mutex> lock(mutex_);
             auto it = std::find_if(entries_.begin(), entries_.end(), [&](const Entry& entry) {
                 const auto& old = entry.relation;
@@ -52,6 +54,8 @@ public:
             });
             if (it == entries_.end()) {
                 entries_.push_back({std::move(relation), 0});
+            } else {
+                it->reported = 0; // Replay on re-establishment for later captures.
             }
         }
         Drain();
@@ -64,13 +68,13 @@ public:
             std::lock_guard<std::mutex> reportLock(reportMutex_);
             std::lock_guard<std::mutex> lock(mutex_);
             for (const auto device : devices) {
-                auto& state = devices_[device];
-                if (start && !state.stopped) {
-                    state.enabled = true;
-                } else if (!start) {
-                    // A late-registration START callback can race behind STOP.
-                    state.stopped = true;
-                    state.enabled = false;
+                devices_[device].enabled = start;
+            }
+            if (start) {
+                for (auto& entry : entries_) {
+                    if (std::find(devices.begin(), devices.end(), entry.relation.device) != devices.end()) {
+                        entry.reported = 0; // Replay into the new capture.
+                    }
                 }
             }
         }
@@ -86,7 +90,6 @@ private:
     };
     struct DeviceState {
         bool enabled = false;
-        bool stopped = false;
     };
     void Drain()
     {

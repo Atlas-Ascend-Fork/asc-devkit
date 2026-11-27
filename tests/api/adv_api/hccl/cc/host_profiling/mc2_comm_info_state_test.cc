@@ -39,7 +39,7 @@ int main()
             size_t items = 0;
             Mc2CommInfoState state([&](const Mc2CommRelation& r, size_t offset, size_t n) {
                 Check(r.kfcStream == 59 && r.queues.front() == 7);
-                Check(n <= 8 && offset == items);
+                Check(n <= 8 && offset % 8 == 0);
                 ++calls;
                 items += n;
                 return true;
@@ -50,10 +50,12 @@ int main()
             state.Save(Relation(0, count));
             Check(startFirst || calls == 0);
             state.Switch({0}, true);
-            Check(items == count && calls == (count + 7) / 8);
+            const size_t replays = startFirst ? 2U : 1U;
+            Check(items == replays * count && calls == replays * ((count + 7) / 8));
             state.Save(Relation(0, count));
+            Check(items == (replays + 1) * count && calls == (replays + 1) * ((count + 7) / 8));
             state.Switch({0}, true);
-            Check(items == count);
+            Check(items == (replays + 2) * count && calls == (replays + 2) * ((count + 7) / 8));
         }
     }
     {
@@ -68,7 +70,7 @@ int main()
         Check(calls == 2);
         failTail = false;
         state.Save(Relation(0, 9));
-        Check(calls == 3); // The successful first batch was not replayed.
+        Check(calls == 4); // Re-establishment replays the whole list.
     }
     {
         size_t calls = 0;
@@ -86,8 +88,8 @@ int main()
         Check(calls == 1);
         state.Switch({0}, true);
         Check(calls == 2);
-        state.Switch({1}, true); // A second capture is intentionally unsupported.
-        Check(calls == 2);
+        state.Switch({1}, true); // A new capture replays the device's relations.
+        Check(calls == 4);
     }
     {
         size_t calls = 0;
@@ -101,11 +103,13 @@ int main()
         relation.queues = {8, 7, 7};
         state.Save(relation);
         state.Save(Relation(0, 2));
-        Check(calls == 1);
+        Check(calls == 2);
     }
     for (size_t iteration = 0; iteration < 200; ++iteration) {
         std::atomic<size_t> calls{0};
-        Mc2CommInfoState state([&](const Mc2CommRelation&, size_t, size_t) {
+        Mc2CommInfoState state([&](const Mc2CommRelation& r, size_t offset, size_t n) {
+            Check(offset % 8 == 0);
+            Check(offset + n <= r.queues.size());
             ++calls;
             return true;
         });
@@ -115,7 +119,7 @@ int main()
         a.join();
         b.join();
         c.join();
-        Check(calls == 1);
+        Check(calls >= 1 && calls <= 3); // Concurrent save/switch/save may each report once.
     }
     {
         size_t calls = 0;
@@ -125,8 +129,9 @@ int main()
         });
         state.Save(Relation());
         state.Switch({0}, false);
-        state.Switch({0}, true); // Delayed START must not reopen a stopped single capture.
-        Check(calls == 0);
+        state.Switch({0}, true); // A delayed START opens the next capture.
+        Check(calls == 1);
     }
-    std::cout << "PASS: batching, start order, duplicate events, partial retry, device isolation, STOP, 200 races\n";
+    std::cout << "PASS: batching, start order, duplicate events, partial retry, device isolation, STOP, capture "
+                 "replay, 200 races\n";
 }
