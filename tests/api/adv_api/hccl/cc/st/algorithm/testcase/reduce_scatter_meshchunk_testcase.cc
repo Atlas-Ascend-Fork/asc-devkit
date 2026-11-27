@@ -25,6 +25,17 @@
 #include "reduce_scatter_auto_selector.h"
 #include "comm_kfc_open_kernel_adapter.h"
 #include "cann_host_bridge.h"
+#include "ops/op_common/template/aicpu/task_cache/mc2_aicpu_task_cache.h"
+
+namespace mc2_ops_hccl {
+// MeshChunk checks algorithm dispatch with intercepted primitives. Execute the
+// callback directly so this target can run without the device replay backend.
+HcclResult RunWithAsccommBinaryCache(
+    const OpParam&, const AlgResourceCtxSerializable&, const std::function<HcclResult()>& execute)
+{
+    return execute();
+}
+} // namespace mc2_ops_hccl
 
 using namespace mc2_ops_hccl;
 

@@ -221,7 +221,21 @@ HcclResult FormatOpenOpParamDataFromMsg(
             HCCL_ERROR("Run op param is empty at repeat %u.", repeatIdx);
             return HCCL_E_PARA;
         }
-        if (param->opType == HCCL_CMD_ALLTOALLV || param->opType == HCCL_CMD_ALLTOALL) {
+        if (param->opType == HCCL_CMD_ALLTOALL) {
+            // Equal A2A repeats translate all peers equally. Preserve the shape
+            // and move bases, as required by the bound-repeat cache contract.
+            const u64 sendWidth = GetDataTypeSize(param->all2AllVDataDes.sendType);
+            const u64 recvWidth = GetDataTypeSize(param->all2AllVDataDes.recvType);
+            const auto input = reinterpret_cast<uintptr_t>(param->inputPtr);
+            const auto output = reinterpret_cast<uintptr_t>(param->outputPtr);
+            CHK_PRT_RET(
+                rankNum == 0 || sendWidth == 0 || recvWidth == 0 ||
+                    extMsg.sendCounts[0] > (std::numeric_limits<uintptr_t>::max() - input) / sendWidth ||
+                    extMsg.recvCounts[0] > (std::numeric_limits<uintptr_t>::max() - output) / recvWidth,
+                HCCL_ERROR("All-to-all repeat base overflows"), HCCL_E_PARA);
+            param->inputPtr = reinterpret_cast<void*>(input + extMsg.sendCounts[0] * sendWidth);
+            param->outputPtr = reinterpret_cast<void*>(output + extMsg.recvCounts[0] * recvWidth);
+        } else if (param->opType == HCCL_CMD_ALLTOALLV) {
             for (u32 i = 0U; i < rankNum; ++i) {
                 extMsg.sendOffset[i] += extMsg.sendCounts[i];
                 extMsg.recvOffset[i] += extMsg.recvCounts[i];

@@ -171,6 +171,12 @@ list(APPEND INCLUDE_LIST
 )
 
 if(PRODUCT_SIDE STREQUAL "device")
+    set(ASCCOMM_REPLAY_HDR "${_ASCCOMM_SOURCE_DIR}/src/aicpu/asccomm/primitives/task_cache")
+    set(ASCCOMM_PROFILING_HDR "${_ASCCOMM_SOURCE_DIR}/src/aicpu/asccomm/diagnostics")
+    if(NOT EXISTS "${ASCCOMM_REPLAY_HDR}/asccomm_command_replay.h" OR
+       NOT EXISTS "${ASCCOMM_PROFILING_HDR}/asccomm_profiling_internal.h")
+        message(FATAL_ERROR "Building mc2_server requires a matching asc-comm source tree with replay and profiling headers: ${_ASCCOMM_SOURCE_DIR}")
+    endif()
     add_library(mc2_server SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         # ${CMAKE_CURRENT_SOURCE_DIR}/common/adapter_acl.cc
@@ -194,6 +200,7 @@ if(PRODUCT_SIDE STREQUAL "device")
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/template_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/aicpu/kernel_launch.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/aicpu/task_cache/mc2_aicpu_task_cache.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/aicpu/task_cache/mc2_asccomm_binary_cache.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/aicpu/dfx/task_exception_fun.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/registry/alg_template_register.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/template/wrapper/alg_data_trans_wrapper.cc
@@ -262,6 +269,7 @@ if(PRODUCT_SIDE STREQUAL "device")
     target_include_directories(mc2_server PRIVATE
         ${ASCOMM_RES_DEFS_HDR}
         ${INCLUDE_LIST}
+        ${ASCCOMM_REPLAY_HDR}
         ${ASCCOMM_PRIMITIVES_HDR}
         ${ASCCOMM_PRIMITIVES_INTERNAL_HDR}
         ${ASCCOMM_ENTITY_HDR}

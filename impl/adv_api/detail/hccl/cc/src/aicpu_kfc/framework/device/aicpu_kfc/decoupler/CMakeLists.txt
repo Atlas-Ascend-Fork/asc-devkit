@@ -131,6 +131,7 @@ if(TARGET mc2_server)
         ${HCCL_BASE_DIR}/pub_inc
         ${HCCL_HCOMM_HEADER_DIR}/../
         ${OPEN_HCCL_SRC_ROOT}/common
+        ${OPEN_HCCL_SRC_ROOT}/ops/op_common/template/aicpu
         ${OPEN_HCCL_SRC_ROOT}/ops/op_common/inc
         ${OPEN_HCCL_SRC_ROOT}/common/hcomm_dlsym
         ${OPEN_HCCL_SRC_ROOT}/common/hcomm_dlsym/ccu
@@ -140,6 +141,7 @@ if(TARGET mc2_server)
         ${HCCL_BASE_DIR}/legacy/unified_platform/resource/stream/aicpu
 
         ${ASCCOMM_PRIMITIVES_HDR}
+        ${ASCCOMM_PROFILING_HDR}
         ${ASCCOMM_PRIMITIVES_INTERNAL_HDR}
         ${ASCCOMM_ENTITY_HDR}
 

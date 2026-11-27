@@ -11,6 +11,8 @@
 #define MC2_AICPU_TASK_CACHE_H
 
 #include <array>
+#include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -32,19 +34,62 @@ enum class Mc2TaskCacheReserveResult {
 struct Mc2AicpuTaskCachePlan {
     bool enabled = false;
     std::string tag;
+    std::string exactKey;
     void* comm = nullptr;
     std::array<void*, 2> addrs{{nullptr, nullptr}};
     std::array<uint64_t, 2> sizes{{0U, 0U}};
 };
 
+struct Mc2RepeatShape {
+    bool ready = false;
+    std::string prefix;
+    std::array<uint64_t, 2> sizes{{0, 0}};
+};
+
+// resourceDomainValidated is only valid within a pinned, immutable resource-holder domain.
+// Standalone callers must leave it false to retain full resource identity.
 HcclResult BuildMc2AicpuTaskCachePlan(
-    const OpParam& param, const AlgResourceCtxSerializable& resCtx, Mc2AicpuTaskCachePlan& plan);
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, Mc2AicpuTaskCachePlan& plan,
+    bool asccommBackend = false, bool resourceDomainValidated = false, Mc2RepeatShape* repeat = nullptr);
+
+// Checks immutable channel metadata once when binding a pinned resource holder.
+bool ValidateMc2BinaryCacheResource(const AlgResourceCtxSerializable& resCtx);
 
 HcclResult Mc2AicpuTaskCacheLookup(const Mc2AicpuTaskCachePlan& plan, bool& isHit);
 HcclResult Mc2AicpuTaskCacheStart(const Mc2AicpuTaskCachePlan& plan);
 HcclResult Mc2AicpuTaskCacheEnd(const Mc2AicpuTaskCachePlan& plan);
 HcclResult Mc2AicpuTaskCacheExecute(const Mc2AicpuTaskCachePlan& plan);
 HcclResult Mc2AicpuTaskCacheClear(const Mc2AicpuTaskCachePlan& plan);
+
+struct Mc2BinaryCacheDomain;
+std::shared_ptr<Mc2BinaryCacheDomain> BindMc2BinaryCacheDomain(
+    void* comm, std::shared_ptr<const AlgResourceCtxSerializable> holder);
+
+// A scope pins the deserialized resource identity during one Server invocation.
+// Cache entries also retain this holder; a different holder never reuses their commands.
+class Mc2BinaryCacheResourceScope {
+public:
+    explicit Mc2BinaryCacheResourceScope(
+        std::shared_ptr<const AlgResourceCtxSerializable> holder,
+        std::shared_ptr<Mc2BinaryCacheDomain> domain = nullptr, bool regularRepeatInvariant = false);
+    ~Mc2BinaryCacheResourceScope();
+    Mc2BinaryCacheResourceScope(const Mc2BinaryCacheResourceScope&) = delete;
+    Mc2BinaryCacheResourceScope& operator=(const Mc2BinaryCacheResourceScope&) = delete;
+
+private:
+    std::shared_ptr<const AlgResourceCtxSerializable> previous_;
+    std::shared_ptr<Mc2BinaryCacheDomain> previousDomain_;
+    uint64_t previousUbDomain_ = 0;
+    uint64_t previousScope_ = 0;
+    size_t previousRepeat_ = 0;
+    Mc2BinaryCacheDomain* previousLockedDomain_ = nullptr;
+    std::unique_lock<std::mutex> domainLock_;
+};
+bool Mc2AsccommBinaryCaptureSupported();
+bool Mc2AsccommRelocationSupported();
+HcclResult RunWithAsccommBinaryCache(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, const std::function<HcclResult()>& execute);
+HcclResult ClearAsccommBinaryCapture(void* comm);
 
 class Mc2AicpuTaskCacheManager {
 public:

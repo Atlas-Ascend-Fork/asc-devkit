@@ -7,6 +7,9 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+#include <cstdlib>
+#include <cstring>
+
 #include "hccl_alloc_ctx_res.h"
 #include "adapter_acl.h"
 #include "mc2_server_debug_config.h"
@@ -404,6 +407,13 @@ HcclResult HcclAllocOpResCtx(
     OpResCtx resCtx{};
     const auto* initTiling = static_cast<const Mc2InitTilingInner*>(mc2Tiling);
     resCtx.res[Mc2ServerDebugConfig::DEBUG_MODE_RES_INDEX] = initTiling->debugMode;
+    const char* replayBackend = std::getenv("MC2_ASCCOMM_REPLAY_BACKEND");
+    if (replayBackend && std::strcmp(replayBackend, "binary") == 0) {
+        resCtx.res[Mc2ServerDebugConfig::DEBUG_MODE_RES_INDEX] |= Mc2ServerDebugConfig::BINARY_REPLAY_FLAG;
+    } else if (replayBackend && std::strcmp(replayBackend, "command") != 0) {
+        HCCL_ERROR("MC2_ASCCOMM_REPLAY_BACKEND must be command or binary");
+        return HCCL_E_PARA;
+    }
     const auto* ccTiling = static_cast<const Mc2CcTilingInner*>(ccTilingList[0]);
 
     for (uint32_t i = 0U; i < opParamVec.size(); ++i) {

@@ -9,6 +9,7 @@
  */
 #include "mc2_server_stage_timing.h"
 #include "comm_kfc_aicpu_server.h"
+#include "task_cache/mc2_aicpu_task_cache.h"
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
@@ -27,6 +28,7 @@
 #include "sqe_build_a5.h"
 #endif
 #include "asccomm_primitives_internal.h"
+#include "asccomm_profiling_internal.h"
 // 实体契约头按 asc-comm 树形择一包含（新版 hcomm_res_entity_defs.h / 中间版
 // asccom_res_entity_defs.h / 旧版公共链），各份布局一致。
 #if __has_include("hcomm_res_entity_defs.h")
@@ -369,6 +371,10 @@ HcclResult CommKfcAicpuServer::AddOpContext(const HcclApi::OpResCtx* ctx)
                 HCCL_E_PARA);
             execCtx.resourceType = ServerExecResourceType::NEXT_AICPU;
             execCtx.mainThread = execCtx.resCtxHolder->threads[0];
+            if (execCtx.baseOpParam.size() >= sizeof(mc2_ops_hccl::OpParam)) {
+                const auto* param = reinterpret_cast<const mc2_ops_hccl::OpParam*>(execCtx.baseOpParam.data());
+                execCtx.replayDomain = mc2_ops_hccl::BindMc2BinaryCacheDomain(param->hcclComm, execCtx.resCtxHolder);
+            }
             HCCL_INFO(
                 "[MC2_SQ_DIAG][ServerRes] group %u commName[%s] opParamKey[%#llx] threadNum[%zu] mainThread[%llu] "
                 "unfoldThread[%llu].",
@@ -572,6 +578,7 @@ HcclResult CommKfcAicpuServer::Orchestrate(const HcclMsg& msg, HcclMsgExt& extMs
     bool dfxRegistered = false;
     HcclResult executionRet = HCCL_SUCCESS;
     HcclResult profilingRet = HCCL_SUCCESS;
+    mc2_ops_hccl::Mc2BinaryCacheResourceScope resourceScope(execCtx->resCtxHolder, execCtx->replayDomain, true);
     std::vector<uint8_t> runParam{};
     for (u32 i = 0U; i < repeatCnt; ++i) {
         const u32 turnIdx = i + 1U;
@@ -622,8 +629,54 @@ HcclResult CommKfcAicpuServer::Orchestrate(const HcclMsg& msg, HcclMsgExt& extMs
                 commAcquired = (ret == HCCL_SUCCESS);
             }
             if (ret == HCCL_SUCCESS) {
-                ret = HcclDfxRegOpInfoByCommId(
-                    const_cast<char*>(dfxParam->commName), reinterpret_cast<void*>(&dfxOpInfo));
+                const char* profName = nullptr;
+                switch (dfxParam->opType) {
+                    case HCCL_CMD_ALLGATHER:
+                        profName = "OpType::ALLGATHER";
+                        break;
+                    case HCCL_CMD_ALLREDUCE:
+                        profName = "OpType::ALLREDUCE";
+                        break;
+                    case HCCL_CMD_REDUCE_SCATTER:
+                        profName = "OpType::REDUCESCATTER";
+                        break;
+                    case HCCL_CMD_ALLTOALL:
+                        profName = "OpType::ALLTOALL";
+                        break;
+                    case HCCL_CMD_ALLTOALLV:
+                        profName = "OpType::ALLTOALLV";
+                        break;
+                    default:
+                        break;
+                }
+                if (profName == nullptr || !execCtx->resCtxHolder) {
+                    ret = HCCL_E_NOT_SUPPORT;
+                } else {
+                    const auto& resources = *execCtx->resCtxHolder;
+                    AsccommProfOp desc{
+                        sizeof(AsccommProfOp),
+                        resources.topoInfo.userRank,
+                        resources.topoInfo.userRankSize,
+                        dfxOpInfo.dataType,
+                        0,
+                        dfxOpInfo.dataCount,
+                        dfxParam->commName,
+                        profName,
+                        dfxParam->algName};
+                    const int profRet = asccomm_prof_begin(&desc);
+                    ret = profRet == 0 ? HCCL_SUCCESS : HCCL_E_INTERNAL;
+                    if (profRet == 0) {
+                        dfxRegistered = true;
+                        for (const auto& level : resources.channels) {
+                            for (const auto& channel : level) {
+                                if (channel.isValid &&
+                                    asccomm_prof_bind_channel(channel.handle, channel.remoteRank) != 0) {
+                                    ret = HCCL_E_INTERNAL;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             if (ret != HCCL_SUCCESS) {
                 HCCL_ERROR(
@@ -662,7 +715,9 @@ HcclResult CommKfcAicpuServer::Orchestrate(const HcclMsg& msg, HcclMsgExt& extMs
         HCCL_INFO(
             "[MC2_OPEN_DIAG][LoopBeforeKernel] group %u, msgPos %u, repeatIdx %u, turnIdx %u.", groupIdx_, msgPos, i,
             turnIdx);
-        ret = LaunchOpenAicpuKernelServer(runParam, *execCtx->resCtxHolder);
+        {
+            ret = LaunchOpenAicpuKernelServer(runParam, *execCtx->resCtxHolder);
+        }
         UpdateProgress("AfterKernel", msgPos, i, turnIdx, opParamKey, waitAddr, recordAddr);
         LogAicpuOrderDfxCounter(
             "AfterKernel", groupIdx_, msgArea_, msgPos, i, turnIdx, opParamKey, waitAddr, recordAddr, turnNumsAddr_,
@@ -705,7 +760,7 @@ HcclResult CommKfcAicpuServer::Orchestrate(const HcclMsg& msg, HcclMsgExt& extMs
     }
 
     if (dfxRegistered) {
-        HcclResult ret = HcommProfilingReportDeviceOp(execCtx->commName.c_str());
+        HcclResult ret = asccomm_prof_end(static_cast<int>(executionRet)) == 0 ? HCCL_SUCCESS : HCCL_E_INTERNAL;
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR(
                 "Group %u: failed to report DFX tasks for commName[%s], opParamKey %#llx, ret[%d].", groupIdx_,
@@ -738,8 +793,8 @@ HcclResult CommKfcAicpuServer::Orchestrate(const HcclMsg& msg, HcclMsgExt& extMs
         // D1 诊断行：五条件真实值，每进程必打一次（weak 0=符号未解析，type 99=null 语境义）。
         HCCL_INFO(
             "[SuccessDumpDiag] fuse[%d] weak[%d] ctx[%d] type[%u] threads[%zu] turnIdx[%u].",
-            g_mc2SuccessDumpDone.load(), asccomm_diag_dump_sq != nullptr, syncExecCtx_ != nullptr,
-            (syncExecCtx_ != nullptr) ? static_cast<u32>(syncExecCtx_->resourceType) : 99U,
+            g_mc2SuccessDumpDone.load(std::memory_order_relaxed), asccomm_diag_dump_sq != nullptr,
+            syncExecCtx_ != nullptr, (syncExecCtx_ != nullptr) ? static_cast<u32>(syncExecCtx_->resourceType) : 99U,
             (syncExecCtx_ != nullptr && syncExecCtx_->resCtxHolder != nullptr) ?
                 syncExecCtx_->resCtxHolder->threads.size() :
                 0U,
@@ -749,7 +804,7 @@ HcclResult CommKfcAicpuServer::Orchestrate(const HcclMsg& msg, HcclMsgExt& extMs
             !syncExecCtx_->resCtxHolder->threads.empty()) {
             HCCL_INFO("[MC2_SQ_DIAG][SuccessDump] group %u turnIdx %u pid-side[Orchestrate].", groupIdx_, repeatCnt);
             const auto& threads = syncExecCtx_->resCtxHolder->threads;
-            (void)asccomm_diag_dump_sq(threads[0]); // main thread only — the reference target
+            (void)asccomm_diag_dump_sq(threads[0]); // 只 dump 主线程——对照重点是 SQ65 主队列
         }
         // 熔断置位在条件外：每进程恰一条诊断。
         g_mc2SuccessDumpDone.store(true, std::memory_order_relaxed);
@@ -981,7 +1036,7 @@ HcclResult CommKfcAicpuServer::ErrorDfxProcess(HcclResult errorCode)
             !syncExecCtx_->resCtxHolder->threads.empty()) {
             const auto& threads = syncExecCtx_->resCtxHolder->threads;
             for (size_t t = 0; t < threads.size(); ++t) {
-                (void)asccomm_diag_dump_sq(threads[t]); // failure-silent: the backoff path must not be interrupted
+                (void)asccomm_diag_dump_sq(threads[t]); // 失败静默，退避路径不可打断
             }
         }
         return (errorCode == HCCL_E_AGAIN) ? HCCL_SUCCESS : errorCode;

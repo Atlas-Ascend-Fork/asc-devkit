@@ -37,6 +37,13 @@ using namespace mc2_ops_hccl;
 using namespace HcclSim;
 
 namespace mc2_ops_hccl {
+// The algorithm checker models cache planning without a device replay backend.
+bool Mc2AsccommBinaryCaptureSupported() { return true; }
+
+bool Mc2AsccommRelocationSupported() { return true; }
+
+HcclResult ClearAsccommBinaryCapture(void*) { return HCCL_SUCCESS; }
+
 uint32_t g_hcclEngineCtxCopyCallCount = 0;
 uint32_t g_stubEndpointBwCoeff = 1; // 均匀带宽：双 die 场景 dieSplitRatio=0.5（0 会导致 p0+p1=0 不切分）
 } // namespace mc2_ops_hccl

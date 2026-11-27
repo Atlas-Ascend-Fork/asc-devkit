@@ -215,7 +215,8 @@ int32_t asccomm_channel_drain_on_thread(ThreadHandle thread, ChannelHandle chann
 }
 
 // devkit AICPU KFC server 侧消费的内部入口（asccomm_primitives_internal.h），同款 stub。
-int32_t asccomm_addr_notify_wait_on_thread(ThreadHandle thread, uint64_t waitAddr, uint64_t valueAddr, uint8_t last)
+ASCCOMM_API int32_t
+asccomm_addr_notify_wait_on_thread(ThreadHandle thread, uint64_t waitAddr, uint64_t valueAddr, uint8_t last)
 {
     (void)thread;
     (void)waitAddr;
@@ -224,7 +225,7 @@ int32_t asccomm_addr_notify_wait_on_thread(ThreadHandle thread, uint64_t waitAdd
     return HostStubNotAvailable();
 }
 
-int32_t asccomm_addr_notify_record_on_thread(ThreadHandle thread, uint64_t recordAddr, uint64_t valueAddr)
+ASCCOMM_API int32_t asccomm_addr_notify_record_on_thread(ThreadHandle thread, uint64_t recordAddr, uint64_t valueAddr)
 {
     (void)thread;
     (void)recordAddr;

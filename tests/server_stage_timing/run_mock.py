@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory() as t:
 #include <string>
 #include <vector>
 inline std::vector<std::string>& Logs() { static std::vector<std::string> v; return v; }
-#define HCCL_RUN_INFO(...) do { char text[1024]; std::snprintf(text,sizeof(text),__VA_ARGS__); Logs().push_back(text); } while(0)
+#define HCCL_RUN_INFO(...) do { char text[1024]; std::snprintf(text,sizeof(text),__VA_ARGS__); if (std::string(text).find("[MC2_SERVER_PERF]") == 0) Logs().push_back(text); } while(0)
 """)
     (root / "test.cc").write_text("""#include "mc2_server_stage_timing.h"
 #include <cassert>

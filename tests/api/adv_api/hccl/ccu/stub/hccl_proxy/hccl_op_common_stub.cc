@@ -305,6 +305,12 @@ static bool ReadEnvVarAicpuUnfold()
     return (envValue != nullptr && std::string(envValue) == "AI_CPU");
 }
 
+const uint8_t& GetExternalInputHcclAicpuCacheEnable()
+{
+    static const uint8_t disabled = 0U;
+    return disabled;
+}
+
 const bool& GetExternalInputHcclAivOnlyMode()
 {
     static bool value = false;

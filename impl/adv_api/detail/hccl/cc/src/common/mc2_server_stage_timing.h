@@ -11,9 +11,13 @@
 #define MC2_SERVER_STAGE_TIMING_H
 #include <cstdint>
 #include <ctime>
+#include <dlfcn.h>
+#include <cstdio>
 #include "log.h"
 namespace Mc2ServerStageTiming {
 constexpr uint32_t LOG_SCHEMA_VERSION = 2;
+// Stable reason_schema=1; checked against the asccomm contract by its adapter.
+constexpr uint32_t REPLAY_REASON_COUNT = 57;
 constexpr uint32_t SAMPLES_PER_BATCH = 30;
 constexpr uint32_t EXPECTED_MESSAGES_PER_SAMPLE = 1;
 constexpr uint64_t NANOSECONDS_PER_SECOND = 1000000000ULL;
@@ -102,7 +106,30 @@ inline uintptr_t& Context()
     static thread_local uintptr_t context;
     return context;
 }
-inline void Start(bool enabled, uintptr_t context = 0)
+// Counter-only audit; no detail clock, allocation or per-command output.
+struct ReplayAudit {
+    uint64_t binary, command, unavailable, preflight, errors, captures, ready, sqe, wqe, db, missing;
+    uint32_t reasons[REPLAY_REASON_COUNT];
+};
+inline ReplayAudit& Audit()
+{
+    static thread_local ReplayAudit a{};
+    return a;
+}
+inline bool& BinaryRequested()
+{
+    static thread_local bool b = true;
+    return b;
+}
+inline void SelectBinary(bool requested, bool reset)
+{
+    (void)requested; // Binary-only backend; legacy selector no longer enables command replay.
+    BinaryRequested() = true;
+    if (reset) {
+        Audit() = {};
+    }
+}
+inline void Start(bool enabled, uintptr_t context = 0, bool = false)
 {
     Enabled() = enabled;
     if (!enabled) {
@@ -214,6 +241,37 @@ inline void Finish(uint32_t status)
         static_cast<unsigned long long>(b.msgTop.second), static_cast<unsigned long long>(b.msgTop.third),
         static_cast<unsigned long long>(b.sqTop.first), static_cast<unsigned long long>(b.sqTop.second),
         static_cast<unsigned long long>(b.sqTop.third));
+    const auto& a = Audit();
+    char reasons[640]; // 57 uint32 values, separators and terminator fit even at UINT32_MAX.
+    char* next = reasons;
+    for (unsigned i = 0; i < REPLAY_REASON_COUNT; ++i) {
+        if (i) {
+            *next++ = ',';
+        }
+        char digits[10];
+        unsigned used = 0;
+        uint32_t value = a.reasons[i];
+        do {
+            digits[used++] = static_cast<char>('0' + value % 10);
+            value /= 10;
+        } while (value);
+        while (used) {
+            *next++ = digits[--used];
+        }
+    }
+    *next = '\0';
+    HCCL_RUN_INFO(
+        "[MC2_REPLAY_AUDIT] schema=1 first=%llu last=%llu count=%u cache=%d requested=%s "
+        "binary=%llu command=%llu unavailable=%llu preflight=%llu errors=%llu captures=%llu ready=%llu "
+        "sqe=%llu wqe=%llu db=%llu missing=%llu reason_schema=1 reasons=%s",
+        static_cast<unsigned long long>(b.first), static_cast<unsigned long long>(b.last), b.count, b.cache,
+        BinaryRequested() ? "binary" : "command", static_cast<unsigned long long>(a.binary),
+        static_cast<unsigned long long>(a.command), static_cast<unsigned long long>(a.unavailable),
+        static_cast<unsigned long long>(a.preflight), static_cast<unsigned long long>(a.errors),
+        static_cast<unsigned long long>(a.captures), static_cast<unsigned long long>(a.ready),
+        static_cast<unsigned long long>(a.sqe), static_cast<unsigned long long>(a.wqe),
+        static_cast<unsigned long long>(a.db), static_cast<unsigned long long>(a.missing), reasons);
+    Audit() = {};
     b = {};
 }
 } // namespace Mc2ServerStageTiming

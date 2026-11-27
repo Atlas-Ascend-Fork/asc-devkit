@@ -166,7 +166,10 @@ add_executable(${MESHCHUNK_TEST_TARGET} main.cc reduce_scatter_meshchunk_testcas
     ${KFC_DECOUPLER_DIR}/comm_kfc_open_kernel_adapter.cc
     ${KFC_DECOUPLER_DIR}/comm_kfc_open_kernel_executor.cc
     ${KFC_DECOUPLER_DIR}/cann_dispatch_bridge.cc)
-target_include_directories(${MESHCHUNK_TEST_TARGET} PRIVATE ${KFC_DECOUPLER_DIR})
+target_include_directories(${MESHCHUNK_TEST_TARGET} PRIVATE
+    ${KFC_DECOUPLER_DIR}
+    ${HCCL_CC_SRC_DIR}
+)
 target_include_directories(${MESHCHUNK_TEST_TARGET} PRIVATE ${HCCL_CHECKER_COMMON_INCLUDE_LIST})
 target_compile_options(${MESHCHUNK_TEST_TARGET} PRIVATE -std=c++14 -Werror -O0 -g -D_GLIBCXX_USE_CXX11_ABI=0)
 target_compile_definitions(${MESHCHUNK_TEST_TARGET} PRIVATE UT_TEST AICPU_COMPILE)
