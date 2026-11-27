@@ -873,46 +873,108 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ushort2bfloat16_ru(const unsi
     return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_CEIL>(), RoundingSaturation::RS_DISABLE_VALUE>(i);
 }
 
+/*
+ * Algorithm: the TRUNC value gives the truncated bf16 candidate, the CEIL
+ * sentinel tells whether x is exactly on an f32 grid point. The low 16 bits
+ * and the inexact (sticky) bit are packed into a 17-bit remainder
+ * [frac | sticky], so one branchless comparison against the scaled midpoint
+ * 0x10000 decides all three cases:
+ *   remainder > 0x10000: above midpoint (or pseudo tie, sticky == 1);
+ *   remainder == 0x10000: exact tie, round to even.
+ */
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ull2bfloat16_rn(const unsigned long long int x)
 {
-    uint64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
-    return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
+    uint64_t input_value = x;
+    float ceil_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_CEIL>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    float trunc_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_TRUNC>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    uint32_t f32_bits = reinterpret_cast<uint32_t&>(trunc_value);
+    uint32_t sticky_bit = (ceil_value != trunc_value) ? 1u : 0u; // 1: u64->f32 inexact, x not on an f32 grid point
+    // 0xFFFF: low 16 bits dropped by bf16 rounding; <<1: scale midpoint to 0x10000
+    uint32_t remainder = ((f32_bits & 0xFFFFu) << 1) | sticky_bit;
+    uint32_t bf16_bits = f32_bits >> 16; // 16: bf16 is the high 16 bits of the f32 bit pattern
+
+    uint32_t round_up =
+        (remainder > 0x10000u) |
+        ((remainder == 0x10000u) & (bf16_bits & 1u)); // 0x10000: scaled midpoint; 1u: tests even/odd mantissa
+    bf16_bits += round_up;
+
+    uint16_t result_bits = static_cast<uint16_t>(bf16_bits);
+    return reinterpret_cast<bfloat16_t&>(result_bits);
 }
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ull2bfloat16_rz(const unsigned long long int x)
 {
     uint64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
+    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_TRUNC>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
     return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_TRUNC>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
 }
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ull2bfloat16_rd(const unsigned long long int x)
 {
     uint64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
+    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_FLOOR>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
     return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_FLOOR>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
 }
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ull2bfloat16_ru(const unsigned long long int x)
 {
     uint64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
+    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_CEIL>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
     return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_CEIL>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
 }
 
+/*
+ * Algorithm (tie-away): both exact and pseudo ties round up, so the sticky
+ * bit does not take part in the decision and the TRUNC value alone
+ * suffices: dropped_bits >= 0x8000 rounds up.
+ */
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ull2bfloat16_rna(const unsigned long long int x)
 {
-    uint64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
-    return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_ROUND>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
+    uint64_t input_value = x;
+    float trunc_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_TRUNC>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    uint32_t f32_bits = reinterpret_cast<uint32_t&>(trunc_value);
+    uint32_t dropped_bits = f32_bits & 0xFFFFu;              // 0xFFFF: mask of the low 16 bits dropped by bf16 rounding
+    uint32_t bf16_bits = f32_bits >> 16;                     // 16: bf16 is the high 16 bits of the f32 bit pattern
+    uint32_t round_up = (dropped_bits >= 0x8000u) ? 1u : 0u; // 0x8000: midpoint, exact or pseudo tie rounds up
+    bf16_bits += round_up;
+    uint16_t result_bits = static_cast<uint16_t>(bf16_bits);
+    return reinterpret_cast<bfloat16_t&>(result_bits);
 }
 
+/*
+ * Algorithm: the FLOOR/CEIL sentinels diverge on both half-axes, so
+ * floor_value != ceil_value means x is not exactly on an f32 grid point,
+ * independent of sign. The sign bit travels with the TRUNC value (f32
+ * bit31 -> bf16 bit15), and +1 on the sign-magnitude encoding grows the
+ * magnitude (away from zero). The low 16 bits and the inexact (sticky) bit
+ * are packed into a 17-bit remainder, one branchless comparison decides
+ * all cases.
+ */
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ll2bfloat16_rn(const long long int x)
 {
-    int64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
-    return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_RINT>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
+    int64_t input_value = x;
+    float floor_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_FLOOR>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    float ceil_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_CEIL>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    float trunc_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_TRUNC>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    uint32_t f32_bits = reinterpret_cast<uint32_t&>(trunc_value);
+    uint32_t sticky_bit = (floor_value != ceil_value) ? 1u : 0u; // 1: i64->f32 inexact, x not on an f32 grid point
+    // 0xFFFF: low 16 bits dropped by bf16 rounding; <<1: scale midpoint to 0x10000
+    uint32_t remainder = ((f32_bits & 0xFFFFu) << 1) | sticky_bit;
+    uint32_t bf16_bits = f32_bits >> 16; // 16: bf16 is the high 16 bits of the f32 bit pattern, sign bit included
+
+    uint32_t round_up =
+        (remainder > 0x10000u) |
+        ((remainder == 0x10000u) & (bf16_bits & 1u)); // 0x10000: scaled midpoint; 1u: tests even/odd mantissa
+    bf16_bits += round_up;
+
+    uint16_t result_bits = static_cast<uint16_t>(bf16_bits);
+    return reinterpret_cast<bfloat16_t&>(result_bits);
 }
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ll2bfloat16_rz(const long long int x)
@@ -936,11 +998,24 @@ __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ll2bfloat16_ru(const long lon
     return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_CEIL>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
 }
 
+/*
+ * Algorithm (tie-away): both exact and pseudo ties round the magnitude up
+ * (away from zero), the sticky bit does not take part in the decision. The
+ * sign bit travels with the TRUNC value (f32 bit31 -> bf16 bit15), no sign
+ * handling needed.
+ */
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16_t __ll2bfloat16_rna(const long long int x)
 {
-    int64_t y = x;
-    float f = __cvt_float<__internal_get_round<__RoundMode::CAST_ROUND>(), RoundingSaturation::RS_DISABLE_VALUE>(y);
-    return __cvt_bfloat16_t<__internal_get_round<__RoundMode::CAST_ROUND>(), RoundingSaturation::RS_DISABLE_VALUE>(f);
+    int64_t input_value = x;
+    float trunc_value =
+        __cvt_float<__internal_get_round<__RoundMode::CAST_TRUNC>(), RoundingSaturation::RS_DISABLE_VALUE>(input_value);
+    uint32_t f32_bits = reinterpret_cast<uint32_t&>(trunc_value);
+    uint32_t dropped_bits = f32_bits & 0xFFFFu; // 0xFFFF: mask of the low 16 bits dropped by bf16 rounding
+    uint32_t bf16_bits = f32_bits >> 16; // 16: bf16 is the high 16 bits of the f32 bit pattern, sign bit included
+    uint32_t round_up = (dropped_bits >= 0x8000u) ? 1u : 0u; // 0x8000: midpoint, rounds the magnitude up
+    bf16_bits += round_up;
+    uint16_t result_bits = static_cast<uint16_t>(bf16_bits);
+    return reinterpret_cast<bfloat16_t&>(result_bits);
 }
 
 __SIMT_DEVICE_FUNCTIONS_DECL__ inline bfloat16x2_t __float2bfloat162_rn(const float x)
