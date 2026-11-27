@@ -65,10 +65,10 @@ private:
         LocalTensor<srcType> src1Local = inQueueY.DeQue<srcType>();
         LocalTensor<bool> conditionLocal = inQueueZ.DeQue<bool>();
         const uint32_t mode0 = 0;
-        const uint32_t mode1 = 2;
+        const uint32_t mode1 = 1;
         const uint32_t mode2 = 2;
 
-        if (mode = mode0) {
+        if (mode == mode0) {
             Where(dstLocal, src0Local, src1Local, conditionLocal, dataSize);
         } else if (mode == mode1) {
             srcType src0 = src0Local.GetValue(0);
