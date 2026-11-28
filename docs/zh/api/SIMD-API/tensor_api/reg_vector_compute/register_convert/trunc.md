@@ -1,0 +1,127 @@
+# trunc
+
+## 产品支持情况
+
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：不支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：不支持
+<!-- end id3 -->
+<!-- npu="310b" id4 -->
+- Atlas 200I/500 A2推理产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品AI Core：不支持
+<!-- end id5 -->
+<!-- npu="310p" id6 -->
+- Atlas推理系列产品Vector Core：不支持
+<!-- end id6 -->
+<!-- npu="910" id7 -->
+- Atlas训练系列产品：不支持
+<!-- end id7 -->
+
+## 功能说明
+
+头文件路径：`"tensor_api/experimental/arch/vector/compute/register_convert.h"`。
+
+命名空间：`asc::te::experimental`。
+
+trunc对源寄存器中mask选中的浮点元素取整，结果保持原数据类型。通过模板参数指定取整模式，默认使用`cast_round_mode::trunc`。
+
+对于有限浮点数，各模式的计算关系如下，其中`x = src[i]`：
+
+| Mode | 计算关系 | 取整规则 |
+| --- | --- | --- |
+| cast_round_mode::trunc | dst[i] = trunc(x) | 向0取整，舍去小数部分；例如3.75 -> 3.0、-3.75 -> -3.0。 |
+| cast_round_mode::round | dst[i] = round(x) | 取最接近的整数；居中时远离0，例如3.1 -> 3.0、2.5 -> 3.0、-2.5 -> -3.0。 |
+| cast_round_mode::rint | dst[i] = rint(x) | 取最接近的整数；居中时取偶数，例如3.1 -> 3.0、2.5 -> 2.0、-2.5 -> -2.0。 |
+| cast_round_mode::ceil | dst[i] = ceil(x) | 向正无穷取整，例如2.5 -> 3.0、-2.5 -> -2.0。 |
+| cast_round_mode::floor | dst[i] = floor(x) | 向负无穷取整，例如2.5 -> 2.0、-2.5 -> -3.0。 |
+
+输入本身为整数值时，数值保持不变。接口使用`src.mask`筛选参与计算的元素，mask未选中的返回值数据元素置0。
+
+## 函数原型
+
+```cpp
+template <cast_round_mode Mode = cast_round_mode::trunc, typename T>
+__simd_callee__ inline reg_tensor<T> trunc(const reg_tensor<T>& src)
+```
+
+## 参数说明
+
+**表1** 模板参数说明
+
+| 参数名 | 描述 |
+| --- | --- |
+| Mode | 舍入模式，默认为`cast_round_mode::trunc`。支持`trunc`（向0取整）、`round`（舍入到最近整数，恰好居中时远离0）、`rint`（舍入到最近整数，恰好居中时取偶数）、`ceil`（向正无穷取整）和`floor`（向负无穷取整）。 |
+| T | 源、目的元素类型，由函数实参自动推导，无需显式指定。支持的数据类型请参考[数据类型](#数据类型)。 |
+
+**表2** 参数说明
+
+| 参数名 | 输入/输出 | 描述 |
+| --- | --- | --- |
+| src | 输入 | 源寄存器，类型为`reg_tensor<T>`。`src.reg`保存待处理数据，`src.mask`指示参与计算的有效元素；调用前必须完成数据和mask初始化。 |
+
+## 数据类型
+
+目的元素类型与源元素类型保持一致，支持的数据类型如下。
+
+| `T` | 源操作数类型 | 目的操作数类型 |
+| --- | --- | --- |
+| `half` | `reg_tensor<half>` | `reg_tensor<half>` |
+| `bfloat16_t` | `reg_tensor<bfloat16_t>` | `reg_tensor<bfloat16_t>` |
+| `float` | `reg_tensor<float>` | `reg_tensor<float>` |
+
+该接口不执行浮点与整数类型之间的转换。若需要改变元素类型，请使用[cast](cast.md)接口。
+
+## 返回值说明
+
+返回`reg_tensor<T>`：
+
+- `reg`保存所选模式舍入后的结果，mask未选中的元素置0。
+- `mask`与`src.mask`相同，接口不会重新生成或扩展有效范围。
+
+## 约束说明
+
+- 调用前必须初始化`src.reg`和`src.mask`。`asc::te::experimental::load`只初始化返回对象的`reg`，需通过`with_mask`绑定与元素类型匹配的mask。
+- 接口不改变元素类型，也不提供饱和或非饱和模式配置。
+- mask合并模式固定为zeroing，不支持merging模式。mask未选中的返回值数据元素置0；后续使用单源`asc::te::experimental::store`时，写回仍由返回值中传递的mask控制。
+- 寄存器计算应在`__simd_vf__`函数或`__simd_callee__`函数中完成。
+
+## 调用示例
+
+以下示例对Unified Buffer（UB）中的一段浮点数据执行向0取整。[update_mask](../register_mask/update_mask.md)`<T>(remain)`根据剩余待处理元素数生成当前循环的mask，并通过引用参数自动更新`remain`，因此完整寄存器块和尾块可以使用同一计算流程。
+
+```cpp
+template <typename SrcTensor, typename DstTensor>
+__simd_vf__ inline void TruncRegLoop(
+    const SrcTensor src, DstTensor dst, uint32_t dataSize, uint32_t columnCount)
+{
+    using T = typename SrcTensor::data_type;
+    using RegType = typename asc::te::experimental::reg_tensor<T>::reg_type;
+    static_assert(AscendC::Std::is_same_v<T, typename DstTensor::data_type>,
+        "trunc requires matching source and destination data types");
+
+    constexpr uint32_t ONE_REPEAT = sizeof(RegType) / sizeof(T);
+    const uint32_t repeatTimes = (dataSize + ONE_REPEAT - 1) / ONE_REPEAT;
+    uint32_t remain = dataSize;
+
+    for (uint16_t i = 0; i < repeatTimes; ++i) {
+        const uint32_t offset = i * ONE_REPEAT;
+        const auto coord = asc::te::make_coord(offset / columnCount, offset % columnCount);
+
+        auto srcReg = asc::te::experimental::load(src, coord);
+        srcReg.with_mask(asc::te::experimental::update_mask<T>(remain));
+
+        auto dstReg = asc::te::experimental::trunc(srcReg);
+        asc::te::experimental::store(dst, coord, dstReg);
+    }
+}
+```
+
+> [!NOTE]  
+> `asc::te::experimental::load`每次搬入一个完整寄存器块。使用上述尾块写法时，源UB Tensor在逻辑数据末尾需预留足够的可读空间；`update_mask`只控制参与计算和写回的有效元素，不会缩小实际搬入宽度。

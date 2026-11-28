@@ -2,9 +2,9 @@
 
 ## 功能说明
 
-头文件路径：`"tensor_api/experimental/utils/reg_enum.h"`。
+头文件路径：`"tensor_api/experimental/arch/vector/defs/reg_enum.h"`。
 
-`cast_layout`用于指定[cast](../type_conversion/cast.md)执行位宽变化时，较小位宽元素在每组数据中的位置。
+`cast_layout`用于指定[cast](../register_convert/cast.md)执行位宽变化时，较小位宽元素在每组数据中的位置。
 
 ## 类型定义
 
@@ -28,7 +28,7 @@ enum class cast_layout {
 | two | 大转小时，转换结果位于目的操作数组内第2个小位宽位置；小转大时，选取源操作数组内第2个小位宽元素。 |
 | three | 大转小时，转换结果位于目的操作数组内第3个小位宽位置；小转大时，选取源操作数组内第3个小位宽元素。 |
 
-源操作数与目的操作数位宽比为1:2、2:1、1:4和4:1时的数据排布分别如下图所示。具体支持的`cast_layout`取值请参考[cast](../type_conversion/cast.md)。
+源操作数与目的操作数位宽比为1:2、2:1、1:4和4:1时的数据排布分别如下图所示。具体支持的`cast_layout`取值请参考[cast](../register_convert/cast.md)。
 
 ![](../../../../figures/src_dst_bitwidth_1to2.png "源操作数与目的操作数位宽比为1:2")
 

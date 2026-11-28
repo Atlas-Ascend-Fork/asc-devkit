@@ -2,9 +2,9 @@
 
 ## 功能说明
 
-头文件路径：`"tensor_api/experimental/utils/reg_enum.h"`。
+头文件路径：`"tensor_api/experimental/arch/vector/defs/reg_enum.h"`。
 
-`cast_round_mode`用于指定[cast](../type_conversion/cast.md)转换时的舍入方式。
+`cast_round_mode`用于指定[cast](../register_convert/cast.md)转换时的舍入方式。
 
 ## 类型定义
 
@@ -34,4 +34,4 @@ enum class cast_round_mode {
 | odd | 向最近的奇数舍入。当前仅`float`转换为`half`时支持。 |
 | hybrid | 混合舍入。当前用于`float`或`half`转换为`hifloat8_t`。 |
 
-舍入模式的具体行为和类型组合支持范围请参考[舍入模式与饱和模式](../type_conversion/rounding_mode.md)以及[cast的数据类型说明](../type_conversion/cast.md#数据类型)。
+舍入模式的具体行为和类型组合支持范围请参考[舍入模式与饱和模式](../register_convert/rounding_mode.md)以及[cast的数据类型说明](../register_convert/cast.md#数据类型)。

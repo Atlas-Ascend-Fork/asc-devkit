@@ -1,0 +1,151 @@
+# interleave
+
+## 产品支持情况
+
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：不支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：不支持
+<!-- end id3 -->
+<!-- npu="310b" id4 -->
+- Atlas 200I/500 A2推理产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品AI Core：不支持
+<!-- end id5 -->
+<!-- npu="310p" id6 -->
+- Atlas推理系列产品Vector Core：不支持
+<!-- end id6 -->
+<!-- npu="910" id7 -->
+- Atlas训练系列产品：不支持
+<!-- end id7 -->
+
+## 功能说明
+
+头文件路径为 `"tensor_api/experimental/arch/vector/compute/register_permute_select.h"`，命名空间为 `asc::te::experimental`。
+
+### 矢量数据寄存器交织模式
+
+给定源操作数寄存器src0和src1，将src0和src1中的元素交织存入结果操作数dst0和dst1中。交织排列方式如下图所示，其中每个方格代表一个元素：
+
+![Interleave示意图](../../../../figures/reg_reginterleave.png)
+
+### 掩码寄存器交织模式
+
+将两个`reg_tensor<bool>`寄存器的reg按`DataType`对应的元素宽度交织，并将交织结果的低半部分和高半部分分别保存在返回值的`first`和`second`中。
+
+对于b8、b16和b32数据类型，接口分别以1 bit、2 bit和4 bit为一组进行交织。`src0`和`src1`前半部分的分组依次交替写入`first.reg`，后半部分的分组依次交替写入`second.reg`。
+
+## 函数原型
+
+### 矢量数据寄存器交织模式
+
+```cpp
+template <typename T>
+__simd_callee__ inline reg_pair<T> interleave(reg_tensor<T> src0, reg_tensor<T> src1);
+```
+
+### 掩码寄存器交织模式
+
+```cpp
+template <typename DataType>
+__simd_callee__ inline reg_pair<bool> interleave(
+    reg_tensor<bool> src0, reg_tensor<bool> src1);
+```
+
+## 参数说明
+
+### 矢量数据寄存器交织模式
+
+**表1** 模板参数说明（操作数为矢量数据寄存器）
+
+| 参数名 | 描述 |
+| --- | --- |
+| T | 目的操作数和源操作数的数据类型。支持的数据类型请参考[数据类型](#数据类型)。 |
+
+**表2** 函数参数说明（操作数为矢量数据寄存器）
+
+| 参数名 | 输入/输出 | 描述 |
+| --- | --- | --- |
+| src0<br>src1 | 输入 | 源操作数。<br>类型为[reg_tensor](../register_tensor/reg_tensor.md)。 |
+
+### 掩码寄存器交织模式
+
+**表3** 函数参数说明（操作数为掩码寄存器）
+
+| 参数名 | 输入/输出 | 描述 |
+| --- | --- | --- |
+| DataType | 输入 | 模板参数，用于确定Mask的元素分组宽度，支持b8、b16和b32数据类型。 |
+| src0 | 输入 | 第一个源Mask寄存器，类型为`reg_tensor<bool>`，必须保证其`reg`成员已初始化。 |
+| src1 | 输入 | 第二个源Mask寄存器，类型为`reg_tensor<bool>`，必须保证其`reg`成员已初始化。 |
+
+## 数据类型
+
+支持的数据类型为：int8_t、uint8_t、fp8_e4m3fn_t、fp8_e8m0_t、fp8_e5m2_t、hifloat8_t、int16_t、uint16_t、half、bfloat16_t、int32_t、uint32_t、float。
+
+## 返回值说明
+
+### 矢量数据寄存器交织模式
+
+返回 `reg_pair<T>`，由两个 `reg_tensor<T>` 组成，分别存放交织后的结果值。返回值的 `mask` 是和数据类型T相关的满mask。
+
+### 掩码寄存器交织模式
+
+返回`reg_pair<bool>`：
+
+- `first.reg`保存交织结果的低半部分。
+- `second.reg`保存交织结果的高半部分。
+
+`first.mask`和`second.mask`均为和数据类型DataType相关的满mask。
+
+## 约束说明
+
+### 矢量数据寄存器交织模式
+
+- src0、src1的数据类型需要保持一致。
+- src0和src1可以为同一个reg_tensor。
+
+### 掩码寄存器交织模式
+
+- `src0`和`src1`可以是同一个`reg_tensor<bool>`对象。
+- 本接口应在Vector Function（`__simd_vf__`标记的函数）内调用。
+- Mask寄存器数量上限为8。超出限制上限的寄存器数据会写入预留的8K UB内存中，可能引起性能劣化。
+
+## 调用示例
+
+### 矢量数据寄存器交织模式
+
+```cpp
+template <typename Src0TensorType, typename Src1TensorType, typename Dst0TensorType, typename Dst1TensorType>
+__simd_vf__ inline void data_interleave_vf(
+    Src0TensorType src0_tensor, Src1TensorType src1_tensor, Dst0TensorType dst0_tensor, Dst1TensorType dst1_tensor,
+    uint32_t repeat_times, uint32_t one_repeat_size)
+{
+    for (uint16_t i = 0; i < repeat_times; ++i) {
+        uint32_t offset = i * one_repeat_size;
+        const auto coord = asc::te::make_coord(offset);
+        auto src0_reg = asc::te::experimental::load(src0_tensor, coord);
+        auto src1_reg = asc::te::experimental::load(src1_tensor, coord);
+        auto result = asc::te::experimental::interleave(src0_reg, src1_reg);
+        asc::te::experimental::store(dst0_tensor, coord, result.first);
+        asc::te::experimental::store(dst1_tensor, coord, result.second);
+    }
+}
+```
+
+### 掩码寄存器交织模式
+
+```cpp
+auto mask0 = asc::te::experimental::make_mask<
+    asc::te::experimental::mask_pattern::every3, float>();
+auto mask1 = asc::te::experimental::make_mask<
+    asc::te::experimental::mask_pattern::every4, float>();
+
+auto result = asc::te::experimental::interleave<float>(mask0, mask1);
+asc::te::experimental::reg_tensor<bool> lowMask = result.first;
+asc::te::experimental::reg_tensor<bool> highMask = result.second;
+```

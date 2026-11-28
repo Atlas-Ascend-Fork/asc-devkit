@@ -2,9 +2,9 @@
 
 ## 功能说明
 
-头文件路径：`"tensor_api/experimental/utils/reg_enum.h"`。
+头文件路径：`"tensor_api/experimental/arch/vector/defs/reg_enum.h"`。
 
-`cast_sat_mode`用于指定[cast](../type_conversion/cast.md)转换时是否采用饱和模式。
+`cast_sat_mode`用于指定[cast](../register_convert/cast.md)转换时是否采用饱和模式。
 
 ## 类型定义
 
@@ -24,4 +24,4 @@ enum class cast_sat_mode {
 | not_sat | 不饱和模式。超出范围时按目的格式截断，或保留浮点格式支持的特殊值。 |
 | sat | 饱和模式。超出范围时将结果钳位到目的类型边界。 |
 
-不同类型转换的具体行为请参考[舍入模式与饱和模式](../type_conversion/rounding_mode.md)以及[cast的饱和与非饱和模式](../type_conversion/cast.md#饱和与非饱和模式)。
+不同类型转换的具体行为请参考[舍入模式与饱和模式](../register_convert/rounding_mode.md)以及[cast的饱和与非饱和模式](../register_convert/cast.md#饱和与非饱和模式)。

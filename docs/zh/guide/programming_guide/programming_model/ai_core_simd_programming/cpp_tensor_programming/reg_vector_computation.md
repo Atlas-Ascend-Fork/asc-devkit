@@ -387,11 +387,11 @@ copy用于tensor之间的数据搬运，load和store分别将数据从UB tensor�
 
 [slice](../../../../../api/SIMD-API/tensor_api/tensor/slice.md)用于创建共享底层存储的子tensor。子tensor是原tensor所描述的数据区域的子视图，不会复制数据。为同一段内存构造不同的布局视图，也不会执行转置或数据重排。对于复杂布局，应分别确认逻辑坐标映射和具体搬运接口的支持范围，不能将任意layout直接视为寄存器内的数据排列。
 
-[reg_tensor](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_tensor/reg_tensor.md)是具有值语义的矢量寄存器轻量级封装。`reg_tensor<T>`包含两个成员：`reg`保存与架构相关的寄存器数据，`mask`保存与数据关联的有效元素掩码。计算接口可读取对象携带的掩码，无需在每次调用时重复传入。
+[reg_tensor](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_tensor/reg_tensor.md)是具有值语义的矢量寄存器轻量级封装。`reg_tensor<T>`包含两个成员：`reg`保存与架构相关的寄存器数据，`mask`保存与数据关联的有效元素掩码。计算接口可读取对象携带的掩码，无需在每次调用时重复传入。
 
 其中，`reg_tensor<bool>`的`reg`和`mask`均为掩码寄存器，但用途不同：`reg`可以记录比较结果或掩码生成结果；`mask`描述对象自身关联的有效元素。`with_mask(maskReg)`将`maskReg.reg`绑定到当前对象的`mask`。应区分比较结果与计算有效范围，不能混用两者。
 
-[reg_pair](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_tensor/reg_pair.md)包含`first`和`second`两个寄存器对象，用于承接部分接口的成对结果。
+[reg_pair](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_tensor/reg_pair.md)包含`first`和`second`两个寄存器对象，用于承接部分接口的成对结果。
 
 ### 设计特性
 
@@ -420,7 +420,7 @@ auto dst = src0 + src1;
 auto scaled = (x_reg + 0.044715f * 3.0f) * (-1.595769f);
 ```
 
-除运算符外，接口还通过命名函数表达其他计算能力。例如，[add_carry](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/basic_arithmetic/add_carry.md)和[sub_carry](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/basic_arithmetic/sub_carry.md)返回`reg_pair<T, bool>`，分别承载算术结果及进位或无借位标志。
+除运算符外，接口还通过命名函数表达其他计算能力。例如，[add_carry](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_arith/add_carry.md)和[sub_carry](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_arith/sub_carry.md)返回`reg_pair<T, bool>`，分别承载算术结果及进位或无借位标志。
 
 #### 掩码内嵌：通过with_mask绑定有效元素范围
 
@@ -443,7 +443,7 @@ auto src1 = asc::te::experimental::load(src1_tensor, asc::te::make_coord(offset)
 auto dst = src0 + src1;
 ```
 
-上述加法使用`src0.mask`控制有效元素，并将该掩码保存在`dst.mask`中，无需单独传入掩码参数。不同接口的掩码来源和返回规则可能不同；计算链中的有效范围发生变化时，应重新绑定适用的掩码。详细规则参见[mask的用法](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/mask_reg_compute/mask_usage.md)。
+上述加法使用`src0.mask`控制有效元素，并将该掩码保存在`dst.mask`中，无需单独传入掩码参数。不同接口的掩码来源和返回规则可能不同；计算链中的有效范围发生变化时，应重新绑定适用的掩码。详细规则参见[mask的用法](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_mask/mask_usage.md)。
 
 #### 复合表达式：组合多步寄存器计算
 
@@ -490,7 +490,7 @@ auto dst_ub = make_tensor(make_mem_ptr(buffer + dst_offset), layout);
 
 #### 编写VF内的矢量计算
 
-[reg_tensor](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_tensor/reg_tensor.md)封装寄存器数据`reg`和选择有效元素的`mask`，不同于描述内存位置和布局的tensor。以下函数接收计算用的一维UB tensor，在一个寄存器块内完成加法。
+[reg_tensor](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_tensor/reg_tensor.md)封装寄存器数据`reg`和选择有效元素的`mask`，不同于描述内存位置和布局的tensor。以下函数接收计算用的一维UB tensor，在一个寄存器块内完成加法。
 
 ```cpp
 template <typename Src0TensorType, typename Src1TensorType, typename DstTensorType>
@@ -507,9 +507,9 @@ __simd_vf__ inline void compute_add(Src0TensorType src0_tensor, Src1TensorType s
 }
 ```
 
-1. **搬入**：[load](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_data_load/load.md)根据tensor布局和`coord`确定UB起始地址，返回寄存器数据，但不初始化结果的`mask`。使用[all_mask](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/mask_reg_compute/all_mask.md)创建与元素类型匹配的全有效掩码，再用`with_mask`绑定到寄存器对象。
-2. **计算**：[operator+](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/basic_arithmetic/operator_add.md)逐元素相加。对于示例中的两个寄存器操作数，左操作数的掩码控制参与计算的位置，结果保留该掩码。其他接口的掩码规则以各自的API参考为准。
-3. **搬出**：[store](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_data_store/store.md)根据目的tensor和坐标确定写入位置。示例使用默认的直接搬出模式，由结果寄存器的`mask`控制写回哪些元素。
+1. **搬入**：[load](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_load/load.md)根据tensor布局和`coord`确定UB起始地址，返回寄存器数据，但不初始化结果的`mask`。使用[all_mask](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_mask/all_mask.md)创建与元素类型匹配的全有效掩码，再用`with_mask`绑定到寄存器对象。
+2. **计算**：[operator+](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_arith/operator_add.md)逐元素相加。对于示例中的两个寄存器操作数，左操作数的掩码控制参与计算的位置，结果保留该掩码。其他接口的掩码规则以各自的API参考为准。
+3. **搬出**：[store](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_store/store.md)根据目的tensor和坐标确定写入位置。示例使用默认的直接搬出模式，由结果寄存器的`mask`控制写回哪些元素。
 
 `load(...).with_mask(...)`先执行搬入，再设置寄存器掩码。**后设置的掩码不会限制这次`load`的实际读取范围**，不能用它代替地址对齐、坐标和缓冲区访问范围检查。
 
@@ -540,15 +540,15 @@ copy_out_mutex.unlock();
 
 - `make_copy`按通路构造搬运Atom，再通过`copy(atom, dst, src)`执行[GM到UB搬运](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/vector_compute_load/copy_gm_to_ub.md)或[UB到GM搬运](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/vector_compute_store/copy_ub_to_gm.md)。VF向`dst_ub`写入结果，搬出阶段直接从该Tensor读取结果。
 - 三段代码使用相同的锁ID，通过[mutex](../../../../../api/SIMD-API/tensor_api/sync/mutex.md)交接UB缓冲区：V流水等待输入搬入完成，MTE3流水等待结果写回UB。
-- 若VF内部另有对同一段UB内存的访存依赖，例如写回后再次读取，可按具体流水依赖使用[mem_bar](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_sync_control/mem_bar.md)。它不是MTE流水同步的替代接口。
+- 若VF内部另有对同一段UB内存的访存依赖，例如写回后再次读取，可按具体流水依赖使用[mem_bar](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_sync/mem_bar.md)。它不是MTE流水同步的替代接口。
 
 #### 扩展到多块和尾块
 
 待处理数据超过一个寄存器块时，在VF中按每块可处理的元素数递增坐标，循环执行搬入、计算和搬出。[abs_diff样例](../../../../../../../examples/01_simd_cpp_api/07_tensor_api/experimental/reg_vector_compute/abs_diff/README.md)的一维场景处理96个`float`元素：第一块处理64个元素，第二块处理剩余32个元素。
 
-- 在循环外将`remain`初始化为待处理元素总数。每轮调用一次[update_mask](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/mask_reg_compute/update_mask.md)，根据当前剩余元素数生成掩码，并更新`remain`。同一轮的两个输入复用该掩码，不要为每个输入分别调用一次。
+- 在循环外将`remain`初始化为待处理元素总数。每轮调用一次[update_mask](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_mask/update_mask.md)，根据当前剩余元素数生成掩码，并更新`remain`。同一轮的两个输入复用该掩码，不要为每个输入分别调用一次。
 - 每轮根据当前块的起始坐标搬入输入，将该轮掩码绑定到寄存器后再计算和写回。尾块掩码只控制使用掩码的操作；仍要分别核对寄存器搬入、寄存器搬出以及GM与UB之间搬运的对齐、有效长度和缓冲区范围。
-- 对二维数据，可以按布局使用行、列坐标定位各行的计算起点，见同一样例的二维场景。需要处理不满足默认对齐约束的UB访存时，参考[unalign_load](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_data_load/unalign_load.md)和[unalign_store](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_data_store/unalign_store.md)，不要仅通过修改掩码来处理地址不对齐。
+- 对二维数据，可以按布局使用行、列坐标定位各行的计算起点，见同一样例的二维场景。需要处理不满足默认对齐约束的UB访存时，参考[unalign_load](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_load/unalign_load.md)和[unalign_store](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_store/unalign_store.md)，不要仅通过修改掩码来处理地址不对齐。
 
 以下VF片段摘自该样例的一维场景。`one_repeat_size`为单个寄存器块的元素数，`repeat_times`为向上取整后的块数，`total`为待计算的总元素数。外层还需准备满足搬运约束的UB缓冲区及对应Tensor。
 
@@ -596,7 +596,7 @@ asc::te::experimental::mem_bar<
     asc::te::experimental::mem_type::vec_load>();
 ```
 
-同步应插入在产生依赖的前一操作之后、后续访问之前。对于无地址重叠或仅存在寄存器数据依赖的计算，不要为了代码顺序额外插入同步；具体支持的流水类型和使用限制以[mem_bar](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_sync_control/mem_bar.md)及[mutex](../../../../../api/SIMD-API/tensor_api/sync/mutex.md)的API参考为准。
+同步应插入在产生依赖的前一操作之后、后续访问之前。对于无地址重叠或仅存在寄存器数据依赖的计算，不要为了代码顺序额外插入同步；具体支持的流水类型和使用限制以[mem_bar](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_sync/mem_bar.md)及[mutex](../../../../../api/SIMD-API/tensor_api/sync/mutex.md)的API参考为准。
 
 ### 性能与编程约束
 
@@ -635,7 +635,7 @@ VF融合并非越大越好。过度融合会增加同时存活的`reg_tensor`、
 
 #### 优先使用满足约束的对齐搬运
 
-满足地址、长度和布局约束时，优先使用对齐搬运。非对齐搬运适用于确实无法满足对齐条件的连续数据访问，但通常需要额外的临时状态和后处理，循环组织也更复杂。不能仅通过给寄存器绑定尾块掩码来解决地址不对齐问题；应根据实际地址和访问范围选择对应的非对齐接口，并将初始化和后处理尽量移到循环外。具体约束参见[unalign_load](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_data_load/unalign_load.md)和[unalign_store](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/reg_data_store/unalign_store.md)。
+满足地址、长度和布局约束时，优先使用对齐搬运。非对齐搬运适用于确实无法满足对齐条件的连续数据访问，但通常需要额外的临时状态和后处理，循环组织也更复杂。不能仅通过给寄存器绑定尾块掩码来解决地址不对齐问题；应根据实际地址和访问范围选择对应的非对齐接口，并将初始化和后处理尽量移到循环外。具体约束参见[unalign_load](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_load/unalign_load.md)和[unalign_store](../../../../../api/SIMD-API/tensor_api/reg_vector_compute/register_store/unalign_store.md)。
 
 #### 复用Tensor和布局描述
 

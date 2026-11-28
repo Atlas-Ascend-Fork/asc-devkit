@@ -29,7 +29,7 @@ Tensor API提供基于Tensor的数据搬运、矩阵计算和矢量计算能力�
 - [数据搬运](data_move/data_move.md)：介绍多种数据搬运通路，包括Global Memory与Unified Buffer（UB）之间的双向搬运，Global Memory到L1 Buffer的搬运等。
 - [矩阵计算](matrix_compute/matrix_compute.md)：介绍矩阵数据搬入、矩阵乘加、矩阵结果搬出和相关关键特性。
 - [Cube数据填充](matrix_compute/cube_data_fill/cube_data_fill.md)：介绍矩阵计算前的L1物理块初始化能力。
-- [reg矢量计算](reg_vector_compute/reg_vector_compute.md)：介绍矢量计算的搬入、矢量计算的搬出、寄存器数据搬入搬出、Mask寄存器计算和类型转换。
+- [Reg矢量计算](reg_vector_compute/reg_vector_compute.md)：介绍矢量计算的搬入、矢量计算的搬出、寄存器数据搬入搬出、Mask寄存器计算和类型转换。
 - [工具接口](utils/tool_functions.md)：介绍编译期整数、维度保留标记、Layout Pattern查询、类型判断、调试打印以及系统变量查询等工具接口的使用方式。
 - [特殊寄存器](special_register/special_register.md)：介绍饱和控制和squeeze状态查询接口。
 - [标量计算](scalar_compute/scalar_compute.md)：介绍标量位运算和标量GM读写接口。
