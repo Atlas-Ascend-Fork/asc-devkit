@@ -20,6 +20,7 @@ CURRENT_DIR=$(dirname $(readlink -f ${BASH_SOURCE[0]}))
 BUILD_DIR=${CURRENT_DIR}/build
 OUTPUT_DIR=${CURRENT_DIR}/build_out
 CANN_3RD_LIB_PATH=${BUILD_DIR}
+ENABLE_MOD_EXT=OFF
 USER_ID=$(id -u)
 CPU_NUM=$(($(cat /proc/cpuinfo | grep "^processor" | wc -l)))
 THREAD_NUM=32
@@ -162,6 +163,10 @@ parse_cmake_extra_args() {
             "ENABLE_BUILD_DEVICE")
                 ENABLE_BUILD_DEVICE="$value"
                 echo "Set ENABLE_BUILD_DEVICE to ${ENABLE_BUILD_DEVICE}."
+                ;;
+            "ENABLE_MOD_EXT")
+                ENABLE_MOD_EXT="$value"
+                echo "Set ENABLE_MOD_EXT to ${ENABLE_MOD_EXT}."
                 ;;
             "USE_CXX11_ABI")
                 USE_CXX11_ABI="$value"
@@ -800,6 +805,8 @@ main() {
   if [ "${PKG}" == "true" ];then
     CUSTOM_OPTION="${CUSTOM_OPTION} -DPACKAGE_OPEN_PROJECT=ON"
   fi
+
+  CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_MOD_EXT=${ENABLE_MOD_EXT}"
 
   if [ -n "${CANN_3RD_LIB_PATH}" ];then
     CUSTOM_OPTION="${CUSTOM_OPTION} -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"

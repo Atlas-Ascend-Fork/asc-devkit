@@ -140,6 +140,7 @@ endif()
 
 # mc2_client 硬依赖 libasccomm_aicpu.so，须随消费者交付到顶层 lib64；-DASC_COMM_AICPU_SO 可指定预编译件。
 set(ASC_COMM_AICPU_SO "" CACHE PATH "Prebuilt libasccomm_aicpu.so to deliver under top-level lib64")
+option(ENABLE_MOD_EXT "Enable modular-extension build components" OFF)
 if(NOT ASC_COMM_AICPU_SO)
     set(_asc_comm_aicpu_out "${CMAKE_BINARY_DIR}/package-aicpu-device/asc-comm-build/libasccomm_aicpu.so")
     # The device sub-project resolves cann-cmake itself; prefer the devkit-resolved
@@ -149,7 +150,7 @@ if(NOT ASC_COMM_AICPU_SO)
     else()
         set(_asc_comm_toolchain_file "-DCMAKE_TOOLCHAIN_FILE=${CANN_CMAKE_DIR}/toolchain/aarch64-hcc-toolchain.cmake")
     endif()
-    if(NOT EXISTS "${_asc_comm_aicpu_out}" AND EXISTS "${ASC_COMM_SOURCE_PATH}/cmake/device/CMakeLists.txt"
+    if(NOT ENABLE_MOD_EXT AND NOT EXISTS "${_asc_comm_aicpu_out}" AND EXISTS "${ASC_COMM_SOURCE_PATH}/cmake/device/CMakeLists.txt"
         AND ASCEND_CANN_PACKAGE_PATH)
         include(ExternalProject)
         # Mirror the superbuild's device-pass -I set (CANN arch/toplevel, runtime
