@@ -34,7 +34,7 @@ hifloat8_t的数据格式、取值范围和转换规则请参见[内置数据类
 
 当L0C Buffer中的float结果需要输出为hifloat8_t时，Matmul可通过Fixpipe在结果搬出过程中完成`float -> hifloat8_t`转换。该方式将类型转换与L0C Buffer到Global Memory的数据搬运合并，无需将矩阵乘结果先搬运到Global Memory，再搬运到UB进行量化计算。
 
-使用同一量化系数时，Host侧通过[SetDequantType](../../../../api/SIMD-API/adv_api/cube_compute/Matmul_Tiling/SetDequantType.md)配置`DequantType::SCALAR`，Kernel侧在`Iterate`或`IterateAll`前调用[SetQuantScalar](../../../../api/SIMD-API/adv_api/cube_compute/Matmul_Kernel/SetQuantScalar.md)。输出采用`QF322HIF8_PRE`量化模式，采用Half to Away Round方式量化。量化系数不能为Inf、NaN或非规格化数。
+使用同一量化系数时，Host侧通过[SetDequantType](../../../../api/SIMD-API/adv_api/cube_compute/Matmul_Tiling/SetDequantType.md)配置`DequantType::SCALAR`，核函数（Kernel）侧在`Iterate`或`IterateAll`前调用[SetQuantScalar](../../../../api/SIMD-API/adv_api/cube_compute/Matmul_Kernel/SetQuantScalar.md)。输出采用`QF322HIF8_PRE`量化模式，采用Half to Away Round方式量化。量化系数不能为Inf、NaN或非规格化数。
 
 【反例】先将float结果写回Global Memory，再搬运到UB进行量化计算，会增加一次float矩阵写入、一次float矩阵读取和一次hifloat8_t矩阵写入。
 
@@ -57,7 +57,7 @@ tiling.SetDequantType(DequantType::SCALAR);
 
 ### 创建Matmul对象
 
-Kernel侧创建Matmul对象时，通过`MatmulType`配置A、B、C矩阵的数据类型，并与Tiling配置保持一致。以下代码省略了矩阵切分和地址偏移等通用实现。
+核函数（Kernel）侧创建Matmul对象时，通过`MatmulType`配置A、B、C矩阵的数据类型，并与Tiling配置保持一致。以下代码省略了矩阵切分和地址偏移等通用实现。
 
 ```cpp
 AscendC::Matmul<

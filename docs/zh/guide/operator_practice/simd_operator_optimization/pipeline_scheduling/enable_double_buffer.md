@@ -68,7 +68,7 @@ t2时，Ping中的输入区和输出区相互独立，因此数据块2搬入和�
 
 ### C API：基于指针的编程方式
 
-采用基于指针的C语言编程方式时，Double Buffer不是单一开关，需要在Kernel中手动申请Ping和Pong两组UB缓冲区，根据数据块序号交替选择缓冲区，并使用[asc_lock](../../../../api/SIMD-API/c_api/sync/intra_core_sync/asc_lock.md)和[asc_unlock](../../../../api/SIMD-API/c_api/sync/intra_core_sync/asc_unlock.md)接口约束同一缓冲区的读取、写入和再次复用。
+采用基于指针的C语言编程方式时，Double Buffer不是单一开关，需要在核函数（Kernel）中手动申请Ping和Pong两组Unified Buffer（UB）缓冲区，根据数据块序号交替选择缓冲区，并使用[asc_lock](../../../../api/SIMD-API/c_api/sync/intra_core_sync/asc_lock.md)和[asc_unlock](../../../../api/SIMD-API/c_api/sync/intra_core_sync/asc_unlock.md)接口约束同一缓冲区的读取、写入和再次复用。
 
 下面直接摘录[融合向量计算Double Buffer样例源码](../../../../../../examples/02_simd_c_api/02_features/01_reg_vector_compute/00_add_double_buffer/add_double_buffer.asc)中的`fused_compute_vf`、`add_baseline`和`add_double_buffer`函数，函数名、参数、计算和流水调度均与样例一致。本节适用于Ascend 950PR&950DT系列产品。头文件、编译期常量和Host启动代码见[样例说明](../../../../../../examples/02_simd_c_api/02_features/01_reg_vector_compute/00_add_double_buffer/README.md)，此处代码需结合完整样例使用。
 
@@ -272,7 +272,7 @@ __vector__ __global__ void add_double_buffer(__gm__ uint8_t* x, __gm__ uint8_t* 
 - 输入Mutex ID 0/1分别保护Ping/Pong的`x/y`，输出Mutex ID 2/3分别保护Ping/Pong的`z`。
 - 再次搬入同组输入前，MTE2等待上次Vector读取完成；再次计算同组输出前，Vector等待上次MTE3搬出完成。
 - 输入和输出使用独立子缓冲区，同组输入搬入和输出搬出可重叠；缓冲区容量、搬运长度和尾块处理使用样例中的常量与配置。
-- Kernel退出前通过`asc_sync_pipe(PIPE_ALL)`等待所有流水操作完成。
+- 核函数（Kernel）退出前通过`asc_sync_pipe(PIPE_ALL)`等待所有流水操作完成。
 
 <!-- end id1 -->
 

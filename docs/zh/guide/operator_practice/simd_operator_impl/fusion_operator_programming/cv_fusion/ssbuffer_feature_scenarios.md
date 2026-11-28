@@ -288,7 +288,7 @@ __aicore__ inline void receive_messages(__ssbuf__ SsbufWorkspace* workspace, __g
 
 ### Kernel入口
 
-Kernel使用`__mix__(1, 2)`执行空间限定符，表示每个核函数执行组合包含1个AIC和2个AIV。`ASC_IS_AIC`和`ASC_IS_AIV`将两侧代码隔离开。
+核函数（Kernel）使用`__mix__(1, 2)`执行空间限定符，表示每个核函数执行组合包含1个AIC和2个AIV。`ASC_IS_AIC`和`ASC_IS_AIV`将两侧代码隔离开。
 
 ```cpp
 // __global__表示Kernel入口，__mix__(1, 2)表示启动1个AIC和2个AIV，__gm__表示参数指向GM。

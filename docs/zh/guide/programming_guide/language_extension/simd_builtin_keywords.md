@@ -330,7 +330,7 @@
         __gm__ uint8_t* tilingGm);
     ```
 
-    -   workspace参数使用`__kfc_workspace__`修饰，表示Host侧申请并传入的系统workspace。Kernel侧注册Matmul对象时，通过`GetSysWorkSpacePtr()`将该workspace传递给`REGIST_MATMUL_OBJ`。
+    -   workspace参数使用`__kfc_workspace__`修饰，表示Host侧申请并传入的系统workspace。核函数（Kernel）侧注册Matmul对象时，通过`GetSysWorkSpacePtr()`将该workspace传递给`REGIST_MATMUL_OBJ`。
     -   `__kfc_workspace__`仅适用于使用Matmul高阶API的场景，且通过`__mix__(1, 2)`或`__mix__(1, 1)`声明的算子，即Cube核与Vector核的比例为1:2或1:1。
 
 ## 地址空间限定符<a name="section1624210295308"></a>

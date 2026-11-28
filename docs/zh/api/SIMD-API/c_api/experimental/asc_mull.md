@@ -129,7 +129,7 @@ bisheng -DCANN_ASC_USE_EXPERIMENTAL example.asc -o main --npu-arch=dav-3510 && .
 ```
 <!-- end id8 -->
 
-本示例处理128个`uint32_t`元素，单次Repeat处理64个元素。Kernel计算`one_repeat_size`和`repeat_time`后，使用`asc_vf_call`启动Vector Function，通过`for`循环完成两次长乘计算。
+本示例处理128个`uint32_t`元素，单次Repeat处理64个元素。核函数（Kernel）计算`one_repeat_size`和`repeat_time`后，使用`asc_vf_call`启动Vector Function，通过`for`循环完成两次长乘计算。
 
 ```cpp
 #include <cstdint>

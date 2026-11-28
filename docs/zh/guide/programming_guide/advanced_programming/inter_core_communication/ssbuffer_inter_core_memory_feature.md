@@ -239,7 +239,7 @@ if ASCEND_IS_AIC {
 }
 ```
 
-该片段只表达消息交接；完整Kernel还需进行控制状态初始化、输出区域分配及必要的收尾同步。完整工程组织与多消息通信可参考[SSBuffer AIV/AIC通信基础 API样例](../../../../../../examples/01_simd_cpp_api/05_best_practices/03_fusion_compute/ssbuf_aiv_aic_comm/README.md)，使用C API的实现可参考[SSBuffer AIV/AIC通信C API样例](../../../../../../examples/02_simd_c_api/05_best_practices/03_fusion_compute/ssbuf_aiv_aic_comm)。
+该片段只表达消息交接；完整核函数（Kernel）还需进行控制状态初始化、输出区域分配及必要的收尾同步。完整工程组织与多消息通信可参考[SSBuffer AIV/AIC通信基础 API样例](../../../../../../examples/01_simd_cpp_api/05_best_practices/03_fusion_compute/ssbuf_aiv_aic_comm/README.md)，使用C API的实现可参考[SSBuffer AIV/AIC通信C API样例](../../../../../../examples/02_simd_c_api/05_best_practices/03_fusion_compute/ssbuf_aiv_aic_comm)。
 
 ### 连续消息的初始化、发布和确认
 

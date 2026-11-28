@@ -86,7 +86,7 @@ __global__ __vector__ void asc_add_kernel(__gm__ float* dst, __gm__ float* src0,
 
 | 接口名称 | 接口描述 | 最细粒度公共头文件 |
 | --- | --- | --- |
-| [asc_vf_call](vf_call/asc_vf_call.md) | 在Kernel中启动Vector Function（VF）子任务，VF函数内可调用Reg矢量计算C API。 | `utils/base/helpers.h` |
+| [asc_vf_call](vf_call/asc_vf_call.md) | 在核函数（Kernel）中启动Vector Function（VF）子任务，VF函数内可调用Reg矢量计算C API。 | `utils/base/helpers.h` |
 
 ### Reg数据搬入
 

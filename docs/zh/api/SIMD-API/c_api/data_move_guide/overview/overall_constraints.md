@@ -99,7 +99,7 @@ asc_sync_wait(PIPE_MTE2, PIPE_V, EVENT_ID0);
 
 ## 初始化与配置状态
 
-- Kernel入口建议先调用[asc_init](../../utils/sys_init/asc_init.md)，清理可能由前序任务保留的控制状态。
+- 核函数（Kernel）入口建议先调用[asc_init](../../utils/sys_init/asc_init.md)，清理可能由前序任务保留的控制状态。
 - Padding、循环、Nz格式转换、量化、激活和矩阵三维搬运等配置接口会影响后续搬运指令。复用配置前，应确认所有相关字段均已按当前任务更新。
 - 多核可能读取同一块GM且该数据可能被其他核更新时，应在NDDMA前按[asc_ndim_copy_dci](../../vector_datamove/asc_ndim_copy_dci.md)要求刷新NDDMA DataCache。
 

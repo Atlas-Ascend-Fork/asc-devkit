@@ -46,7 +46,7 @@ version_changes: []
 
 头文件路径为：`"utils/base/helpers.h"`。
 
-在SIMD C API编程场景下使用。用于在Kernel中启动Vector Function（VF）子任务，VF函数内可调用Reg矢量计算C API完成寄存器级搬运和计算。
+在SIMD C API编程场景下使用。用于在核函数（Kernel）中启动Vector Function（VF）子任务，VF函数内可调用Reg矢量计算C API完成寄存器级搬运和计算。
 
 ## 函数原型
 

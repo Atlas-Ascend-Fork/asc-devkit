@@ -139,7 +139,7 @@ bisheng -DCANN_ASC_USE_EXPERIMENTAL example.asc -o main --npu-arch=dav-3510 && .
 ```
 <!-- end id10 -->
 
-本示例处理两组各128个`float`元素，单次Repeat分别读取两个源寄存器各64个元素。Kernel计算`one_repeat_size`和`repeat_time`后，使用`asc_vf_call`启动Vector Function，循环执行两次解交织，Host按每次Repeat的范围生成预期结果。
+本示例处理两组各128个`float`元素，单次Repeat分别读取两个源寄存器各64个元素。核函数（Kernel）计算`one_repeat_size`和`repeat_time`后，使用`asc_vf_call`启动Vector Function，循环执行两次解交织，Host按每次Repeat的范围生成预期结果。
 
 ```cpp
 #include <cstdint>
