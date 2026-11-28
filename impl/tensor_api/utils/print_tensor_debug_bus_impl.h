@@ -28,7 +28,7 @@ namespace asc {
 namespace te {
 namespace detail {
 
-#if defined(__DAV_CUBE__) && (__NPU_ARCH__ == 3510)
+#if defined(__DAV_CUBE__) && (__NPU_ARCH__ == 3510 || __NPU_ARCH__ == 9201)
 constexpr uint32_t bits_per_byte = 8U;
 constexpr uint32_t bits_per_byte_shift = 3U;
 constexpr uint32_t bits_per_byte_mask = 7U;

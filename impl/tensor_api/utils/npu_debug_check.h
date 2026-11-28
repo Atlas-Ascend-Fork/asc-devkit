@@ -49,7 +49,7 @@ __aicore__ inline constexpr bool is_copy_shape_valid(const ShapeType& shape)
 }
 
 template <typename LayoutType, typename CoordType>
-__aicore__ inline constexpr void debug_check_coord(
+__aicore__ inline void debug_check_coord(
     const tensor_api_assert_context& context, const LayoutType& layout, const CoordType& coord,
     __gm__ const char* api_name)
 {
@@ -59,7 +59,7 @@ __aicore__ inline constexpr void debug_check_coord(
 }
 
 template <typename ShapeType, typename CoordType>
-__aicore__ inline constexpr void debug_check_coord_shape(
+__aicore__ inline void debug_check_coord_shape(
     const tensor_api_assert_context& context, const ShapeType& shape, const CoordType& coord,
     __gm__ const char* api_name)
 {
@@ -74,7 +74,7 @@ __aicore__ inline constexpr void debug_check_coord_shape(
         TENSOR_API_REPORT_INTERNAL(report_tensor_layout_error<tensor_layout_error_kind::stride>, (value), name, api))
 
 template <typename LayoutType>
-__aicore__ inline constexpr void debug_check_layout(
+__aicore__ inline void debug_check_layout(
     const tensor_api_assert_context& context, const LayoutType& layout, __gm__ const char* tensor_name,
     __gm__ const char* api_name)
 {
@@ -85,8 +85,7 @@ __aicore__ inline constexpr void debug_check_layout(
 }
 
 template <typename LayoutType>
-__aicore__ inline constexpr void debug_check_make_tensor_shape(
-    const tensor_api_assert_context& context, const LayoutType& layout)
+__aicore__ inline void debug_check_make_tensor_shape(const tensor_api_assert_context& context, const LayoutType& layout)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
         context, (is_shape_valid(layout.shape())),
@@ -95,7 +94,7 @@ __aicore__ inline constexpr void debug_check_make_tensor_shape(
 }
 
 template <typename ShapeType, typename StrideType>
-__aicore__ inline constexpr void debug_check_make_tensor_shape(
+__aicore__ inline void debug_check_make_tensor_shape(
     const tensor_api_assert_context& context, const ShapeType& shape, const StrideType& stride)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -105,7 +104,7 @@ __aicore__ inline constexpr void debug_check_make_tensor_shape(
 }
 
 template <typename SrcTensorType, typename DstTensorType>
-__aicore__ inline constexpr void debug_check_copy_size(
+__aicore__ inline void debug_check_copy_size(
     const tensor_api_assert_context& context, const SrcTensorType& src, const DstTensorType& dst,
     __gm__ const char* api_name)
 {
@@ -114,7 +113,7 @@ __aicore__ inline constexpr void debug_check_copy_size(
 }
 
 template <typename ShapeType>
-__aicore__ inline constexpr void debug_check_copy_shape(
+__aicore__ inline void debug_check_copy_shape(
     const tensor_api_assert_context& context, const ShapeType& shape, __gm__ const char* api_name)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -125,7 +124,7 @@ __aicore__ inline constexpr void debug_check_copy_shape(
 }
 
 template <typename SrcLayout, typename DstLayout, typename SrcCoord, typename DstCoord, typename CopyShape>
-__aicore__ inline constexpr void debug_check_copy_region(
+__aicore__ inline void debug_check_copy_region(
     const tensor_api_assert_context& context, const SrcLayout& src_layout, const DstLayout& dst_layout,
     const SrcCoord& src_coord, const DstCoord& dst_coord, const CopyShape& copy_shape, __gm__ const char* api_name)
 {
@@ -149,7 +148,7 @@ __aicore__ inline constexpr void debug_check_copy_region(
 }
 
 template <typename SrcTensor, typename DstTensor, typename DstCoord, typename SrcCoord, typename CopyShape>
-__aicore__ inline constexpr void debug_check_copy_region_args(
+__aicore__ inline void debug_check_copy_region_args(
     const tensor_api_assert_context& context, const DstTensor& dst, const SrcTensor& src, const DstCoord& dst_coord,
     const SrcCoord& src_coord, const CopyShape& copy_shape, __gm__ const char* api_name)
 {
@@ -165,7 +164,7 @@ __aicore__ inline constexpr void debug_check_copy_region_args(
 }
 
 template <typename LayoutType, typename CoordType, typename InfoType>
-__aicore__ inline constexpr void debug_check_slice_args(
+__aicore__ inline void debug_check_slice_args(
     const tensor_api_assert_context& context, const LayoutType& layout, const CoordType& coord, const InfoType& info)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -183,7 +182,7 @@ __aicore__ inline constexpr void debug_check_slice_args(
 #undef TENSOR_API_DETAIL_CHECK_LAYOUT_STRIDE
 
 template <typename ParamsType>
-__aicore__ inline constexpr void debug_check_mmad_params(
+__aicore__ inline void debug_check_mmad_params(
     const tensor_api_assert_context& context, const ParamsType& params, bool disable_gemv, __gm__ const char* api_name)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -212,7 +211,7 @@ __aicore__ inline constexpr void debug_check_mmad_params(
 }
 
 template <typename ValueType>
-__aicore__ inline constexpr void debug_check_unit_flag(
+__aicore__ inline void debug_check_unit_flag(
     const tensor_api_assert_context& context, const ValueType& unit_flag, __gm__ const char* api_name)
 {
     const auto unit_flag_value = static_cast<uint8_t>(unit_flag);
@@ -227,7 +226,7 @@ __aicore__ inline constexpr void debug_check_unit_flag(
 }
 
 template <typename CountType>
-__aicore__ inline constexpr void debug_check_block_count(
+__aicore__ inline void debug_check_block_count(
     const tensor_api_assert_context& context, const CountType& block_count, __gm__ const char* value_name,
     __gm__ const char* api_name)
 {
@@ -240,7 +239,7 @@ __aicore__ inline constexpr void debug_check_block_count(
 }
 
 template <typename LengthType, typename MaxLengthType>
-__aicore__ inline constexpr void debug_check_block_len(
+__aicore__ inline void debug_check_block_len(
     const tensor_api_assert_context& context, const LengthType& block_len, const MaxLengthType& max_block_len,
     __gm__ const char* api_name)
 {
@@ -253,7 +252,7 @@ __aicore__ inline constexpr void debug_check_block_len(
 }
 
 template <typename ValueType, typename MaxValueType>
-__aicore__ inline constexpr void debug_check_block_limit(
+__aicore__ inline void debug_check_block_limit(
     const tensor_api_assert_context& context, const ValueType& value, const MaxValueType& max_value,
     __gm__ const char* value_name, __gm__ const char* api_name)
 {
@@ -266,7 +265,7 @@ __aicore__ inline constexpr void debug_check_block_limit(
 }
 
 template <typename StrideType, typename LengthType, typename CountType>
-__aicore__ inline constexpr void debug_check_gm2ub_stride(
+__aicore__ inline void debug_check_gm2ub_stride(
     const tensor_api_assert_context& context, const StrideType& dst_stride, const LengthType& block_len,
     const CountType& block_count, __gm__ const char* api_name)
 {
@@ -287,7 +286,7 @@ __aicore__ inline constexpr void debug_check_gm2ub_stride(
 }
 
 template <typename ElementType, typename PaddingType, typename StrideType, typename LengthType, typename CountType>
-__aicore__ inline constexpr void debug_check_gm2ub_padding(
+__aicore__ inline void debug_check_gm2ub_padding(
     const tensor_api_assert_context& context, const PaddingType& left_padding_count,
     const PaddingType& right_padding_count, const StrideType& dst_stride, const LengthType& block_len,
     const CountType& block_count, __gm__ const char* api_name)
@@ -323,7 +322,7 @@ __aicore__ inline constexpr void debug_check_gm2ub_padding(
 }
 
 template <typename StrideType, typename LengthType, typename CountType>
-__aicore__ inline constexpr void debug_check_ub2gm_stride(
+__aicore__ inline void debug_check_ub2gm_stride(
     const tensor_api_assert_context& context, const StrideType& src_stride, const LengthType& block_len,
     const CountType& block_count, __gm__ const char* api_name)
 {
@@ -340,7 +339,7 @@ __aicore__ inline constexpr void debug_check_ub2gm_stride(
 }
 
 template <typename BatchType>
-__aicore__ inline constexpr void debug_check_batch_count(
+__aicore__ inline void debug_check_batch_count(
     const tensor_api_assert_context& context, const BatchType& batch, __gm__ const char* api_name)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -352,7 +351,7 @@ __aicore__ inline constexpr void debug_check_batch_count(
 }
 
 template <typename SrcBatchType, typename DstBatchType>
-__aicore__ inline constexpr void debug_check_batch_match(
+__aicore__ inline void debug_check_batch_match(
     const tensor_api_assert_context& context, const SrcBatchType& src_batch, const DstBatchType& dst_batch,
     __gm__ const char* api_name)
 {
@@ -365,7 +364,7 @@ __aicore__ inline constexpr void debug_check_batch_match(
 }
 
 template <typename SrcColumnBytesType, typename DstColumnBytesType>
-__aicore__ inline constexpr void debug_check_l12bt_column_bytes(
+__aicore__ inline void debug_check_l12bt_column_bytes(
     const tensor_api_assert_context& context, const SrcColumnBytesType& src_column_bytes,
     const DstColumnBytesType& dst_column_bytes, __gm__ const char* api_name)
 {
@@ -379,7 +378,7 @@ __aicore__ inline constexpr void debug_check_l12bt_column_bytes(
 }
 
 template <typename SrcStrideType, typename DstStrideType>
-__aicore__ inline constexpr void debug_check_fixpipe_stride(
+__aicore__ inline void debug_check_fixpipe_stride(
     const tensor_api_assert_context& context, const SrcStrideType& src_stride, const DstStrideType& dst_stride,
     __gm__ const char* api_name)
 {
@@ -396,7 +395,7 @@ __aicore__ inline constexpr void debug_check_fixpipe_stride(
 }
 
 template <typename SizeType>
-__aicore__ inline constexpr void debug_check_fixpipe_m(
+__aicore__ inline void debug_check_fixpipe_m(
     const tensor_api_assert_context& context, const SizeType& m_size, bool nz2nd_en, __gm__ const char* api_name)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -412,7 +411,7 @@ __aicore__ inline constexpr void debug_check_fixpipe_m(
 }
 
 template <typename SizeType>
-__aicore__ inline constexpr void debug_check_fixpipe_n(
+__aicore__ inline void debug_check_fixpipe_n(
     const tensor_api_assert_context& context, const SizeType& n_size, bool enable_channel_split, bool nz2nd_en,
     bool nz2dn_en, __gm__ const char* api_name)
 {
@@ -432,7 +431,7 @@ __aicore__ inline constexpr void debug_check_fixpipe_n(
 }
 
 template <typename CountType, typename LengthType>
-__aicore__ inline constexpr void debug_check_copy_blocks(
+__aicore__ inline void debug_check_copy_blocks(
     const tensor_api_assert_context& context, const CountType& block_count, const LengthType& block_len,
     __gm__ const char* api_name)
 {
@@ -449,7 +448,7 @@ __aicore__ inline constexpr void debug_check_copy_blocks(
 }
 
 template <typename DataSizeType, typename StepType>
-__aicore__ inline constexpr void debug_check_l0_transpose(
+__aicore__ inline void debug_check_l0_transpose(
     const tensor_api_assert_context& context, bool transpose, const DataSizeType& data_size, const StepType& k_step,
     __gm__ const char* api_name)
 {
@@ -464,7 +463,7 @@ __aicore__ inline constexpr void debug_check_l0_transpose(
 }
 
 template <typename StepType>
-__aicore__ inline constexpr void debug_check_l0_step(
+__aicore__ inline void debug_check_l0_step(
     const tensor_api_assert_context& context, const StepType& step, __gm__ const char* step_name,
     __gm__ const char* api_name)
 {
@@ -476,7 +475,7 @@ __aicore__ inline constexpr void debug_check_l0_step(
 }
 
 template <typename StepType>
-__aicore__ inline constexpr void debug_check_l0_m_step(
+__aicore__ inline void debug_check_l0_m_step(
     const tensor_api_assert_context& context, const StepType& m_step, bool is_b4, __gm__ const char* api_name)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
@@ -489,7 +488,7 @@ __aicore__ inline constexpr void debug_check_l0_m_step(
 }
 
 template <typename SrcStrideType, typename SrcCapacityType, typename DstStrideType, typename DstCapacityType>
-__aicore__ inline constexpr void debug_check_l0_batch_stride(
+__aicore__ inline void debug_check_l0_batch_stride(
     const tensor_api_assert_context& context, const SrcStrideType& src_stride, const SrcCapacityType& src_capacity,
     const DstStrideType& dst_stride, const DstCapacityType& dst_capacity, __gm__ const char* api_name)
 {
@@ -504,7 +503,7 @@ __aicore__ inline constexpr void debug_check_l0_batch_stride(
 }
 
 template <typename ElementType, typename ParamsType>
-__aicore__ inline constexpr void debug_check_img2col_coord(
+__aicore__ inline void debug_check_img2col_coord(
     const tensor_api_assert_context& context, const ParamsType& params, __gm__ const char* api_name)
 {
     TENSOR_API_DEBUG_ASSERT_AT(
