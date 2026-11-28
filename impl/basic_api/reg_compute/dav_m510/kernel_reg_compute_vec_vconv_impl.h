@@ -151,34 +151,40 @@ __simd_callee__ inline void CastImpl(RegTensor<T>& dstReg, RegTensor<U>& srcReg,
     }
 }
 
-template <typename T, typename U, RoundMode roundMode, SatMode satMode, RegLayout layoutMode, MaskMergeMode mode>
-__simd_callee__ inline void CastOperator(RegTensor<T>& dstReg, RegTensor<U>& srcReg, MaskReg& mask)
-{
-    constexpr bool partCondition = SupportType<
+template <typename T, typename U>
+struct CastOperatorTypeTraits {
+    static constexpr bool partCondition = SupportType<
         Tuple<T, U>, Tuple<int16_t, float>, Tuple<uint8_t, half>, Tuple<int8_t, half>, Tuple<int32_t, bfloat16_t>,
         Tuple<int64_t, float>, Tuple<half, float>, Tuple<bfloat16_t, float>, Tuple<hifloat8_t, half>,
         Tuple<fp8_e8m0_t, bfloat16_t>>();
-    constexpr bool conditionNoneToRint =
+    static constexpr bool conditionNoneToRint =
         SupportType<Tuple<T, U>, Tuple<half, float>, Tuple<int8_t, half>, Tuple<uint8_t, half>>();
-    constexpr bool conditionNoNone = SupportType<Tuple<T, U>, Tuple<bfloat16_t, float>>();
-    constexpr bool ppCondition = SupportType<
+    static constexpr bool conditionNoNone = SupportType<Tuple<T, U>, Tuple<bfloat16_t, float>>();
+    static constexpr bool ppCondition = SupportType<
         Tuple<T, U>, Tuple<hifloat8_t, float>, Tuple<fp8_e5m2_t, float>, Tuple<fp8_e4m3fn_t, float>,
         Tuple<int4x2_t, half>>();
+    static constexpr bool unsupported = !(partCondition && ppCondition);
+};
+
+template <typename T, typename U, RoundMode roundMode, SatMode satMode, RegLayout layoutMode, MaskMergeMode mode>
+__simd_callee__ inline void CastOperator(RegTensor<T>& dstReg, RegTensor<U>& srcReg, MaskReg& mask)
+{
+    using TypeTraits = CastOperatorTypeTraits<T, U>;
     constexpr auto modeValue = GetMaskMergeMode<mode>();
     constexpr auto satModeValue =
         std::integral_constant<::RoundingSaturation, static_cast<::RoundingSaturation>(satMode)>();
     constexpr auto roundModeValue = std::integral_constant<::ROUND, GetRound<roundMode>()>();
-    if constexpr (partCondition) {
+    if constexpr (TypeTraits::partCondition) {
         // vcvt_fi f322s16/f162u8/f162s8/bf162s32/f322s64
         // vcvt_ff f322f16/f322bf16/f162hif8/bf162f8e8m0/
         static_assert(
             SupportEnum<layoutMode, RegLayout::ZERO, RegLayout::ONE>(),
             "current cast api RegLayout Mode is not supported on current device!");
-        if constexpr (conditionNoneToRint && (roundMode == RoundMode::CAST_NONE)) {
+        if constexpr (TypeTraits::conditionNoneToRint && (roundMode == RoundMode::CAST_NONE)) {
             constexpr auto roundModeNoneToRint = std::integral_constant<::ROUND, GetRound<RoundMode::CAST_RINT>()>();
             constexpr auto partModeValue = std::integral_constant<::Part, static_cast<::Part>(layoutMode)>();
             vcvt(dstReg, srcReg, mask, roundModeNoneToRint, satModeValue, partModeValue, modeValue);
-        } else if constexpr (conditionNoNone) {
+        } else if constexpr (TypeTraits::conditionNoNone) {
             static_assert(
                 !(SupportEnum<roundMode, RoundMode::CAST_NONE>()),
                 "roundMode can't be CAST_NONE when float to bfloat16_t!");
@@ -197,7 +203,7 @@ __simd_callee__ inline void CastOperator(RegTensor<T>& dstReg, RegTensor<U>& src
             constexpr auto partModeValue = std::integral_constant<::Part, static_cast<::Part>(layoutMode)>();
             vcvt(dstReg, srcReg, mask, roundModeValue, satModeValue, partModeValue, modeValue);
         }
-    } else if constexpr (ppCondition) {
+    } else if constexpr (TypeTraits::ppCondition) {
         constexpr auto ppModeValue = std::integral_constant<::Part_T, static_cast<::Part_T>(layoutMode)>();
         // vcvt_fi f162s4x2
         if constexpr (SupportType<Tuple<T, U>, Tuple<int4x2_t, half>>()) {
@@ -213,7 +219,7 @@ __simd_callee__ inline void CastOperator(RegTensor<T>& dstReg, RegTensor<U>& src
             vcvt(dstReg, srcReg, mask, roundModeValue, satModeValue, ppModeValue, modeValue);
         }
     } else {
-        static_assert(!(partCondition && ppCondition), "current cast data type is not supported on current device!");
+        static_assert(TypeTraits::unsupported, "current cast data type is not supported on current device!");
     }
 }
 
@@ -525,14 +531,9 @@ __simd_callee__ inline void CastImpl(S& dstReg, V& srcReg, MaskReg& mask)
     }
 }
 
-template <typename T, typename U, const CastTrait& trait, typename S, typename V>
-__simd_callee__ inline void CastImpl(S& dstReg, V& srcReg, MaskReg& mask)
-{
-    using ActualT = typename S::ActualT;
-    using ActualU = typename V::ActualT;
-    static_assert(Std::is_same_v<T, DefaultType> || Std::is_same_v<T, ActualT>, "T type is not correct!");
-    static_assert(Std::is_same_v<U, DefaultType> || Std::is_same_v<U, ActualU>, "U type is not correct!");
-    constexpr bool layoutMerge = SupportType<
+template <typename ActualT, typename ActualU>
+struct CastTypeTraits {
+    static constexpr bool layoutMerge = SupportType<
         Tuple<ActualT, ActualU>, Tuple<uint16_t, uint8_t>, Tuple<int16_t, int8_t>, Tuple<uint32_t, uint16_t>,
         Tuple<uint32_t, int16_t>, Tuple<int32_t, int16_t>, Tuple<int64_t, int32_t>, Tuple<float, half>,
         Tuple<float, bfloat16_t>, Tuple<half, hifloat8_t>, Tuple<half, uint8_t>, Tuple<half, int8_t>,
@@ -540,56 +541,66 @@ __simd_callee__ inline void CastImpl(S& dstReg, V& srcReg, MaskReg& mask)
         Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>, Tuple<float, fp8_e5m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>,
         Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<half, int4x2_t>, Tuple<bfloat16_t, int4x2_t>,
         Tuple<int16_t, int4x2_t>>();
-    constexpr bool satLayMergeCast = SupportType<
+    static constexpr bool satLayMergeCast = SupportType<
         Tuple<ActualT, ActualU>, Tuple<uint8_t, uint16_t>, Tuple<uint8_t, int16_t>, Tuple<uint16_t, uint32_t>,
         Tuple<int16_t, uint32_t>, Tuple<uint16_t, int32_t>, Tuple<int16_t, int32_t>, Tuple<uint8_t, uint32_t>,
         Tuple<uint8_t, int32_t>, Tuple<int32_t, int64_t>, Tuple<int4x2_t, int16_t>>();
-    constexpr bool rndSatLayoutMergeCast = SupportType<
+    static constexpr bool rndSatLayoutMergeCast = SupportType<
         Tuple<ActualT, ActualU>, Tuple<int16_t, float>, Tuple<uint8_t, half>, Tuple<int8_t, half>,
         Tuple<int32_t, bfloat16_t>, Tuple<int64_t, float>, Tuple<half, float>, Tuple<bfloat16_t, float>,
         Tuple<hifloat8_t, half>, Tuple<hifloat8_t, float>, Tuple<fp8_e5m2_t, float>, Tuple<fp8_e4m3fn_t, float>,
         Tuple<int4x2_t, half>, Tuple<fp8_e8m0_t, bfloat16_t>>();
-    constexpr bool rndSatMergeCast =
+    static constexpr bool rndSatMergeCast =
         SupportType<Tuple<ActualT, ActualU>, Tuple<int32_t, float>, Tuple<int16_t, half>, Tuple<half, bfloat16_t>>();
-    constexpr bool rndLayoutMergeCast = SupportType<
+    static constexpr bool rndLayoutMergeCast = SupportType<
         Tuple<ActualT, ActualU>, Tuple<int32_t, half>, Tuple<float, int64_t>, Tuple<fp4x2_e2m1_t, bfloat16_t>,
         Tuple<fp4x2_e1m2_t, bfloat16_t>>();
-    constexpr bool rndMergeCast =
+    static constexpr bool rndMergeCast =
         SupportType<Tuple<ActualT, ActualU>, Tuple<half, int16_t>, Tuple<float, int32_t>, Tuple<bfloat16_t, half>>();
-    constexpr bool allNotSupport =
+    static constexpr bool allNotSupport =
         !(layoutMerge && satLayMergeCast && rndSatLayoutMergeCast && rndSatMergeCast && rndLayoutMergeCast &&
           rndMergeCast);
-    if constexpr (layoutMerge) {
+};
+
+template <typename T, typename U, const CastTrait& trait, typename S, typename V>
+__simd_callee__ inline void CastImpl(S& dstReg, V& srcReg, MaskReg& mask)
+{
+    using ActualT = typename S::ActualT;
+    using ActualU = typename V::ActualT;
+    static_assert(Std::is_same_v<T, DefaultType> || Std::is_same_v<T, ActualT>, "T type is not correct!");
+    static_assert(Std::is_same_v<U, DefaultType> || Std::is_same_v<U, ActualU>, "U type is not correct!");
+    using TypeTraits = CastTypeTraits<ActualT, ActualU>;
+    if constexpr (TypeTraits::layoutMerge) {
         if constexpr (CheckRegTrait<S, RegTraitNumTwo>()) {
             CastImpl<T, U, trait.mrgMode, S, V>(dstReg, srcReg, mask);
         } else {
             CastImpl<ActualT, ActualU, trait.layoutMode, trait.mrgMode>(dstReg, srcReg, mask);
         }
-    } else if constexpr (satLayMergeCast) {
+    } else if constexpr (TypeTraits::satLayMergeCast) {
         if constexpr (CheckRegTrait<V, RegTraitNumTwo>()) {
             CastImpl<T, U, trait.satMode, trait.mrgMode, S, V>(dstReg, srcReg, mask);
         } else {
             CastImpl<ActualT, ActualU, trait.satMode, trait.layoutMode, trait.mrgMode>(dstReg, srcReg, mask);
         }
-    } else if constexpr (rndSatLayoutMergeCast) {
+    } else if constexpr (TypeTraits::rndSatLayoutMergeCast) {
         if constexpr (CheckRegTrait<S, RegTraitNumTwo>()) {
             CastImpl<T, U, trait.roundMode, trait.satMode, trait.mrgMode, S, V>(dstReg, srcReg, mask);
         } else {
             CastImpl<ActualT, ActualU, trait.roundMode, trait.satMode, trait.layoutMode, trait.mrgMode>(
                 dstReg, srcReg, mask);
         }
-    } else if constexpr (rndSatMergeCast) {
+    } else if constexpr (TypeTraits::rndSatMergeCast) {
         CastImpl<ActualT, ActualU, trait.roundMode, trait.satMode, trait.mrgMode>(dstReg, srcReg, mask);
-    } else if constexpr (rndLayoutMergeCast) {
+    } else if constexpr (TypeTraits::rndLayoutMergeCast) {
         if constexpr (CheckRegTrait<V, RegTraitNumTwo>()) {
             CastImpl<T, U, trait.roundMode, trait.mrgMode, S, V>(dstReg, srcReg, mask);
         } else {
             CastImpl<ActualT, ActualU, trait.roundMode, trait.layoutMode, trait.mrgMode>(dstReg, srcReg, mask);
         }
-    } else if constexpr (rndMergeCast) {
+    } else if constexpr (TypeTraits::rndMergeCast) {
         CastImpl<ActualT, ActualU, trait.roundMode, trait.mrgMode>(dstReg, srcReg, mask);
     } else {
-        static_assert(allNotSupport, "current cast data type is not supported on current device!");
+        static_assert(TypeTraits::allNotSupport, "current cast data type is not supported on current device!");
     }
 }
 } // namespace Reg

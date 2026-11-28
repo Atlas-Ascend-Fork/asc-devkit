@@ -1447,8 +1447,32 @@ __simd_callee__ inline void DivIEEE754HalfImpl(
     Select(dst, (RegTensor<half>&)tmp0, dst, maskNan);
 }
 
-template <typename T = DefaultType, auto mode = MaskMergeMode::ZEROING, typename U>
-__simd_callee__ inline void DivImpl(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& mask)
+template <typename T, auto mode, typename U>
+__simd_callee__ inline void DivFloatDispatch(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& mask)
+{
+    constexpr DivSpecificMode sprMode = Internal::GetDivSpecificMode(mode);
+    constexpr auto modeValue = GetMaskMergeMode<sprMode.mrgMode>();
+    if constexpr (sprMode.precisionMode) {
+        if constexpr (sprMode.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE) {
+            DivIEEE754FloatImpl<T, mode, U, true>(dstReg, srcReg0, srcReg1, mask);
+        } else {
+            DivPrecisionImpl<T, mode, U>(dstReg, srcReg0, srcReg1, mask);
+        }
+    } else {
+        if constexpr (sprMode.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE) {
+            DivIEEE754FloatImpl<T, mode, U, true>(dstReg, srcReg0, srcReg1, mask);
+        } else if constexpr (sprMode.algo == DivAlgo::PRECISION_1ULP_FTZ_FALSE) {
+            DivIEEE754FloatImpl<T, mode, U, false>(dstReg, srcReg0, srcReg1, mask);
+        } else if constexpr (sprMode.algo == DivAlgo::PRECISION_0ULP_FTZ_TRUE) {
+            DivPrecisionImpl<T, mode, U>(dstReg, srcReg0, srcReg1, mask);
+        } else {
+            vdiv(dstReg, srcReg0, srcReg1, mask, modeValue);
+        }
+    }
+}
+
+template <typename T, auto mode, typename U>
+__simd_callee__ inline constexpr void CheckDivTypeAndMode()
 {
     using ActualT = typename U::ActualT;
     static_assert(
@@ -1463,7 +1487,6 @@ __simd_callee__ inline void DivImpl(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& 
     static_assert(
         SupportEnum<sprMode.mrgMode, MaskMergeMode::ZEROING>(),
         "current Div api only supported Mode ZEROING on current device!");
-    constexpr auto modeValue = GetMaskMergeMode<sprMode.mrgMode>();
     if constexpr (sprMode.precisionMode) {
         static_assert(
             SupportType<ActualT, float, complex64>(),
@@ -1477,6 +1500,15 @@ __simd_callee__ inline void DivImpl(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& 
         static_assert(
             SupportType<T, float, complex64>(), "Reg Div for PRECISION_0ULP_FTZ_TRUE only supports float/complex64.");
     }
+}
+
+template <typename T = DefaultType, auto mode = MaskMergeMode::ZEROING, typename U>
+__simd_callee__ inline void DivImpl(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& mask)
+{
+    using ActualT = typename U::ActualT;
+    constexpr DivSpecificMode sprMode = Internal::GetDivSpecificMode(mode);
+    constexpr auto modeValue = GetMaskMergeMode<sprMode.mrgMode>();
+    CheckDivTypeAndMode<T, mode, U>();
     if constexpr (SupportType<ActualT, complex32>()) {
         if constexpr (CheckRegTrait<U, RegTraitNumTwo>()) {
             DivComplex32TwoImpl(dstReg, srcReg0, srcReg1, mask);
@@ -1499,23 +1531,7 @@ __simd_callee__ inline void DivImpl(U& dstReg, U& srcReg0, U& srcReg1, MaskReg& 
             vdiv(dstReg, srcReg0, srcReg1, mask, modeValue);
         }
     } else if constexpr (SupportType<ActualT, float>()) {
-        if constexpr (sprMode.precisionMode) {
-            if constexpr (sprMode.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE) {
-                DivIEEE754FloatImpl<T, mode, U, true>(dstReg, srcReg0, srcReg1, mask);
-            } else {
-                DivPrecisionImpl<T, mode, U>(dstReg, srcReg0, srcReg1, mask);
-            }
-        } else {
-            if constexpr (sprMode.algo == DivAlgo::PRECISION_0ULP_FTZ_FALSE) {
-                DivIEEE754FloatImpl<T, mode, U, true>(dstReg, srcReg0, srcReg1, mask);
-            } else if constexpr (sprMode.algo == DivAlgo::PRECISION_1ULP_FTZ_FALSE) {
-                DivIEEE754FloatImpl<T, mode, U, false>(dstReg, srcReg0, srcReg1, mask);
-            } else if constexpr (sprMode.algo == DivAlgo::PRECISION_0ULP_FTZ_TRUE) {
-                DivPrecisionImpl<T, mode, U>(dstReg, srcReg0, srcReg1, mask);
-            } else {
-                vdiv(dstReg, srcReg0, srcReg1, mask, modeValue);
-            }
-        }
+        DivFloatDispatch<T, mode, U>(dstReg, srcReg0, srcReg1, mask);
     } else {
         vdiv(dstReg, srcReg0, srcReg1, mask, modeValue);
     }

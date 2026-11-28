@@ -313,23 +313,16 @@ __aicore__ inline void CastIntrinsicsImpl(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_T
 }
 
 // Cast::Level 2
-template <typename ORI_DST_TYPE, typename ORI_SRC_TYPE>
-__aicore__ inline void CastImpl(
-    __ubuf__ ORI_DST_TYPE* oriDst, __ubuf__ ORI_SRC_TYPE* oriSrc, const RoundMode& roundMode, const uint32_t calCount)
-{
-    using DST_TYPE = typename CastParam::CastTypeTrait<ORI_DST_TYPE>::RealType;
-    using SRC_TYPE = typename CastParam::CastTypeTrait<ORI_SRC_TYPE>::RealType;
-    __ubuf__ DST_TYPE* dst = reinterpret_cast<__ubuf__ DST_TYPE*>(oriDst);
-    __ubuf__ SRC_TYPE* src = reinterpret_cast<__ubuf__ SRC_TYPE*>(oriSrc);
-
-    constexpr bool cast_round_all = SupportType<
+template <typename DST_TYPE, typename SRC_TYPE>
+struct CastCountTypeTraits {
+    static constexpr bool cast_round_all = SupportType<
         Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>, Tuple<int64_t, float>, Tuple<int32_t, float>,
         Tuple<int16_t, float>, Tuple<bfloat16_t, float>, Tuple<int32_t, half>, Tuple<int16_t, half>,
         Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<bfloat16_t, half>, Tuple<half, int16_t>,
         Tuple<float, int32_t>, Tuple<float, int64_t>, Tuple<int32_t, bfloat16_t>, Tuple<half, bfloat16_t>,
         Tuple<fp4x2_e1m2_t, bfloat16_t>, Tuple<fp4x2_e2m1_t, bfloat16_t>, Tuple<half, int32_t>, Tuple<float, float>,
         Tuple<complex64, complex64>, Tuple<complex32, complex64>>();
-    constexpr bool cast_none = SupportType<
+    static constexpr bool cast_none = SupportType<
         Tuple<DST_TYPE, SRC_TYPE>, Tuple<float, half>, Tuple<float, bfloat16_t>, Tuple<half, int4x2_t>,
         Tuple<half, uint8_t>, Tuple<uint16_t, uint8_t>, Tuple<uint32_t, uint8_t>, Tuple<half, int8_t>,
         Tuple<int16_t, int8_t>, Tuple<int32_t, int8_t>, Tuple<uint8_t, uint16_t>, Tuple<uint32_t, uint16_t>,
@@ -339,74 +332,142 @@ __aicore__ inline void CastImpl(
         Tuple<half, hifloat8_t>, Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>, Tuple<float, fp8_e5m2_t>,
         Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>, Tuple<int4x2_t, int16_t>,
         Tuple<int16_t, int4x2_t>, Tuple<bfloat16_t, int4x2_t>, Tuple<complex64, complex32>>();
-    constexpr bool using_cast_rint = SupportType<
+    static constexpr bool using_cast_rint = SupportType<
         Tuple<DST_TYPE, SRC_TYPE>, Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<half, float>,
         Tuple<half, int16_t>, Tuple<float, int32_t>, Tuple<complex32, complex64>>();
-    constexpr bool cast_odd = SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>, Tuple<complex32, complex64>>();
-    constexpr bool cast_rint =
+    static constexpr bool cast_odd =
+        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>, Tuple<complex32, complex64>>();
+    static constexpr bool cast_rint =
         SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<fp8_e5m2_t, float>, Tuple<fp8_e4m3fn_t, float>>();
-    constexpr bool cast_round =
+    static constexpr bool cast_round =
         SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<hifloat8_t, float>, Tuple<hifloat8_t, half>>();
-    constexpr bool cast_hybrid =
+    static constexpr bool cast_hybrid =
         SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<hifloat8_t, float>, Tuple<hifloat8_t, half>>();
+};
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountRint(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all || TypeTraits::cast_rint) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast rint"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountFloor(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_FLOOR>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast floor"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountCeil(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_CEIL>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast ceil"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountRound(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all || TypeTraits::cast_round) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ROUND>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast round"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountTrunc(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_TRUNC>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast trunc"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountOdd(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_odd) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ODD>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast odd"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountNone(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_none) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_NONE>(dst, src, calCount);
+    } else if constexpr (TypeTraits::using_cast_rint) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast none"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE>
+__aicore__ inline void CastCountHybrid(__ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, const uint32_t calCount)
+{
+    using TypeTraits = CastCountTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_hybrid) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_HYBRID>(dst, src, calCount);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast hybrid"); });
+    }
+}
+
+template <typename ORI_DST_TYPE, typename ORI_SRC_TYPE>
+__aicore__ inline void CastImpl(
+    __ubuf__ ORI_DST_TYPE* oriDst, __ubuf__ ORI_SRC_TYPE* oriSrc, const RoundMode& roundMode, const uint32_t calCount)
+{
+    using DST_TYPE = typename CastParam::CastTypeTrait<ORI_DST_TYPE>::RealType;
+    using SRC_TYPE = typename CastParam::CastTypeTrait<ORI_SRC_TYPE>::RealType;
+    __ubuf__ DST_TYPE* dst = reinterpret_cast<__ubuf__ DST_TYPE*>(oriDst);
+    __ubuf__ SRC_TYPE* src = reinterpret_cast<__ubuf__ SRC_TYPE*>(oriSrc);
+
     switch (roundMode) {
         case RoundMode::CAST_RINT:
-            if constexpr (cast_round_all || cast_rint) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast rint"); });
-            }
+            CastCountRint<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_FLOOR:
-            if constexpr (cast_round_all) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_FLOOR>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast floor"); });
-            }
+            CastCountFloor<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_CEIL:
-            if constexpr (cast_round_all) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_CEIL>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast ceil"); });
-            }
+            CastCountCeil<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_ROUND:
-            if constexpr (cast_round_all || cast_round) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ROUND>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast round"); });
-            }
+            CastCountRound<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_TRUNC:
-            if constexpr (cast_round_all) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_TRUNC>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast trunc"); });
-            }
+            CastCountTrunc<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_ODD:
-            if constexpr (cast_odd) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ODD>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast odd"); });
-            }
+            CastCountOdd<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_NONE:
-            if constexpr (cast_none) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_NONE>(dst, src, calCount);
-            } else if constexpr (using_cast_rint) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast none"); });
-            }
+            CastCountNone<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         case RoundMode::CAST_HYBRID:
-            if constexpr (cast_hybrid) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_HYBRID>(dst, src, calCount);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast hybrid"); });
-            }
+            CastCountHybrid<DST_TYPE, SRC_TYPE>(dst, src, calCount);
             break;
         default:
             ASCENDC_ASSERT(
@@ -922,6 +983,151 @@ __aicore__ inline void CastIntrinsicsImpl(
 }
 
 // Cast::Level 0 - shared mask dispatcher
+template <typename DST_TYPE, typename SRC_TYPE>
+struct CastMaskTypeTraits {
+    static constexpr bool cast_round_all = SupportType<
+        Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>, Tuple<int64_t, float>, Tuple<int32_t, float>,
+        Tuple<int16_t, float>, Tuple<bfloat16_t, float>, Tuple<int32_t, half>, Tuple<int16_t, half>,
+        Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<bfloat16_t, half>, Tuple<half, int16_t>,
+        Tuple<float, int32_t>, Tuple<float, int64_t>, Tuple<int32_t, bfloat16_t>, Tuple<half, bfloat16_t>,
+        Tuple<fp4x2_e1m2_t, bfloat16_t>, Tuple<fp4x2_e2m1_t, bfloat16_t>, Tuple<half, int32_t>, Tuple<float, float>>();
+    static constexpr bool cast_none = SupportType<
+        Tuple<DST_TYPE, SRC_TYPE>, Tuple<float, half>, Tuple<float, bfloat16_t>, Tuple<half, int4x2_t>,
+        Tuple<half, uint8_t>, Tuple<uint16_t, uint8_t>, Tuple<uint32_t, uint8_t>, Tuple<half, int8_t>,
+        Tuple<int16_t, int8_t>, Tuple<int32_t, int8_t>, Tuple<uint8_t, uint16_t>, Tuple<uint32_t, uint16_t>,
+        Tuple<float, int16_t>, Tuple<uint8_t, int16_t>, Tuple<uint32_t, int16_t>, Tuple<int32_t, int16_t>,
+        Tuple<uint8_t, uint32_t>, Tuple<uint16_t, uint32_t>, Tuple<int16_t, uint32_t>, Tuple<int64_t, int32_t>,
+        Tuple<int16_t, int32_t>, Tuple<uint8_t, int32_t>, Tuple<uint16_t, int32_t>, Tuple<int32_t, int64_t>,
+        Tuple<half, hifloat8_t>, Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>, Tuple<float, fp8_e5m2_t>,
+        Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>, Tuple<int4x2_t, int16_t>,
+        Tuple<int16_t, int4x2_t>, Tuple<bfloat16_t, int4x2_t>>();
+    static constexpr bool using_cast_rint = SupportType<
+        Tuple<DST_TYPE, SRC_TYPE>, Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<half, float>,
+        Tuple<half, int16_t>, Tuple<float, int32_t>>();
+    static constexpr bool cast_odd = SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>>();
+    static constexpr bool cast_rint =
+        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<fp8_e5m2_t, float>, Tuple<fp8_e4m3fn_t, float>>();
+    static constexpr bool cast_round =
+        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<hifloat8_t, float>, Tuple<hifloat8_t, half>>();
+    static constexpr bool cast_hybrid =
+        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<hifloat8_t, float>, Tuple<hifloat8_t, half>>();
+};
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskRint(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all || TypeTraits::cast_rint) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast rint"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskFloor(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_FLOOR, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast floor"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskCeil(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_CEIL, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast ceil"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskRound(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all || TypeTraits::cast_round) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ROUND, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast round"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskTrunc(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_round_all) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_TRUNC, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast trunc"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskOdd(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_odd) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ODD, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast odd"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskNone(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_none) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_NONE, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else if constexpr (TypeTraits::using_cast_rint) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast none"); });
+    }
+}
+
+template <typename DST_TYPE, typename SRC_TYPE, bool isSetMask, typename MaskT>
+__aicore__ inline void CastMaskHybrid(
+    __ubuf__ DST_TYPE* dst, __ubuf__ SRC_TYPE* src, MaskT mask, uint8_t repeatTime,
+    const UnaryRepeatParams& repeatParams)
+{
+    using TypeTraits = CastMaskTypeTraits<DST_TYPE, SRC_TYPE>;
+    if constexpr (TypeTraits::cast_hybrid) {
+        CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_HYBRID, isSetMask>(
+            dst, src, mask, repeatTime, repeatParams);
+    } else {
+        ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast hybrid"); });
+    }
+}
+
 template <typename ORI_DST_TYPE, typename ORI_SRC_TYPE, bool isSetMask, typename MaskT>
 __aicore__ inline void CastImplMaskCommonDavM510(
     __ubuf__ ORI_DST_TYPE* oriDst, __ubuf__ ORI_SRC_TYPE* oriSrc, const RoundMode& roundMode, MaskT mask,
@@ -932,99 +1138,30 @@ __aicore__ inline void CastImplMaskCommonDavM510(
     __ubuf__ DST_TYPE* dst = reinterpret_cast<__ubuf__ DST_TYPE*>(oriDst);
     __ubuf__ SRC_TYPE* src = reinterpret_cast<__ubuf__ SRC_TYPE*>(oriSrc);
 
-    constexpr bool cast_round_all = SupportType<
-        Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>, Tuple<int64_t, float>, Tuple<int32_t, float>,
-        Tuple<int16_t, float>, Tuple<bfloat16_t, float>, Tuple<int32_t, half>, Tuple<int16_t, half>,
-        Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<bfloat16_t, half>, Tuple<half, int16_t>,
-        Tuple<float, int32_t>, Tuple<float, int64_t>, Tuple<int32_t, bfloat16_t>, Tuple<half, bfloat16_t>,
-        Tuple<fp4x2_e1m2_t, bfloat16_t>, Tuple<fp4x2_e2m1_t, bfloat16_t>, Tuple<half, int32_t>, Tuple<float, float>>();
-    constexpr bool cast_none = SupportType<
-        Tuple<DST_TYPE, SRC_TYPE>, Tuple<float, half>, Tuple<float, bfloat16_t>, Tuple<half, int4x2_t>,
-        Tuple<half, uint8_t>, Tuple<uint16_t, uint8_t>, Tuple<uint32_t, uint8_t>, Tuple<half, int8_t>,
-        Tuple<int16_t, int8_t>, Tuple<int32_t, int8_t>, Tuple<uint8_t, uint16_t>, Tuple<uint32_t, uint16_t>,
-        Tuple<float, int16_t>, Tuple<uint8_t, int16_t>, Tuple<uint32_t, int16_t>, Tuple<int32_t, int16_t>,
-        Tuple<uint8_t, uint32_t>, Tuple<uint16_t, uint32_t>, Tuple<int16_t, uint32_t>, Tuple<int64_t, int32_t>,
-        Tuple<int16_t, int32_t>, Tuple<uint8_t, int32_t>, Tuple<uint16_t, int32_t>, Tuple<int32_t, int64_t>,
-        Tuple<half, hifloat8_t>, Tuple<float, hifloat8_t>, Tuple<float, fp8_e4m3fn_t>, Tuple<float, fp8_e5m2_t>,
-        Tuple<bfloat16_t, fp4x2_e1m2_t>, Tuple<bfloat16_t, fp4x2_e2m1_t>, Tuple<int4x2_t, int16_t>,
-        Tuple<int16_t, int4x2_t>, Tuple<bfloat16_t, int4x2_t>>();
-    constexpr bool using_cast_rint = SupportType<
-        Tuple<DST_TYPE, SRC_TYPE>, Tuple<int8_t, half>, Tuple<uint8_t, half>, Tuple<int4x2_t, half>, Tuple<half, float>,
-        Tuple<half, int16_t>, Tuple<float, int32_t>>();
-    constexpr bool cast_odd = SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<half, float>>();
-    constexpr bool cast_rint =
-        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<fp8_e5m2_t, float>, Tuple<fp8_e4m3fn_t, float>>();
-    constexpr bool cast_round =
-        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<hifloat8_t, float>, Tuple<hifloat8_t, half>>();
-    constexpr bool cast_hybrid =
-        SupportType<Tuple<DST_TYPE, SRC_TYPE>, Tuple<hifloat8_t, float>, Tuple<hifloat8_t, half>>();
     switch (roundMode) {
         case RoundMode::CAST_RINT:
-            if constexpr (cast_round_all || cast_rint) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast rint"); });
-            }
+            CastMaskRint<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_FLOOR:
-            if constexpr (cast_round_all) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_FLOOR, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast floor"); });
-            }
+            CastMaskFloor<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_CEIL:
-            if constexpr (cast_round_all) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_CEIL, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast ceil"); });
-            }
+            CastMaskCeil<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_ROUND:
-            if constexpr (cast_round_all || cast_round) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ROUND, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast round"); });
-            }
+            CastMaskRound<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_TRUNC:
-            if constexpr (cast_round_all) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_TRUNC, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast trunc"); });
-            }
+            CastMaskTrunc<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_ODD:
-            if constexpr (cast_odd) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_ODD, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast odd"); });
-            }
+            CastMaskOdd<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_NONE:
-            if constexpr (cast_none) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_NONE, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else if constexpr (using_cast_rint) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_RINT, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast none"); });
-            }
+            CastMaskNone<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         case RoundMode::CAST_HYBRID:
-            if constexpr (cast_hybrid) {
-                CastIntrinsicsImpl<DST_TYPE, SRC_TYPE, RoundMode::CAST_HYBRID, isSetMask>(
-                    dst, src, mask, repeatTime, repeatParams);
-            } else {
-                ASCENDC_ASSERT((false), { KERNEL_LOG(KERNEL_ERROR, "illegal type for cast hybrid"); });
-            }
+            CastMaskHybrid<DST_TYPE, SRC_TYPE, isSetMask>(dst, src, mask, repeatTime, repeatParams);
             break;
         default:
             ASCENDC_ASSERT(
