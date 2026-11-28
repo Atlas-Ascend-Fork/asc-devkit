@@ -501,13 +501,14 @@ __aicore__ inline void WelfordUpdateImpl(
     ASCENDC_ASSERT((para.abLength <= inputX.GetSize()), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check para.abLength, current size is %u, which should not larger than inputX size %u.",
+            "Failed to check para.abLength, current size is %u, which should not be larger than inputX size %u.",
             para.abLength, inputX.GetSize());
     });
     ASCENDC_ASSERT((para.abComputeLength <= para.abLength), {
         KERNEL_LOG(
             KERNEL_ERROR,
-            "Failed to check para.abComputeLength, current size is %u, which should not larger than abLength size %u.",
+            "Failed to check para.abComputeLength, current size is %u, which should not be larger than abLength size "
+            "%u.",
             para.abComputeLength, para.abLength);
     });
     ASCENDC_ASSERT((para.abComputeLength > 0), {

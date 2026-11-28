@@ -1015,7 +1015,8 @@ __aicore__ inline void ShiftLeft(
     CheckTensorPos<T>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "ShiftLeft");
     CheckTensorPos<U>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "ShiftLeft");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
     ShiftLeftImpl<Src0PrimType, Src1PrimType>(
         (__ubuf__ Src0PrimType*)dst.GetPhyAddr(), (__ubuf__ Src0PrimType*)src0.GetPhyAddr(),
@@ -1043,7 +1044,8 @@ __aicore__ inline void ShiftRight(
     CheckTensorPos<T>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "ShiftRight");
     CheckTensorPos<U>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "ShiftRight");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
     ShiftRightImpl<Src0PrimType, Src1PrimType>(
         (__ubuf__ Src0PrimType*)dst.GetPhyAddr(), (__ubuf__ Src0PrimType*)src0.GetPhyAddr(),
@@ -1740,7 +1742,8 @@ __aicore__ inline void Prelu(
     CheckTensorPos<T>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "Prelu");
     CheckTensorPos<T>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "Prelu");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
     PreluImpl(
         (__ubuf__ PrimType*)dst.GetPhyAddr(), (__ubuf__ PrimType*)src0.GetPhyAddr(),
@@ -1773,7 +1776,7 @@ __aicore__ inline void Mull(
     ASCENDC_ASSERT(
         (count <= src0.GetSize() && count <= src1.GetSize() && count <= dst0.GetSize() && count <= dst1.GetSize()), {
             KERNEL_LOG(
-                KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst0 / dst1 / src0 / src1",
+                KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst0 / dst1 / src0 / src1",
                 count);
         });
     MullImpl(
@@ -1801,7 +1804,8 @@ __aicore__ inline void AbsSub(
     CheckTensorPos<T>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "AbsSub");
     CheckTensorPos<T>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "AbsSub");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
     FusedAbsSubImpl(
         (__ubuf__ PrimType*)dst.GetPhyAddr(), (__ubuf__ PrimType*)src0.GetPhyAddr(),
@@ -1818,7 +1822,8 @@ __aicore__ inline void FusedAbsSub(
     CheckTensorPos<T>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "FusedAbsSub");
     CheckTensorPos<T>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "FusedAbsSub");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
     FusedAbsSubImpl(
         (__ubuf__ PrimType*)dst.GetPhyAddr(), (__ubuf__ PrimType*)src0.GetPhyAddr(),
@@ -1847,7 +1852,8 @@ __aicore__ inline void ExpSub(
     CheckTensorPos<U>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "ExpSub");
     CheckTensorPos<U>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "ExpSub");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510 || __NPU_ARCH__ == 3103)
     static_assert(
@@ -1881,7 +1887,8 @@ __aicore__ inline void FusedExpSub(
     CheckTensorPos<U>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "FusedExpSub");
     CheckTensorPos<U>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "FusedExpSub");
     ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+        KERNEL_LOG(
+            KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
     });
     FusedExpSubImpl<DstPrimType, SrcPrimType>(
         (__ubuf__ DstPrimType*)dst.GetPhyAddr(), (__ubuf__ SrcPrimType*)src0.GetPhyAddr(),

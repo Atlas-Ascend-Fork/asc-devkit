@@ -41,7 +41,7 @@
 | [Sin](math_compute/Sin_interface/Sin.md) | 按元素做正弦函数计算。 |
 | [Sinh](math_compute/Sinh_interface/Sinh.md) | 按元素做双曲正弦函数计算。 |
 | [Tan](math_compute/Tan_interface/Tan.md) | 按元素做正切函数计算。 |
-| [Tanh](math_compute/Tanh_interface/Tanh.md) | 按元素做逻辑回归Tanh。 |
+| [Tanh](math_compute/Tanh_interface/Tanh.md) | 按元素做双曲正切函数计算。 |
 | [Trunc](math_compute/Trunc_interface/Trunc.md) | 按元素做浮点数截断操作，即向零取整操作。 |
 | [Xor](math_compute/Xor_interface/Xor.md) | 按元素执行Xor（异或）运算。 |
 | [Fma](math_compute/Fma_interface/Fma_interface.md) | 按元素计算两个输入相乘后与第三个输入相加的结果。 |

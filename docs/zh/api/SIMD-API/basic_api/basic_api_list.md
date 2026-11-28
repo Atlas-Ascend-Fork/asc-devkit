@@ -187,7 +187,7 @@
 | 接口名 | 功能描述 |
 | --- | --- |
 | [Axpy](memory_vector_compute/composite_compute/Axpy.md) | 向量和标量的乘积，并将乘积结果逐元素加到的输出向量上。 |
-| [CastDequant](memory_vector_compute/composite_compute/CastDequant.md) | 对输入做量化并进行精度转换，对输出结果的溢出采用饱和处理。本接口需要与[SetDeqScale](memory_vector_compute/type_conversion_aux_config/SetDeqScale.md)接口配合使用。 |
+| [CastDequant](memory_vector_compute/composite_compute/CastDequant.md) | 对输入做反量化并进行精度转换，对输出结果的溢出采用饱和处理。本接口需要与[SetDeqScale](memory_vector_compute/type_conversion_aux_config/SetDeqScale.md)接口配合使用。 |
 | [AddRelu](memory_vector_compute/composite_compute/AddRelu.md) | 按元素求和，再进行Relu计算（结果和0对比取较大值）。 |
 | [AddReluCast](memory_vector_compute/composite_compute/AddReluCast.md) | 按元素求和，结果和0对比取较大值，并根据源操作数和目的操作数Tensor的数据类型进行精度转换。 |
 | [AddDeqRelu](memory_vector_compute/composite_compute/AddDeqRelu.md) | 依次计算按元素求和、结果进行deq量化后再进行relu计算（结果和0对比取较大值）。 |

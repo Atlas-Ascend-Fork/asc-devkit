@@ -131,3 +131,5 @@ TPosition枚举值的具体定义如下：
 </tr>
 </tbody>
 </table>
+
+<!-- @ref: asc-devkit/res/docs/zh/api/api/SIMD-API/basic_api/aux_data_structures/TPosition_res.md#id1 -->

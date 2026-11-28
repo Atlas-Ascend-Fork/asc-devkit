@@ -34,17 +34,17 @@ __aicore__ inline void IsQuantValid(
 {
     ASCENDC_ASSERT((calCount <= srcTensor.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "calCount is %u, which should not larger than srcTensor size %u", calCount,
+            KERNEL_ERROR, "calCount is %u, which should not be larger than srcTensor size %u", calCount,
             srcTensor.GetSize());
     });
     ASCENDC_ASSERT((config.calcCount <= srcTensor.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "config.calcCount is %u, which should not larger than srcTensor size %u", config.calcCount,
+            KERNEL_ERROR, "config.calcCount is %u, which should not be larger than srcTensor size %u", config.calcCount,
             srcTensor.GetSize());
     });
     ASCENDC_ASSERT((config.workLocalSize <= sharedTmpBuffer.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "workLocalSize is %u, which should not larger than sharedTmpBuffer size %u",
+            KERNEL_ERROR, "workLocalSize is %u, which should not be larger than sharedTmpBuffer size %u",
             config.workLocalSize, sharedTmpBuffer.GetSize());
     });
 }
@@ -55,12 +55,12 @@ __aicore__ inline void IsQuantConfigValid(
 {
     ASCENDC_ASSERT((config.calcCount <= srcTensor.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "config.calCount is %u, which should not larger than srcTensor size %u.", config.calcCount,
+            KERNEL_ERROR, "config.calCount is %u, which should not be larger than srcTensor size %u.", config.calcCount,
             srcTensor.GetSize());
     });
     ASCENDC_ASSERT((config.scaleCount <= scaleTensor.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "config.scaleCount is %u, which should not larger than scaleTensor size %u.",
+            KERNEL_ERROR, "config.scaleCount is %u, which should not be larger than scaleTensor size %u.",
             config.scaleCount, scaleTensor.GetSize());
     });
     ASCENDC_ASSERT((config.scaleCount == 0 || config.calcCount % config.scaleCount == 0), {
@@ -74,7 +74,7 @@ __aicore__ inline void IsQuantConfigValid(
     });
     ASCENDC_ASSERT((config.workLocalSize <= sharedTmpBuffer.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "workLocalSize is %u, which should not larger than sharedTmpBuffer size %u",
+            KERNEL_ERROR, "workLocalSize is %u, which should not be larger than sharedTmpBuffer size %u",
             config.workLocalSize, sharedTmpBuffer.GetSize());
     });
 }
@@ -87,7 +87,7 @@ __aicore__ inline void IsQuantConfigValid(
     IsQuantConfigValid<T, config>(srcTensor, sharedTmpBuffer, scaleTensor);
     ASCENDC_ASSERT((config.offsetCount <= offsetTensor.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "config.offsetCount is %u, which should not larger than offsetTensor size %u.",
+            KERNEL_ERROR, "config.offsetCount is %u, which should not be larger than offsetTensor size %u.",
             config.offsetCount, offsetTensor.GetSize());
     });
     ASCENDC_ASSERT((config.scaleCount == config.offsetCount), {

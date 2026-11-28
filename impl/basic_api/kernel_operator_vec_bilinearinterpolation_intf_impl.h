@@ -73,7 +73,8 @@ __aicore__ inline void BilinearInterpolationCheck(
         KERNEL_LOG(
             KERNEL_ERROR,
             "Failed to check "
-            "sharedTmpBuffer size in BilinearInterpolation, its expected size is at least %u, current size is %u",
+            "sharedTmpBuffer size in BilinearInterpolation, its expected size is at least %u bytes, current size is %u "
+            "bytes",
             expectedTmpBufferSize, sharedTmpBufferSize);
     });
 #endif

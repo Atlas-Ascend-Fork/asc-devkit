@@ -704,7 +704,7 @@ __aicore__ inline void Truncate(const LocalTensor<T>& dst, const LocalTensor<T>&
     CheckTensorPos<T>(dst, Hardware::UB, "dst", "VECIN/VECCALC/VECOUT", "Truncate");
     CheckTensorPos<T>(src, Hardware::UB, "src", "VECIN/VECCALC/VECOUT", "Truncate");
     ASCENDC_ASSERT((count <= src.GetSize() && count <= dst.GetSize()), {
-        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src", count);
+        KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src", count);
     });
     TruncateImpl<PrimType, roundMode>(
         (__ubuf__ PrimType*)dst.GetPhyAddr(), (__ubuf__ PrimType*)src.GetPhyAddr(), count);

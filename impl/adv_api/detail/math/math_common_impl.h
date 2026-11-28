@@ -41,7 +41,7 @@ __aicore__ inline void CommonCheckInputsValidness(
 
     ASCENDC_ASSERT((calCount <= srcTensor.GetSize()), {
         KERNEL_LOG(
-            KERNEL_ERROR, "calCount is %u, which should not larger than srcTensor size %u", calCount,
+            KERNEL_ERROR, "calCount is %u, which should not be larger than srcTensor size %u", calCount,
             srcTensor.GetSize());
     });
 #endif

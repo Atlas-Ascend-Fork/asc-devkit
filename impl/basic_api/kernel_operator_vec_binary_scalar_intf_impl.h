@@ -1952,7 +1952,7 @@ __aicore__ inline void MulsCast(const T2& dst, const T3& src0, const T4& src1, c
     if constexpr (Std::is_same<T3, T4>::value) {
         ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
             KERNEL_LOG(
-                KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+                KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
         });
         using ActualU = typename T3::PrimType;
         CheckTensorPos<ActualU>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "MulsCast");
@@ -1972,7 +1972,7 @@ __aicore__ inline void MulsCast(const T2& dst, const T3& src0, const T4& src1, c
         }
     } else if constexpr (TypeUtils::IsLocalTensorType<T4>() && TypeUtils::IsInnerDefaultType<T3>()) {
         ASCENDC_ASSERT((count <= src1.GetSize() && count <= dst.GetSize()), {
-            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src1", count);
+            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src1", count);
         });
         using ActualU = typename T4::PrimType;
         CheckTensorPos<ActualU>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "MulsCast");
@@ -1983,7 +1983,7 @@ __aicore__ inline void MulsCast(const T2& dst, const T3& src0, const T4& src1, c
             (__ubuf__ ActualT*)dst.GetPhyAddr(), (__ubuf__ ActualU*)src1.GetPhyAddr(), src0, count);
     } else if constexpr (TypeUtils::IsLocalTensorType<T3>() && TypeUtils::IsInnerDefaultType<T4>()) {
         ASCENDC_ASSERT((count <= src0.GetSize() && count <= dst.GetSize()), {
-            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0", count);
+            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0", count);
         });
         using ActualU = typename T3::PrimType;
         CheckTensorPos<ActualU>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "MulsCast");
@@ -2012,7 +2012,7 @@ __aicore__ inline void FusedMulsCast(const T2& dst, const T3& src0, const T4& sr
     if constexpr (Std::is_same<T3, T4>::value) {
         ASCENDC_ASSERT((count <= src0.GetSize() && count <= src1.GetSize() && count <= dst.GetSize()), {
             KERNEL_LOG(
-                KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0 / src1", count);
+                KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0 / src1", count);
         });
         using ActualU = typename T3::PrimType;
         CheckTensorPos<ActualU>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "FusedMulsCast");
@@ -2032,7 +2032,7 @@ __aicore__ inline void FusedMulsCast(const T2& dst, const T3& src0, const T4& sr
         }
     } else if constexpr (TypeUtils::IsLocalTensorType<T4>() && TypeUtils::IsInnerDefaultType<T3>()) {
         ASCENDC_ASSERT((count <= src1.GetSize() && count <= dst.GetSize()), {
-            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src1", count);
+            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src1", count);
         });
         using ActualU = typename T4::PrimType;
         CheckTensorPos<ActualU>(src1, Hardware::UB, "src1", "VECIN/VECCALC/VECOUT", "FusedMulsCast");
@@ -2043,7 +2043,7 @@ __aicore__ inline void FusedMulsCast(const T2& dst, const T3& src0, const T4& sr
             (__ubuf__ ActualT*)dst.GetPhyAddr(), (__ubuf__ ActualU*)src1.GetPhyAddr(), src0, count);
     } else if constexpr (TypeUtils::IsLocalTensorType<T3>() && TypeUtils::IsInnerDefaultType<T4>()) {
         ASCENDC_ASSERT((count <= src0.GetSize() && count <= dst.GetSize()), {
-            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not larger than tensor size of dst / src0", count);
+            KERNEL_LOG(KERNEL_ERROR, "count is %u, which should not be larger than tensor size of dst / src0", count);
         });
         using ActualU = typename T3::PrimType;
         CheckTensorPos<ActualU>(src0, Hardware::UB, "src0", "VECIN/VECCALC/VECOUT", "FusedMulsCast");
