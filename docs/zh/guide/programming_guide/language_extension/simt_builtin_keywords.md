@@ -169,46 +169,43 @@ SIMT会提供内置的宏方便用户编写程序。预定义宏一节着重介�
 | 浮点型 | bfloat16_t | 符号位宽1，指数位宽8，尾数位宽7 | 16 | [2<sup>120</sup> - 2<sup>128</sup>, 2<sup>128</sup> - 2<sup>120</sup>] |
 | 浮点型 | float | 符号位宽1，指数位宽8，尾数位宽23 | 32 | [2<sup>104</sup> - 2<sup>128</sup>, 2<sup>128</sup> - 2<sup>104</sup>] |
 
-短向量数据类型分为Vector X2、Vector X3、Vector X4，表示一个短向量变量有2、3、4个元素，当前支持的类型分布如下：<a name="table49986503175"></a>
+短向量数据类型分为Vector X2、Vector X4，表示一个短向量变量有2、4个元素，当前支持的类型分布如下：<a name="table49986503175"></a>
 
-| 元素数据类型 | Vector X2 | Vector X3 | Vector X4 |
-| --- | --- | --- | --- |
-| unsigned char | uchar2 | uchar3 | uchar4 |
-| signed char | char2 | char3 | char4 |
-| unsigned short (16bit) | ushort2 | ushort3 | ushort4 |
-| signed short (16bit) | short2 | short3 | short4 |
-| unsigned int | uint2 | uint3 | uint4 |
-| signed int | int2 | int3 | int4 |
-| 无符号的长整型(64bit) | ulonglong2 | ulonglong3 | ulonglong4 |
-| 有符号的长整型(64bit) | longlong2 | longlong3 | longlong4 |
-| 无符号的长整型(64bit) | ulong2 | ulong3 | ulong4 |
-| 有符号的长整型(64bit) | long2 | long3 | long4 |
-| 浮点型，1符号位，2指数位，1尾数位 | float4_e2m1x2_t | - | - |
-| 浮点型，1符号位，1指数位，2尾数位 | float4_e1m2x2_t | - | - |
-| 浮点型，1符号位，4指数位，3尾数位 | float8_e4m3x2_t | - | - |
-| 浮点型，1符号位，5指数位，2尾数位 | float8_e5m2x2_t | - | - |
-| 浮点型hif8 | hifloat8x2_t | - | - |
-| 浮点型，1符号位，5指数位，10尾数位 | half2 | - | - |
-| 浮点型，1符号位，8指数位，7尾数位 | bfloat16x2_t | - | - |
-| 浮点型，1符号位，8指数位，23尾数位 | float2 | float3 | float4 |
+| 元素数据类型 | Vector X2 | Vector X4 |
+| --- | --- | --- |
+| unsigned char | uchar2 | uchar4 |
+| signed char | char2 | char4 |
+| unsigned short (16bit) | ushort2 | ushort4 |
+| signed short (16bit) | short2 | short4 |
+| unsigned int | uint2 | uint4 |
+| signed int | int2 | int4 |
+| 无符号的长整型(64bit) | ulonglong2 | ulonglong4 |
+| 有符号的长整型(64bit) | longlong2 | longlong4 |
+| 无符号的长整型(64bit) | ulong2 | ulong4 |
+| 有符号的长整型(64bit) | long2 | long4 |
+| 浮点型，1符号位，4指数位，3尾数位 | float8_e4m3x2_t | - |
+| 浮点型，1符号位，5指数位，2尾数位 | float8_e5m2x2_t | - |
+| 浮点型hif8 | hifloat8x2_t | - |
+| 浮点型，1符号位，5指数位，10尾数位 | half2 | - |
+| 浮点型，1符号位，8指数位，7尾数位 | bfloat16x2_t | - |
+| 浮点型，1符号位，8指数位，23尾数位 | float2 | float4 |
 
 **表3**  短向量数据类型<a name="table13856144241"></a>
 
 | 数据类型 | 内存大小（字节） | 地址对齐（字节） |
 | --- | --- | --- |
 | char2、 uchar2 | 2 | 2 |
-| char3、 uchar3、 char4、 uchar4 | 4 | 4 |
+| char4、 uchar4 | 4 | 4 |
 | short2、 ushort2 | 4 | 4 |
-| short3、 ushort3、 short4、 ushort4 | 8 | 8 |
+| short4、 ushort4 | 8 | 8 |
 | int2、 uint2 | 8 | 8 |
-| int3、 uint3、 int4、 uint4 | 16 | 16 |
+| int4、 uint4 | 16 | 16 |
 | long2、 ulong2 | 16 | 16 |
-| long3、 ulong3、 long4、 ulong4 | 32 | 32 |
+| long4、 ulong4 | 32 | 32 |
 | longlong2、 ulonglong2 | 16 | 16 |
-| longlong3、 ulonglong3、 longlong4、 ulonglong4 | 32 | 32 |
+| longlong4、 ulonglong4 | 32 | 32 |
 | float2 | 8 | 8 |
-| float3、 float4 | 16 | 16 |
-| float4_e2m1x2_t、 float4_e1m2x2_t | 1 | 1 |
+| float4 | 16 | 16 |
 | float8_e4m3x2_t、 float8_e5m2x2_t、 hifloat8x2_t | 2 | 2 |
 | half2、bfloat16x2_t | 4 | 4 |
 

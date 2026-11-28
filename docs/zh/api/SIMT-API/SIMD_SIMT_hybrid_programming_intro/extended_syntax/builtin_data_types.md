@@ -69,8 +69,6 @@ SIMD与SIMT混合编程提供了一系列适用于Device侧的数据类型，包
 | signed long long (64bit) | longlong2 | longlong4 |
 | unsigned long (64bit) | ulong2 | ulong4 |
 | signed long (64bit) | long2 | long4 |
-| 浮点型，1符号位，2指数位，1尾数位 | float4_e2m1x2_t | - |
-| 浮点型，1符号位，1指数位，2尾数位 | float4_e1m2x2_t | - |
 | 浮点型，1符号位，4指数位，3尾数位 | float8_e4m3x2_t | - |
 | 浮点型，1符号位，5指数位，2尾数位 | float8_e5m2x2_t | - |
 | 浮点型hif8 | hifloat8x2_t | - |
@@ -96,7 +94,6 @@ SIMD与SIMT混合编程提供了一系列适用于Device侧的数据类型，包
 | longlong4, ulonglong4 | 32 | 32 |
 | float2 | 8 | 8 |
 | float4 | 16 | 16 |
-| float4_e2m1x2_t, float4_e1m2x2_t | 1 | 1 |
 | float8_e4m3x2_t, float8_e5m2x2_t, hifloat8x2_t | 2 | 2 |
 | half2, bfloat16x2_t | 4 | 4 |
 
