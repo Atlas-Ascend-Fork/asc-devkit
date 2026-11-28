@@ -69,7 +69,7 @@ SIMT编程场景当前不支持使用该接口。
     __simt_vf__ __launch_bounds__(1024) inline void simt_e4m3x22float2(__gm__ float8_e4m3x2_t* input, __gm__ float2* output, uint32_t input_total_length)
     {
         uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-        // 每个线程处理1个float8_e4m3x2_t类型的数据，即2个fp8_e4m3fn_t类型的数据，因此idx >= input_total_length / 2的线程不处理数据
+        // 每个线程处理1个float8_e4m3x2_t类型的数据，即2个float8_e4m3_t类型的数据，因此idx >= input_total_length / 2的线程不处理数据
         if (idx >= input_total_length / 2) {
             return;
         }
