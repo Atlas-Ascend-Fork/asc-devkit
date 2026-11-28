@@ -13,6 +13,7 @@
  * \brief
  */
 #include "context_builder.h"
+#include <cerrno>
 #include <climits>
 #include <dlfcn.h>
 #include <fstream>
@@ -51,7 +52,7 @@ TilingFunc OpTilingRegistry::GetTilingFunc(const char* opType) const
     auto registry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
     const gert::OpImplKernelRegistry::OpImplFunctionsV2* funcs;
     if (registry == nullptr) {
-        CXT_ASCENDC_LOGD("failed to find implfuncs in 2.0 way, registery is null. op type is %s.", opType);
+        CXT_ASCENDC_LOGD("failed to find implfuncs in 2.0 way, registry is null. op type is %s.", opType);
         return nullptr;
     }
     funcs = registry->GetOpImpl(opType);
@@ -68,13 +69,17 @@ bool OpTilingRegistry::LoadTilingLibrary(const char* tilingSoPath) const
         CXT_ASCENDC_LOGE("tilingSoPath is null.");
         return false;
     }
-    if (strlen(tilingSoPath) >= PATH_MAX) {
-        CXT_ASCENDC_LOGE("OpTilingRegistry tiling so path [%s] is too long.", tilingSoPath);
+    const size_t pathLength = strlen(tilingSoPath);
+    if (pathLength >= PATH_MAX) {
+        CXT_ASCENDC_LOGE(
+            "Tiling so path is too long: %zu bytes, maximum %d bytes. Path: [%s].", pathLength, PATH_MAX - 1,
+            tilingSoPath);
         return false;
     }
     char resovedPath[PATH_MAX] = {0};
     if (realpath(tilingSoPath, resovedPath) == nullptr) {
-        CXT_ASCENDC_LOGE("OpTilingRegistry Tiling so path [%s] is not exist.", tilingSoPath);
+        const int resolveError = errno;
+        CXT_ASCENDC_LOGE("Failed to resolve tiling so path (errno=%d): [%s].", resolveError, tilingSoPath);
         return false;
     }
     std::string absFilePath(resovedPath);
@@ -296,7 +301,7 @@ ContextBuilder& ContextBuilder::AddPlatformInfo(const char* customSocVersion)
     } else {
         errno_t r = strcpy_s(socVersion, sizeof(socVersion), customSocVersion);
         if (r != EOK) {
-            CXT_ASCENDC_LOGE("strcpy socverison failed.");
+            CXT_ASCENDC_LOGE("strcpy socversion failed.");
             return *this;
         }
     }
@@ -319,7 +324,8 @@ ContextBuilder& ContextBuilder::AddPlatformInfo(const char* customSocVersion)
             platformInfoIns.SetCoreNumByCoreType("VectorCore");
         }
     } else {
-        ASCENDC_ASSERT(false, return *this, CXT_ASCENDC_LOGE("Invalid SocVersion."));
+        ASCENDC_ASSERT(
+            false, return *this, CXT_ASCENDC_LOGE("Unsupported short SoC version: [%s].", socVersionStr.c_str()));
     }
     impl_->PlatformInfo(&platformInfoIns);
     return *this;

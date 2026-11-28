@@ -14,6 +14,8 @@
  */
 
 #include "context_builder_impl.h"
+#include <cerrno>
+#include <cinttypes>
 #include <map>
 #include <fstream>
 #include <limits.h>
@@ -181,7 +183,7 @@ void ContextBuilderImpl::AddInputTd(
             return;
         }
     } else {
-        CXT_ASCENDC_LOGE("Cannot find set cosnt data function for Input idx :%d, please check dtype.", index);
+        CXT_ASCENDC_LOGE("Cannot find set const data function for Input idx :%d, please check dtype.", index);
         errFlag_ = true;
         return;
     }
@@ -212,7 +214,7 @@ void ContextBuilderImpl::AddInputTd(
         return;
     }
     if (!context_ascendc::DataUtils::ReadBinFile(filePath, buffer, static_cast<size_t>(tensorSize))) {
-        CXT_ASCENDC_LOGE("Add Input Idx :%d error, file path is invalid", index);
+        CXT_ASCENDC_LOGE("Failed to read constant data from file for input idx %d.", index);
         free(buffer);
         buffer = nullptr;
         errFlag_ = true;
@@ -223,7 +225,7 @@ void ContextBuilderImpl::AddInputTd(
     auto tensor = reinterpret_cast<gert::Tensor*>(tensorPtr.get());
     errno_t err = memcpy_s(tensor->GetData<uint8_t>(), totalSize - sizeof(gert::Tensor), buffer, tensorSize);
     if (err != EOK) {
-        CXT_ASCENDC_LOGE("Set Const Data Failed!");
+        CXT_ASCENDC_LOGE("Failed to copy constant data for input idx %d: memcpy_s returned %d.", index, err);
         free(buffer);
         buffer = nullptr;
         errFlag_ = true;
@@ -345,25 +347,25 @@ void ContextBuilderImpl::AddOutputTd(
 
 void ContextBuilderImpl::CompileInfo(void* compileInfo)
 {
-    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("kernelCtxBuilder_ is nullptr!"));
+    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("tilingCtxBuilder_ is nullptr!"));
     tilingCtxBuilder_->CompileInfo(compileInfo);
 }
 
 void ContextBuilderImpl::TilingData(void* tilingData)
 {
-    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("kernelCtxBuilder_ is nullptr!"));
+    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("tilingCtxBuilder_ is nullptr!"));
     tilingCtxBuilder_->TilingData(reinterpret_cast<gert::TilingData*>(tilingData));
 }
 
 void ContextBuilderImpl::Workspace(gert::ContinuousVector* workspace)
 {
-    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("kernelCtxBuilder_ is nullptr!"));
+    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("tilingCtxBuilder_ is nullptr!"));
     tilingCtxBuilder_->Workspace(workspace);
 }
 
 void ContextBuilderImpl::PlatformInfo(void* platformInfo)
 {
-    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("kernelCtxBuilder_ is nullptr!"));
+    ASCENDC_ASSERT(tilingCtxBuilder_ != nullptr, return, CXT_ASCENDC_LOGE("tilingCtxBuilder_ is nullptr!"));
     tilingCtxBuilder_->PlatformInfo(platformInfo);
 }
 
@@ -427,13 +429,16 @@ bool ReadBinFile(const std::string& fileName, void* buf, std::size_t bufferLen)
             return false;
         }
         if (fileName.size() >= PATH_MAX) {
-            CXT_ASCENDC_LOGE("Path[%s] is too long.", fileName.c_str());
+            CXT_ASCENDC_LOGE(
+                "Input file path is too long: %zu bytes, maximum %d bytes. Path: [%s].", fileName.size(), PATH_MAX - 1,
+                fileName.c_str());
             return false;
         }
         char resovedPath[PATH_MAX] = {0};
         std::string absFilePath = "";
         if (realpath(fileName.c_str(), resovedPath) == nullptr) {
-            CXT_ASCENDC_LOGE("Path[%s] is not exist.", fileName.c_str());
+            const int resolveError = errno;
+            CXT_ASCENDC_LOGE("Failed to resolve input file path (errno=%d): [%s].", resolveError, fileName.c_str());
             return false;
         }
         absFilePath = resovedPath;
@@ -455,12 +460,14 @@ int64_t GetTensorSizeByStorageShape(const gert::StorageShape& storageShape, cons
 {
     int64_t dataSize = storageShape.GetStorageShape().GetShapeSize();
     if (dataSize <= 0) {
-        CXT_ASCENDC_LOGE("Add Input Idx Invalid: shape size overflow.");
+        CXT_ASCENDC_LOGE("Storage shape element count must be positive, got %" PRId64 ".", dataSize);
         return -1;
     }
     int64_t tensorSize = ge::GetSizeInBytes(dataSize, dtype);
     if (tensorSize <= 0) {
-        CXT_ASCENDC_LOGE("Add Input Idx Invalid: tensorSize overflow.");
+        CXT_ASCENDC_LOGE(
+            "Failed to calculate tensor size in bytes: element count=%" PRId64 ", dtype=%d, result=%" PRId64 ".",
+            dataSize, static_cast<int>(dtype), tensorSize);
         return -1;
     }
     return tensorSize;
@@ -477,14 +484,16 @@ bool SetConstDataWithFloat16(void* rawData, int64_t bufferLen, int64_t holderSiz
         float16Values.emplace_back(float16Value);
     }
     if (static_cast<size_t>(holderSize) < sizeof(gert::Tensor)) {
-        CXT_ASCENDC_LOGE("Set Const Data Failed! Tensor Holder Size is smaller than size of tensor");
+        CXT_ASCENDC_LOGE(
+            "FP16 constant data holder has %" PRId64 " bytes, requires at least %zu bytes.", holderSize,
+            sizeof(gert::Tensor));
         return false;
     }
     errno_t err = memcpy_s(
         tensor->GetData<uint8_t>(), holderSize - sizeof(gert::Tensor), float16Values.data(),
         float16Values.size() * sizeof(uint16_t));
     if (err != EOK) {
-        CXT_ASCENDC_LOGE("Set Const Data Failed!");
+        CXT_ASCENDC_LOGE("Failed to copy FP16 constant data: memcpy_s returned %d.", err);
         return false;
     }
     return true;
@@ -501,7 +510,9 @@ bool SetConstDataWithBF16(void* rawData, int64_t bufferLen, int64_t holderSize, 
         bf16Values.emplace_back(bf16Value);
     }
     if (static_cast<size_t>(holderSize) < sizeof(gert::Tensor)) {
-        CXT_ASCENDC_LOGE("Set Const Data Failed! Tensor Holder Size is smaller than size of tensor");
+        CXT_ASCENDC_LOGE(
+            "BF16 constant data holder has %" PRId64 " bytes, requires at least %zu bytes.", holderSize,
+            sizeof(gert::Tensor));
         return false;
     }
     errno_t err = memcpy_s(
@@ -521,13 +532,15 @@ bool SetConstData(void* rawData, int64_t bufferLen, int64_t holderSize, std::uni
     std::vector<uint8_t> constValues =
         std::vector<uint8_t>(reinterpret_cast<uint8_t*>(rawData), reinterpret_cast<uint8_t*>(rawData) + bufferLen);
     if (static_cast<size_t>(holderSize) < sizeof(gert::Tensor)) {
-        CXT_ASCENDC_LOGE("Set Const Data Failed! Tensor Holder Size is smaller than size of tensor");
+        CXT_ASCENDC_LOGE(
+            "Constant data holder has %" PRId64 " bytes, requires at least %zu bytes.", holderSize,
+            sizeof(gert::Tensor));
         return false;
     }
     errno_t err =
         memcpy_s(tensor->GetData<uint8_t>(), holderSize - sizeof(gert::Tensor), constValues.data(), bufferLen);
     if (err != EOK) {
-        CXT_ASCENDC_LOGE("Set Const Data Failed!");
+        CXT_ASCENDC_LOGE("Failed to copy constant data: memcpy_s returned %d.", err);
         return false;
     }
     return true;
