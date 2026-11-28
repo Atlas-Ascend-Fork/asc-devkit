@@ -23,7 +23,10 @@
 #define IMPL_TENSOR_API_TENSOR_COORD_INDEX_H
 
 #include "impl/tensor_api/tensor/layout_definition.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
 #include "impl/tensor_api/utils/npu_debug_check.h"
+#pragma clang diagnostic pop
 
 namespace asc {
 namespace te {
