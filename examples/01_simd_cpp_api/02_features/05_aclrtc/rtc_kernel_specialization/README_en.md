@@ -247,7 +247,7 @@ The following results were collected in five independent rounds using the settin
 | 5 | 8.90 | 7.70 |
 | **Mean** | **9.048** | **7.532** |
 
-For each pipeline metric, the values are averaged across the valid compute cores in each round and then across all five rounds.
+For each pipeline metric, the values are averaged across the valid compute cores in each round and then across all five rounds. Changes are calculated from the means displayed to three decimal places in the table and rounded to two decimal places.
 
 **Table 5**  Mean Kernel Task and Pipeline Durations
 
@@ -255,11 +255,11 @@ For each pipeline metric, the values are averaged across the valid compute cores
 | --- | ---: | ---: | ---: |
 | `Task Duration(us)` | 9.048 | 7.532 | -16.76% |
 | `aic_time(us)` | 7.786 | 6.441 | -17.27% |
-| `aic_scalar_time(us)` | 4.640 | 2.330 | -49.79% |
+| `aic_scalar_time(us)` | 4.640 | 2.330 | -49.78% |
 | `aic_cube_time(us)` | 1.449 | 1.450 | +0.07% |
-| `aic_mte1_time(us)` | 1.703 | 1.684 | -1.14% |
+| `aic_mte1_time(us)` | 1.703 | 1.684 | -1.12% |
 | `aic_mte2_time(us)` | 4.138 | 4.606 | +11.31% |
 | `aic_mte3_time(us)` | 0.001 | 0.001 | 0.00% |
-| `aic_fixpipe_time(us)` | 2.858 | 3.006 | +5.16% |
+| `aic_fixpipe_time(us)` | 2.858 | 3.006 | +5.18% |
 
-- The specialized Kernel had a lower Task Duration in all five rounds. The mean decreased by 16.76%. Mean Scalar duration decreased by 49.79%, consistent with reduced runtime scalar processing after specialization.
+- The specialized Kernel had a lower Task Duration in all five rounds. The mean decreased by 16.76%. Mean Scalar duration decreased by 49.78%, consistent with reduced runtime scalar processing after specialization.
