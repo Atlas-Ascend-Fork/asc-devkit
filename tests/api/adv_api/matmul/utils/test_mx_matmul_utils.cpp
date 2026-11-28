@@ -275,3 +275,17 @@ TEST_F(TestMatmulUtilsMx, test_mx_matmul_utils_IsMxEnableUnitFlag)
     EXPECT_FALSE((IsMxDisableUnitFlag<AS_TYPE_GM, BS_TYPE_GM_TP, CFG_NORM>));
     EXPECT_TRUE((IsMxDisableUnitFlag<AS_TYPE_GM_TP, BS_TYPE_GM_TP, CFG_NORM>));
 }
+
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510) && defined(__DAV_C310_CUBE__)
+TEST_F(TestMatmulUtilsMx, test_matmul_utils_SyncCubeWithVecABShareAIC) { SyncCubeWithVec<true, true>(1U); }
+#endif
+
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3510) && defined(__DAV_VEC__)
+TEST_F(TestMatmulUtilsMx, test_matmul_utils_SyncCubeWithVecABShareAIV)
+{
+    sub_block_idx = 0;
+    SyncCubeWithVec<true, true>(1U);
+    sub_block_idx = 1;
+    SyncCubeWithVec<true, true>(1U);
+}
+#endif
