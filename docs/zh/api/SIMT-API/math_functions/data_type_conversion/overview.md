@@ -177,17 +177,17 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
 
     将src按照舍入模式取整，以hifloat8_t格式（溢出默认按照饱和处理）存入dst中。
 
-    示例：输入1.75，CAST_ROUND模式输出2；CAST_HYBRID参考[表9](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#float转hifloat8_t转换规则)输出。
-  - 输出数据类型为fp8_e4m3fn_t：
+    示例：输入1.75，CAST_ROUND模式输出1.75；CAST_HYBRID参考[表9](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#float转hifloat8_t转换规则)输出。
+  - 输出数据类型为float8_e4m3_t：
 
-    将src按照舍入模式取整，以fp8_e4m3fn_t格式（溢出默认按照饱和处理）存入dst中。
+    将src按照舍入模式取整，以float8_e4m3_t格式（溢出默认按照饱和处理）存入dst中。
 
-    示例：输入2.5，CAST_RINT模式输出2。
-  - 输出数据类型为fp8_e5m2_t：
+    示例：输入2.5，CAST_RINT模式输出2.5。
+  - 输出数据类型为float8_e5m2_t：
 
-    将src按照舍入模式取整，以fp8_e5m2_t格式（溢出默认按照饱和处理）存入dst中。
+    将src按照舍入模式取整，以float8_e5m2_t格式（溢出默认按照饱和处理）存入dst中。
 
-    示例：输入2.5，CAST_RINT模式输出2。
+    示例：输入2.5，CAST_RINT模式输出2.5。
 - 输入数据类型为half：
   - 输出数据类型为half：
 
@@ -252,7 +252,7 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
 
     示例：输入1.75，
 
-    CAST_ROUND模式输出2，CAST_HYBRID模式参考[表10](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#half转hifloat8_t转换规则)输出。
+    CAST_ROUND模式输出1.75，CAST_HYBRID模式参考[表10](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#half转hifloat8_t转换规则)输出。
 - 输入数据类型为bfloat16_t：
   - 输出数据类型为bfloat16_t：
 
@@ -310,13 +310,13 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
     将src以half格式存入dst中，不存在精度转换问题，无舍入模式。
 
     示例：输入2，输出2。
-- 输入数据类型为fp8_e4m3fn_t：
+- 输入数据类型为float8_e4m3_t：
   - 输出数据类型为float：
 
     将src以float格式存入dst中，不存在精度转换问题，无舍入模式。
 
     示例：输入2，输出2。
-- 输入数据类型为fp8_e5m2_t：
+- 输入数据类型为float8_e5m2_t：
   - 输出数据类型为float：
 
     将src以float格式存入dst中，不存在精度转换问题，无舍入模式。
