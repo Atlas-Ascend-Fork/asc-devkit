@@ -17,7 +17,7 @@
 
 饱和行为受寄存器CTRL\[60\]、CTRL\[48\]和接口功能同时控制，SIMD与SIMT混合编程场景下，CTRL寄存器的设置请参考[SetCtrlSpr\(ISASI\)](../../SIMD-API/basic_api/special_register_access/SetCtrlSpr_ISASI.md)接口。**SIMT编程场景暂不支持设置CTRL寄存器。**
 
-宽范围数据转成窄范围数据且转换的目标类型不是float时，包括float转half、float转bfloat16\_t、bfloat16\_t转half、float或half转hifloat8\_t、fp8\_e4m3fn\_t或fp8\_e5m2\_t，接口的饱和行为受硬件寄存器CTRL\[60\]和CTRL\[48\]的影响。具体行为如下：
+宽范围数据转成窄范围数据且转换的目标类型不是float时，包括float转half、float转bfloat16\_t、bfloat16\_t转half、float或half转hifloat8\_t、float8\_e4m3\_t或float8\_e5m2\_t，接口的饱和行为受硬件寄存器CTRL\[60\]和CTRL\[48\]的影响。具体行为如下：
 
 -   当CTRL\[60\] = 0时，饱和行为受接口独立控制。
     -   后缀\_\_sat的接口转换结果为饱和模式。
