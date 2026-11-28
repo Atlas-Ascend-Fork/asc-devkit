@@ -96,7 +96,7 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
 
 饱和行为受寄存器CTRL\[60\]、CTRL\[48\]和接口功能同时控制，SIMD与SIMT混合编程场景下，CTRL寄存器的设置请参考[SetCtrlSpr\(ISASI\)](../../../SIMD-API/basic_api/special_register_access/SetCtrlSpr_ISASI.md)接口。SIMT编程场景暂不支持设置CTRL寄存器。
 
-宽范围数据转成窄范围数据且转换的目标类型不是float时，包括float转half、float转bfloat16\_t、bfloat16\_t转half、float或half转hifloat8\_t、fp8\_e4m3fn\_t或fp8\_e5m2\_t，接口的饱和行为受硬件寄存器CTRL\[60\]和CTRL\[48\]的影响。具体行为如下：
+宽范围数据转成窄范围数据且转换的目标类型不是float时，包括float转half、float转bfloat16\_t、bfloat16\_t转half、float或half转hifloat8\_t、float8\_e4m3\_t或float8\_e5m2\_t，接口的饱和行为受硬件寄存器CTRL\[60\]和CTRL\[48\]的影响。具体行为如下：
 
 -   当CTRL\[60\] = 0时，饱和行为受接口独立控制。
     -   后缀\_\_sat的接口转换结果为饱和模式。
@@ -226,17 +226,17 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
 
     将src按照舍入模式取整，以hifloat8_t格式（溢出默认按照饱和处理）存入dst中。
 
-    示例：输入1.75，CAST_ROUND模式输出2；CAST_HYBRID参考[表9](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#float转hifloat8_t转换规则)输出。
-  - 输出数据类型为fp8_e4m3fn_t：
+    示例：输入1.75，CAST_ROUND模式输出1.75；CAST_HYBRID参考[表9](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#float转hifloat8_t转换规则)输出。
+  - 输出数据类型为float8_e4m3_t：
 
-    将src按照舍入模式取整，以fp8_e4m3fn_t格式（溢出默认按照饱和处理）存入dst中。
+    将src按照舍入模式取整，以float8_e4m3_t格式（溢出默认按照饱和处理）存入dst中。
 
-    示例：输入2.5，CAST_RINT模式输出2。
-  - 输出数据类型为fp8_e5m2_t：
+    示例：输入2.5，CAST_RINT模式输出2.5。
+  - 输出数据类型为float8_e5m2_t：
 
-    将src按照舍入模式取整，以fp8_e5m2_t格式（溢出默认按照饱和处理）存入dst中。
+    将src按照舍入模式取整，以float8_e5m2_t格式（溢出默认按照饱和处理）存入dst中。
 
-    示例：输入2.5，CAST_RINT模式输出2。
+    示例：输入2.5，CAST_RINT模式输出2.5。
 - 输入数据类型为half：
   - 输出数据类型为half：
 
@@ -301,7 +301,7 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
 
     示例：输入1.75，
 
-    CAST_ROUND模式输出2，CAST_HYBRID模式参考[表10](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#half转hifloat8_t转换规则)输出。
+    CAST_ROUND模式输出1.75，CAST_HYBRID模式参考[表10](../../../SIMD-API/basic_api/reg_vector_compute/type_conversion/Cast.md#half转hifloat8_t转换规则)输出。
 - 输入数据类型为bfloat16_t：
   - 输出数据类型为bfloat16_t：
 
@@ -359,13 +359,13 @@ half b = a; // b = -inf，-100000.0f超出half类型能表示的范围
     将src以half格式存入dst中，不存在精度转换问题，无舍入模式。
 
     示例：输入2，输出2。
-- 输入数据类型为fp8_e4m3fn_t：
+- 输入数据类型为float8_e4m3_t：
   - 输出数据类型为float：
 
     将src以float格式存入dst中，不存在精度转换问题，无舍入模式。
 
     示例：输入2，输出2。
-- 输入数据类型为fp8_e5m2_t：
+- 输入数据类型为float8_e5m2_t：
   - 输出数据类型为float：
 
     将src以float格式存入dst中，不存在精度转换问题，无舍入模式。
